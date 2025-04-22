@@ -11,13 +11,22 @@ from decimal import Decimal
 from sqlalchemy import func, extract
 import language
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]  # Console uniquement
-)
+log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
+os.makedirs(log_dir, exist_ok=True)  # ✅ Empêche le crash si le dossier n'existe pas
 
+log_file = os.path.join(log_dir, 'app.log')
+
+# === Initialisation du logging ===
+logging.basicConfig(
+    level=logging.DEBUG, 
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(log_file),   # ✅ Ce fichier existera maintenant
+        logging.StreamHandler()
+    ]
+)
 logger = logging.getLogger(__name__)
+
 
 
 # Load environment variables
