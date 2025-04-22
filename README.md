@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # IA-Solution - Instructions de déploiement
 
 Ce dossier contient tous les fichiers nécessaires pour déployer l'application IA-Solution.
@@ -50,3 +51,6 @@ Une fois déployée, l'application sera accessible à l'adresse :
 ## Contact
 
 En cas de problème ou de question, contactez : support@ia-solution.com
+=======
+# ia-solution
+>>>>>>> 081de0d35fbc8dee7355f746805b7734d2bd6911

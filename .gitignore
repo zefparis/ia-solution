@@ -1,0 +1,54 @@
+# Environnement
+.env
+.env.*
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+
+# Fichiers de log
+*.log
+logs/
+*.sqlite3
+
+# Fichiers secrets
+secrets/
+config/secrets.json
+
+# Docker
+*.pid
+*.sock
+*.pid.lock
+docker-compose.override.yml
+docker-data/
+
+# Redis, Postgres & Elasticsearch volumes
+postgres-data/
+redis-data/
+elasticsearch-data/
+rabbitmq-data/
+static-volume/
+uploads-volume/
+cache-volume/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Fichiers de test ou de debug
+file.tmp
+debug.log
+memory.json
+

@@ -1,77 +1,29 @@
 version: '3.8'
 
 services:
-  # Application principale
   app:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        - APP_ENV=${APP_ENV:-production}
-        - APP_PORT=${APP_PORT:-5000}
     image: ia-solution-api:latest
     container_name: ia-solution-api
     restart: unless-stopped
     ports:
       - "${APP_PORT:-5000}:5000"
+    env_file:
+      - .env
     depends_on:
-      - postgres
       - redis
       - elasticsearch
       - rabbitmq
     networks:
       - ia-solution-network
-    environment:
-      - APP_ENV=${APP_ENV:-production}
-      - FLASK_ENV=${FLASK_ENV:-production}
-      - FLASK_DEBUG=${FLASK_DEBUG:-0}
-      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-default_secret_key_change_me}
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ia_solution}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USERNAME=${RABBITMQ_USERNAME:-guest}
-      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - SENDGRID_API_KEY=${SENDGRID_API_KEY:-}
-      - SENDGRID_VERIFIED_SENDER=${SENDGRID_VERIFIED_SENDER:-}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
-      - AWS_REGION=${AWS_REGION:-us-east-1}
-      - AWS_COGNITO_USER_POOL_ID=${AWS_COGNITO_USER_POOL_ID:-}
-      - AWS_COGNITO_APP_CLIENT_ID=${AWS_COGNITO_APP_CLIENT_ID:-}
-      - AWS_COGNITO_APP_CLIENT_SECRET=${AWS_COGNITO_APP_CLIENT_SECRET:-}
     volumes:
       - ./:/app
       - static-volume:/app/static
       - uploads-volume:/app/uploads
       - cache-volume:/app/cache
 
-  # Base de données PostgreSQL
-  postgres:
-    image: postgres:14-alpine
-    container_name: ia-solution-postgres
-    restart: unless-stopped
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_DB=${POSTGRES_DB:-ia_solution}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - ia-solution-network
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Cache Redis
   redis:
     image: redis:6-alpine
     container_name: ia-solution-redis
@@ -89,7 +41,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Elasticsearch
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
     container_name: ia-solution-elasticsearch
@@ -111,7 +62,6 @@ services:
       timeout: 10s
       retries: 5
 
-  # RabbitMQ
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: ia-solution-rabbitmq
@@ -132,7 +82,6 @@ services:
       timeout: 10s
       retries: 5
 
-  # Nginx pour servir les fichiers statiques et faire office de proxy inverse
   nginx:
     image: nginx:alpine
     container_name: ia-solution-nginx
@@ -154,7 +103,6 @@ networks:
     driver: bridge
 
 volumes:
-  postgres-data:
   redis-data:
   elasticsearch-data:
   rabbitmq-data:
