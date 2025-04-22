@@ -1,0 +1,193 @@
+{% extends 'layout.html' %}
+
+{% block title %}Factures - IA Solution{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Factures</h1>
+        <a href="{{ url_for('invoicing.add_invoice') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i>Créer une facture
+        </a>
+    </div>
+
+    {% for message in get_flashed_messages(with_categories=true) %}
+    <div class="alert alert-{{ message[0] }}" role="alert">
+        {{ message[1] }}
+    </div>
+    {% endfor %}
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col">
+                    <a href="{{ url_for('invoicing.invoices', status='draft') }}" class="text-decoration-none">
+                        <div class="d-flex flex-column">
+                            <span class="badge bg-secondary mb-2">Brouillons</span>
+                            <span class="fs-4">{{ status_counts.draft }}</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a href="{{ url_for('invoicing.invoices', status='sent') }}" class="text-decoration-none">
+                        <div class="d-flex flex-column">
+                            <span class="badge bg-primary mb-2">Envoyées</span>
+                            <span class="fs-4">{{ status_counts.sent }}</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a href="{{ url_for('invoicing.invoices', status='overdue') }}" class="text-decoration-none">
+                        <div class="d-flex flex-column">
+                            <span class="badge bg-danger mb-2">En retard</span>
+                            <span class="fs-4">{{ status_counts.overdue }}</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a href="{{ url_for('invoicing.invoices', status='paid') }}" class="text-decoration-none">
+                        <div class="d-flex flex-column">
+                            <span class="badge bg-success mb-2">Payées</span>
+                            <span class="fs-4">{{ status_counts.paid }}</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a href="{{ url_for('invoicing.invoices', status='cancelled') }}" class="text-decoration-none">
+                        <div class="d-flex flex-column">
+                            <span class="badge bg-danger mb-2">Annulées</span>
+                            <span class="fs-4">{{ status_counts.cancelled }}</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a href="{{ url_for('invoicing.invoices') }}" class="text-decoration-none">
+                        <div class="d-flex flex-column">
+                            <span class="badge bg-info mb-2">Toutes</span>
+                            <span class="fs-4">{{ status_counts.draft + status_counts.sent + status_counts.overdue + status_counts.paid + status_counts.cancelled }}</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                {% if active_status %}
+                Factures - 
+                {% if active_status == 'draft' %}
+                <span class="badge bg-secondary">Brouillons</span>
+                {% elif active_status == 'sent' %}
+                <span class="badge bg-primary">Envoyées</span>
+                {% elif active_status == 'overdue' %}
+                <span class="badge bg-danger">En retard</span>
+                {% elif active_status == 'paid' %}
+                <span class="badge bg-success">Payées</span>
+                {% elif active_status == 'cancelled' %}
+                <span class="badge bg-danger">Annulées</span>
+                {% endif %}
+                {% else %}
+                Toutes les factures
+                {% endif %}
+            </h5>
+            {% if active_status %}
+            <a href="{{ url_for('invoicing.invoices') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-times me-2"></i>Effacer le filtre
+            </a>
+            {% endif %}
+        </div>
+        <div class="card-body p-0">
+            {% if invoices %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>N° Facture</th>
+                            <th>Client</th>
+                            <th>Date</th>
+                            <th>Échéance</th>
+                            <th>Montant</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in invoices %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('invoicing.view_invoice', invoice_id=invoice.id) }}">
+                                    {{ invoice.invoice_number }}
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('invoicing.view_customer', customer_id=invoice.customer.id) }}">
+                                    {{ invoice.customer.name }}
+                                </a>
+                            </td>
+                            <td>{{ invoice.issue_date.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                {% if invoice.due_date %}
+                                    {% if invoice.is_overdue and invoice.status not in ['paid', 'cancelled'] %}
+                                    <span class="text-danger">{{ invoice.due_date.strftime('%d/%m/%Y') }}</span>
+                                    {% else %}
+                                    {{ invoice.due_date.strftime('%d/%m/%Y') }}
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ invoice.total }} €</td>
+                            <td>
+                                {% if invoice.status == 'draft' %}
+                                <span class="badge bg-secondary">Brouillon</span>
+                                {% elif invoice.status == 'sent' %}
+                                <span class="badge bg-primary">Envoyée</span>
+                                {% elif invoice.status == 'paid' %}
+                                <span class="badge bg-success">Payée</span>
+                                {% elif invoice.status == 'overdue' %}
+                                <span class="badge bg-danger">En retard</span>
+                                {% elif invoice.status == 'cancelled' %}
+                                <span class="badge bg-danger">Annulée</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('invoicing.view_invoice', invoice_id=invoice.id) }}" class="btn btn-outline-primary" title="Voir">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if invoice.status in ['draft', 'sent'] %}
+                                    <a href="{{ url_for('invoicing.edit_invoice', invoice_id=invoice.id) }}" class="btn btn-outline-secondary" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% endif %}
+                                    <a href="{{ url_for('invoicing.generate_invoice_pdf', invoice_id=invoice.id) }}" class="btn btn-outline-info" title="Télécharger PDF">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center p-4">
+                {% if active_status %}
+                <p class="text-muted mb-3">Aucune facture trouvée avec ce statut</p>
+                <a href="{{ url_for('invoicing.invoices') }}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-times me-2"></i>Effacer le filtre
+                </a>
+                {% else %}
+                <p class="text-muted mb-3">Aucune facture pour le moment</p>
+                {% endif %}
+                <a href="{{ url_for('invoicing.add_invoice') }}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-2"></i>Créer une facture
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

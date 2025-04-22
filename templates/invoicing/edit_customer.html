@@ -1,0 +1,122 @@
+{% extends 'layout.html' %}
+
+{% block title %}Modifier {{ customer.name }} - IA Solution{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Modifier {{ customer.name }}</h1>
+        <div>
+            <a href="{{ url_for('invoicing.view_customer', customer_id=customer.id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Retour au client
+            </a>
+        </div>
+    </div>
+
+    {% for message in get_flashed_messages(with_categories=true) %}
+    <div class="alert alert-{{ message[0] }}" role="alert">
+        {{ message[1] }}
+    </div>
+    {% endfor %}
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" action="{{ url_for('invoicing.edit_customer', customer_id=customer.id) }}">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4 class="mb-3">Informations générales</h4>
+                        
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="is_company" name="is_company" {% if customer.is_company %}checked{% endif %}>
+                            <label class="form-check-label" for="is_company">Ce client est une entreprise</label>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nom / Raison sociale <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ customer.name }}" required>
+                        </div>
+                        
+                        <div class="mb-3" id="contact_name_group">
+                            <label for="contact_name" class="form-label">Nom du contact</label>
+                            <input type="text" class="form-control" id="contact_name" name="contact_name" value="{{ customer.contact_name or '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ customer.email or '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Téléphone</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" value="{{ customer.phone or '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="tax_id" class="form-label">Numéro SIRET / TVA</label>
+                            <input type="text" class="form-control" id="tax_id" name="tax_id" value="{{ customer.tax_id or '' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h4 class="mb-3">Adresse</h4>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Adresse</label>
+                            <textarea class="form-control" id="address" name="address" rows="3">{{ customer.address or '' }}</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="postal_code" class="form-label">Code postal</label>
+                            <input type="text" class="form-control" id="postal_code" name="postal_code" value="{{ customer.postal_code or '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="city" class="form-label">Ville</label>
+                            <input type="text" class="form-control" id="city" name="city" value="{{ customer.city or '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="country" class="form-label">Pays</label>
+                            <input type="text" class="form-control" id="country" name="country" value="{{ customer.country or 'France' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3">{{ customer.notes or '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-end mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Enregistrer les modifications
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const isCompanyCheckbox = document.getElementById('is_company');
+        const contactNameGroup = document.getElementById('contact_name_group');
+        
+        function toggleContactNameVisibility() {
+            if (isCompanyCheckbox.checked) {
+                contactNameGroup.style.display = 'block';
+            } else {
+                contactNameGroup.style.display = 'none';
+            }
+        }
+        
+        // Initialize visibility
+        toggleContactNameVisibility();
+        
+        // Add change event listener
+        isCompanyCheckbox.addEventListener('change', toggleContactNameVisibility);
+    });
+</script>
+{% endblock %}

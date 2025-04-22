@@ -1,0 +1,316 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {% if question %}
+        {{ _('training_admin_edit_question', 'Modifier la question') }}
+    {% else %}
+        {{ _('training_admin_create_question', 'Créer une question') }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('training.training_dashboard') }}">{{ _('training_dashboard', 'Formation') }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('training.admin_courses') }}">{{ _('training_admin_courses_title', 'Gestion des cours') }}</a></li>
+                    {% if quiz %}
+                        <li class="breadcrumb-item"><a href="{{ url_for('training.view_course', course_id=quiz.lesson.course_id) }}">{{ quiz.lesson.course.title }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('training.view_lesson', lesson_id=quiz.lesson_id) }}">{{ quiz.lesson.title }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('training.edit_quiz', quiz_id=quiz.id) }}">{{ quiz.title }}</a></li>
+                    {% elif question and question.quiz %}
+                        <li class="breadcrumb-item"><a href="{{ url_for('training.view_course', course_id=question.quiz.lesson.course_id) }}">{{ question.quiz.lesson.course.title }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('training.view_lesson', lesson_id=question.quiz.lesson_id) }}">{{ question.quiz.lesson.title }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('training.edit_quiz', quiz_id=question.quiz.id) }}">{{ question.quiz.title }}</a></li>
+                    {% endif %}
+                    <li class="breadcrumb-item active">
+                        {% if question %}
+                            {{ _('training_admin_edit_question', 'Modifier la question') }}
+                        {% else %}
+                            {{ _('training_admin_create_question', 'Créer une question') }}
+                        {% endif %}
+                    </li>
+                </ol>
+            </nav>
+            
+            <h1 class="display-5">
+                {% if question %}
+                    {{ _('training_admin_edit_question', 'Modifier la question') }}
+                {% else %}
+                    {{ _('training_admin_create_question', 'Créer une question pour') }} {{ quiz.title }}
+                {% endif %}
+            </h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- Protection CSRF (fournie par Flask-WTF) -->
+                        {{ form.csrf_token if form.csrf_token }}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        
+                        {% if quiz %}
+                            <input type="hidden" name="quiz_id" value="{{ quiz.id }}">
+                        {% endif %}
+
+                        <!-- Informations de base -->
+                        <div class="mb-4">
+                            <h4>{{ _('training_question_basic_info', 'Informations de base') }}</h4>
+                            <hr>
+                            
+                            <div class="mb-3">
+                                <label for="question_text" class="form-label">{{ _('training_question_text', 'Texte de la question') }} *</label>
+                                <textarea class="form-control" id="question_text" name="question_text" rows="3" required>{{ question.question_text if question else '' }}</textarea>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="question_type" class="form-label">{{ _('training_question_type', 'Type de question') }} *</label>
+                                    <select class="form-select" id="question_type" name="question_type" required>
+                                        <option value="multiple_choice" {% if question and question.question_type == 'multiple_choice' %}selected{% endif %}>
+                                            {{ _('training_question_type_multiple', 'Choix multiple') }}
+                                        </option>
+                                        <option value="true_false" {% if question and question.question_type == 'true_false' %}selected{% endif %}>
+                                            {{ _('training_question_type_true_false', 'Vrai ou Faux') }}
+                                        </option>
+                                        <option value="text" {% if question and question.question_type == 'text' %}selected{% endif %}>
+                                            {{ _('training_question_type_text', 'Réponse textuelle') }}
+                                        </option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="points" class="form-label">{{ _('training_question_points', 'Points') }} *</label>
+                                    <input type="number" class="form-control" id="points" name="points" min="1" required
+                                        value="{{ question.points if question else '1' }}">
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="order_index" class="form-label">{{ _('training_question_order', 'Ordre d\'affichage') }} *</label>
+                                    <input type="number" class="form-control" id="order_index" name="order_index" min="0" required
+                                        value="{{ question.order_index if question else next_order }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Options et réponses -->
+                        <div class="mb-4">
+                            <h4>{{ _('training_question_options_answers', 'Options et réponses') }}</h4>
+                            <hr>
+                            
+                            <!-- Section pour questions à choix multiples -->
+                            <div id="multiple_choice_section" style="display: {% if not question or question.question_type == 'multiple_choice' %}block{% else %}none{% endif %};">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ _('training_question_options', 'Options') }} *</label>
+                                    
+                                    <div id="options_container">
+                                        {% if question and question.question_type == 'multiple_choice' and options %}
+                                            {% for option in options %}
+                                                <div class="input-group mb-2 option-group">
+                                                    <div class="input-group-text">
+                                                        <input type="radio" name="correct_option" value="{{ loop.index0 }}" 
+                                                            {% if correct_answer is defined and correct_answer|string == loop.index0|string %}checked{% endif %}>
+                                                    </div>
+                                                    <input type="text" class="form-control option-input" name="options[]" value="{{ option }}" required>
+                                                    <button type="button" class="btn btn-outline-danger remove-option">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            <div class="input-group mb-2 option-group">
+                                                <div class="input-group-text">
+                                                    <input type="radio" name="correct_option" value="0" checked>
+                                                </div>
+                                                <input type="text" class="form-control option-input" name="options[]" required>
+                                                <button type="button" class="btn btn-outline-danger remove-option">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                            <div class="input-group mb-2 option-group">
+                                                <div class="input-group-text">
+                                                    <input type="radio" name="correct_option" value="1">
+                                                </div>
+                                                <input type="text" class="form-control option-input" name="options[]" required>
+                                                <button type="button" class="btn btn-outline-danger remove-option">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <button type="button" id="add_option" class="btn btn-outline-primary btn-sm mt-2">
+                                        <i class="fas fa-plus-circle me-1"></i> {{ _('training_question_add_option', 'Ajouter une option') }}
+                                    </button>
+                                    
+                                    <small class="text-muted d-block mt-2">{{ _('training_question_options_help', 'Sélectionnez la réponse correcte en cochant le bouton radio correspondant.') }}</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Section pour questions vrai/faux -->
+                            <div id="true_false_section" style="display: {% if question and question.question_type == 'true_false' %}block{% else %}none{% endif %};">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ _('training_question_correct_answer', 'Réponse correcte') }} *</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="true_false_answer" id="true_answer" value="true"
+                                            {% if question and question.question_type == 'true_false' and question.correct_answer == 'true' %}checked{% endif %}>
+                                        <label class="form-check-label" for="true_answer">
+                                            {{ _('training_question_true', 'Vrai') }}
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="true_false_answer" id="false_answer" value="false"
+                                            {% if question and question.question_type == 'true_false' and question.correct_answer == 'false' %}checked{% endif %}>
+                                        <label class="form-check-label" for="false_answer">
+                                            {{ _('training_question_false', 'Faux') }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Section pour questions à réponse textuelle -->
+                            <div id="text_section" style="display: {% if question and question.question_type == 'text' %}block{% else %}none{% endif %};">
+                                <div class="mb-3">
+                                    <label for="text_answer" class="form-label">{{ _('training_question_text_answer', 'Réponse correcte') }} *</label>
+                                    <input type="text" class="form-control" id="text_answer" name="text_answer" 
+                                        value="{{ question.correct_answer if question and question.question_type == 'text' else '' }}">
+                                    <small class="text-muted">{{ _('training_question_text_answer_help', 'La réponse sera considérée correcte si elle contient ce texte (insensible à la casse).') }}</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Explication (pour tous les types de questions) -->
+                            <div class="mb-3">
+                                <label for="explanation" class="form-label">{{ _('training_question_explanation', 'Explication (optionnelle)') }}</label>
+                                <textarea class="form-control" id="explanation" name="explanation" rows="3">{{ question.explanation if question else '' }}</textarea>
+                                <small class="text-muted">{{ _('training_question_explanation_help', 'Une explication qui sera montrée après que l\'apprenant ait répondu, qu\'il ait bien répondu ou non.') }}</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Boutons de soumission -->
+                        <div class="d-flex justify-content-between">
+                            {% if question %}
+                                <a href="{{ url_for('training.edit_quiz', quiz_id=question.quiz_id) }}" class="btn btn-outline-secondary">
+                                    {{ _('cancel', 'Annuler') }}
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('training.edit_quiz', quiz_id=quiz.id) }}" class="btn btn-outline-secondary">
+                                    {{ _('cancel', 'Annuler') }}
+                                </a>
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary">
+                                {% if question %}
+                                    {{ _('save', 'Enregistrer') }}
+                                {% else %}
+                                    {{ _('create', 'Créer') }}
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">{{ _('training_question_help', 'Aide') }}</h5>
+                </div>
+                <div class="card-body">
+                    <h6>{{ _('training_question_form_help_title', 'Conseils pour créer de bonnes questions') }}</h6>
+                    <ul>
+                        <li>{{ _('training_question_form_help_1', 'Rédigez des questions claires et sans ambiguïté.') }}</li>
+                        <li>{{ _('training_question_form_help_2', 'Pour les QCM, assurez-vous que les choix sont plausibles.') }}</li>
+                        <li>{{ _('training_question_form_help_3', 'Évitez les indices qui orientent vers la bonne réponse.') }}</li>
+                        <li>{{ _('training_question_form_help_4', 'Ajoutez des explications pour toutes les questions.') }}</li>
+                        <li>{{ _('training_question_form_help_5', 'Variez la difficulté des questions.') }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gestion de l'affichage des sections en fonction du type de question
+        const questionTypeSelect = document.getElementById('question_type');
+        const multipleChoiceSection = document.getElementById('multiple_choice_section');
+        const trueFalseSection = document.getElementById('true_false_section');
+        const textSection = document.getElementById('text_section');
+        
+        questionTypeSelect.addEventListener('change', function() {
+            // Cacher toutes les sections
+            multipleChoiceSection.style.display = 'none';
+            trueFalseSection.style.display = 'none';
+            textSection.style.display = 'none';
+            
+            // Afficher la section correspondante
+            if (this.value === 'multiple_choice') {
+                multipleChoiceSection.style.display = 'block';
+            } else if (this.value === 'true_false') {
+                trueFalseSection.style.display = 'block';
+            } else if (this.value === 'text') {
+                textSection.style.display = 'block';
+            }
+        });
+        
+        // Gestion des options pour les questions à choix multiples
+        const addOptionBtn = document.getElementById('add_option');
+        const optionsContainer = document.getElementById('options_container');
+        
+        // Ajout d'une nouvelle option
+        addOptionBtn.addEventListener('click', function() {
+            const optionCount = document.querySelectorAll('.option-group').length;
+            const newOption = document.createElement('div');
+            newOption.className = 'input-group mb-2 option-group';
+            newOption.innerHTML = `
+                <div class="input-group-text">
+                    <input type="radio" name="correct_option" value="${optionCount}">
+                </div>
+                <input type="text" class="form-control option-input" name="options[]" required>
+                <button type="button" class="btn btn-outline-danger remove-option">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            optionsContainer.appendChild(newOption);
+            
+            // Mettre à jour les handlers pour supprimer les options
+            updateRemoveOptionHandlers();
+        });
+        
+        // Mise à jour des gestionnaires d'événements pour supprimer les options
+        function updateRemoveOptionHandlers() {
+            document.querySelectorAll('.remove-option').forEach(button => {
+                button.addEventListener('click', function() {
+                    // Ne pas supprimer si c'est la dernière option
+                    if (document.querySelectorAll('.option-group').length > 1) {
+                        this.closest('.option-group').remove();
+                        // Mettre à jour les valeurs des boutons radio
+                        updateRadioValues();
+                    } else {
+                        alert("{{ _('training_question_min_options', 'Vous devez avoir au moins une option.') }}");
+                    }
+                });
+            });
+        }
+        
+        // Mise à jour des valeurs des boutons radio après suppression
+        function updateRadioValues() {
+            document.querySelectorAll('.option-group').forEach((group, index) => {
+                const radio = group.querySelector('input[type="radio"]');
+                radio.value = index;
+            });
+        }
+        
+        // Initialiser les handlers au chargement
+        updateRemoveOptionHandlers();
+    });
+</script>
+{% endblock %}

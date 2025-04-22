@@ -1,0 +1,211 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('training_dashboard_title', 'Tableau de bord Formation') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5">{{ _('training_dashboard_title', 'Formation Interactive') }}</h1>
+            <p class="lead">{{ _('training_dashboard_subtitle', 'Développez vos compétences avec nos formations personnalisées') }}</p>
+        </div>
+    </div>
+
+    <!-- Message de bienvenue pour utilisateurs non connectés -->
+    {% if not is_authenticated %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ _('training_welcome', 'Bienvenue dans notre centre de formation') }}</h5>
+                    <p class="card-text">{{ _('training_login_message', 'Connectez-vous pour accéder à toutes nos formations et suivre votre progression') }}</p>
+                    <a href="{{ url_for('login') }}" class="btn btn-primary">{{ _('login', 'Se connecter') }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Section principale -->
+    <div class="row mb-5">
+        <!-- Cours en cours pour utilisateurs connectés -->
+        {% if is_authenticated %}
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">{{ _('training_in_progress_courses', 'Mes formations en cours') }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if in_progress_courses %}
+                        <div class="list-group list-group-flush">
+                            {% for item in in_progress_courses %}
+                                <div class="list-group-item p-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ item.course.title }}</h6>
+                                            <p class="text-muted small mb-0">{{ _('training_last_activity', 'Dernière activité') }}: {{ item.course.updated_at.strftime('%d/%m/%Y') }}</p>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="mb-2">
+                                                <div class="progress" style="width: 150px; height: 8px;">
+                                                    <div class="progress-bar" role="progressbar" style="width: {{ item.progress }}%;" 
+                                                        aria-valuenow="{{ item.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                                <span class="small text-muted">{{ item.progress }}% {{ _('training_completed', 'terminé') }}</span>
+                                            </div>
+                                            <a href="{{ url_for('training.view_course', course_id=item.course.id) }}" class="btn btn-sm btn-outline-primary">{{ _('training_continue', 'Continuer') }}</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% if in_progress_courses|length == 0 %}
+                            <p class="text-center text-muted my-4">{{ _('training_no_courses_in_progress', 'Vous n\'avez pas encore commencé de formation') }}</p>
+                            <div class="text-center">
+                                <a href="{{ url_for('training.list_courses') }}" class="btn btn-primary">{{ _('training_explore_courses', 'Explorer les formations') }}</a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-center text-muted my-4">{{ _('training_no_courses_in_progress', 'Vous n\'avez pas encore commencé de formation') }}</p>
+                        <div class="text-center">
+                            <a href="{{ url_for('training.list_courses') }}" class="btn btn-primary">{{ _('training_explore_courses', 'Explorer les formations') }}</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if certifications %}
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">{{ _('training_my_certifications', 'Mes certifications') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for certification in certifications %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 border">
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ certification.course.title }}</h6>
+                                        <p class="text-muted small">{{ _('training_certified_on', 'Certifié le') }} {{ certification.certification_date.strftime('%d/%m/%Y') }}</p>
+                                        <a href="{{ url_for('training.view_certificate', certificate_id=certification.certificate_id) }}" class="btn btn-sm btn-outline-primary">{{ _('training_view_certificate', 'Voir le certificat') }}</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <!-- Section pour utilisateurs non connectés -->
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">{{ _('training_featured_courses', 'Formations à la une') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for course in popular_courses %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100 border">
+                                    {% if course.cover_image %}
+                                        <img src="{{ course.cover_image }}" class="card-img-top" alt="{{ course.title }}">
+                                    {% else %}
+                                        <div class="bg-light text-center py-5">
+                                            <i class="bi bi-book" style="font-size: 3rem;"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ course.title }}</h5>
+                                        <p class="card-text small">{{ course.description|truncate(100) }}</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="badge bg-{{ course.difficulty_level }}">
+                                                {% if course.difficulty_level == 'beginner' %}
+                                                    {{ _('training_difficulty_beginner', 'Débutant') }}
+                                                {% elif course.difficulty_level == 'intermediate' %}
+                                                    {{ _('training_difficulty_intermediate', 'Intermédiaire') }}
+                                                {% else %}
+                                                    {{ _('training_difficulty_advanced', 'Avancé') }}
+                                                {% endif %}
+                                            </span>
+                                            <a href="{{ url_for('training.view_course', course_id=course.id) }}" class="btn btn-sm btn-outline-primary">{{ _('training_view_details', 'Voir détails') }}</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Cours populaires -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">{{ _('training_popular_courses', 'Formations populaires') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for course in popular_courses %}
+                            <a href="{{ url_for('training.view_course', course_id=course.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ course.title }}</h6>
+                                    <small class="text-muted">
+                                        {% if course.difficulty_level == 'beginner' %}
+                                            {{ _('training_difficulty_beginner', 'Débutant') }}
+                                        {% elif course.difficulty_level == 'intermediate' %}
+                                            {{ _('training_difficulty_intermediate', 'Intermédiaire') }}
+                                        {% else %}
+                                            {{ _('training_difficulty_advanced', 'Avancé') }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <p class="mb-1 small text-muted">{{ course.description|truncate(80) }}</p>
+                            </a>
+                        {% endfor %}
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('training.list_courses') }}" class="btn btn-outline-primary btn-sm">{{ _('training_view_all_courses', 'Voir toutes les formations') }}</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Base de connaissances -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">{{ _('training_knowledge_base', 'Base de connaissances') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for article in knowledge_articles %}
+                            <a href="{{ url_for('training.view_knowledge_article', article_id=article.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ article.title }}</h6>
+                                    <small class="text-muted">{{ article.category }}</small>
+                                </div>
+                                <p class="mb-1 small text-muted">{{ article.content|striptags|truncate(60) }}</p>
+                            </a>
+                        {% endfor %}
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('training.knowledge_base') }}" class="btn btn-outline-primary btn-sm">{{ _('training_view_all_articles', 'Voir tous les articles') }}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Scripts pour le tableau de bord de formation
+    document.addEventListener('DOMContentLoaded', function() {
+        // Vous pouvez ajouter ici des fonctionnalités interactives
+    });
+</script>
+{% endblock %}

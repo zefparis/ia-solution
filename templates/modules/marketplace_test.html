@@ -1,0 +1,150 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('modules.marketplace') }} - IA-Solution{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h1>{{ _('modules.marketplace') }}</h1>
+        <a href="{{ url_for('modules.modules_home') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left mr-1"></i> {{ _('modules.back') }}
+        </a>
+    </div>
+
+    <!-- Message de test -->
+    <div class="alert alert-info mb-4">
+        <h4>Page de test</h4>
+        <p>Cette page est une version simplifiée de la marketplace des modules pour tester le fonctionnement de base.</p>
+    </div>
+
+    <div class="row">
+        <!-- Modules disponibles -->
+        <div class="col-lg-9">
+            <div class="row">
+                {% for module in modules %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ module.name }}</h5>
+                            <p class="card-text small">{{ module.short_description }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <span>{{ module.average_rating|round(1) }}</span>
+                                </div>
+                                {% if module.price and module.price > 0 %}
+                                <span class="badge bg-primary">{{ module.price }}€</span>
+                                {% else %}
+                                <span class="badge bg-success">{{ _('modules.free') }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <a href="{{ url_for('modules.module_details', module_id=module.id) }}" class="btn btn-primary btn-sm w-100">
+                                {{ _('modules.details') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            <nav aria-label="Pagination des modules" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('modules.modules_marketplace', page=page-1, sort=sort_by, category=current_category, free=is_free, official=is_official) }}">
+                            {{ _('modules.previous') }}
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">{{ _('modules.previous') }}</span>
+                    </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">{{ page }}</span>
+                    </li>
+                    
+                    {% if has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('modules.modules_marketplace', page=page+1, sort=sort_by, category=current_category, free=is_free, official=is_official) }}">
+                            {{ _('modules.next') }}
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">{{ _('modules.next') }}</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        
+        <!-- Filtres -->
+        <div class="col-lg-3">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">{{ _('modules.filters') }}</h5>
+                </div>
+                <div class="card-body">
+                    <h6>{{ _('modules.categories') }}</h6>
+                    <div class="list-group mb-3">
+                        <a href="{{ url_for('modules.modules_marketplace') }}" class="list-group-item list-group-item-action {% if not current_category %}active{% endif %}">
+                            {{ _('Toutes les catégories') }}
+                        </a>
+                        {% for category in categories %}
+                        <a href="{{ url_for('modules.modules_marketplace', category=category.id, sort=sort_by, free=is_free, official=is_official) }}" class="list-group-item list-group-item-action {% if current_category == category.id %}active{% endif %}">
+                            {{ category.name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                    
+                    <h6>{{ _('modules.sort_by') }}</h6>
+                    <div class="btn-group w-100 mb-3">
+                        <a href="{{ url_for('modules.modules_marketplace', sort='popular', category=current_category, free=is_free, official=is_official) }}" class="btn btn-sm {% if sort_by == 'popular' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            {{ _('modules.sort_popular') }}
+                        </a>
+                        <a href="{{ url_for('modules.modules_marketplace', sort='newest', category=current_category, free=is_free, official=is_official) }}" class="btn btn-sm {% if sort_by == 'newest' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            {{ _('modules.sort_newest') }}
+                        </a>
+                        <a href="{{ url_for('modules.modules_marketplace', sort='top_rated', category=current_category, free=is_free, official=is_official) }}" class="btn btn-sm {% if sort_by == 'top_rated' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            {{ _('modules.sort_top_rated') }}
+                        </a>
+                    </div>
+                    
+                    <h6>{{ _('Prix') }}</h6>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="freeFilter" {% if is_free == '1' %}checked{% endif %} onchange="updateFilters('free', this.checked ? '1' : '')">
+                        <label class="form-check-label" for="freeFilter">
+                            {{ _('modules.free_only') }}
+                        </label>
+                    </div>
+                    
+                    <h6>{{ _('Source') }}</h6>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="officialFilter" {% if is_official == '1' %}checked{% endif %} onchange="updateFilters('official', this.checked ? '1' : '')">
+                        <label class="form-check-label" for="officialFilter">
+                            {{ _('modules.official_only') }}
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateFilters(param, value) {
+    const url = new URL(window.location.href);
+    if (value) {
+        url.searchParams.set(param, value);
+    } else {
+        url.searchParams.delete(param);
+    }
+    window.location.href = url.toString();
+}
+</script>
+{% endblock %}

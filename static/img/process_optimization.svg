@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="500" height="300" viewBox="0 0 500 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a90e2" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#6dd5fa" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f6d365" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#fda085" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#84fab0" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#8fd3f4" stop-opacity="0.9"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect x="10" y="10" width="480" height="280" rx="15" ry="15" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
+  
+  <!-- Process Diagram -->
+  <g transform="translate(50, 50)">
+    <!-- Process Flow -->
+    <rect x="0" y="0" width="80" height="40" rx="5" ry="5" fill="url(#gradient1)" />
+    <text x="40" y="24" text-anchor="middle" fill="#fff" font-family="Arial" font-size="12">Analyse</text>
+    
+    <line x1="80" y1="20" x2="120" y2="20" stroke="#6c757d" stroke-width="2" stroke-dasharray="4"/>
+    
+    <rect x="120" y="0" width="80" height="40" rx="5" ry="5" fill="url(#gradient1)" />
+    <text x="160" y="24" text-anchor="middle" fill="#fff" font-family="Arial" font-size="12">Optimisation</text>
+    
+    <line x1="200" y1="20" x2="240" y2="20" stroke="#6c757d" stroke-width="2" stroke-dasharray="4"/>
+    
+    <rect x="240" y="0" width="80" height="40" rx="5" ry="5" fill="url(#gradient1)" />
+    <text x="280" y="24" text-anchor="middle" fill="#fff" font-family="Arial" font-size="12">Mise en œuvre</text>
+    
+    <line x1="320" y1="20" x2="360" y2="20" stroke="#6c757d" stroke-width="2" stroke-dasharray="4"/>
+    
+    <rect x="360" y="0" width="80" height="40" rx="5" ry="5" fill="url(#gradient1)" />
+    <text x="400" y="24" text-anchor="middle" fill="#fff" font-family="Arial" font-size="12">Résultats</text>
+  </g>
+  
+  <!-- Pain Points -->
+  <g transform="translate(70, 120)">
+    <circle cx="15" cy="15" r="15" fill="url(#gradient2)" />
+    <text x="15" y="19" text-anchor="middle" fill="#fff" font-family="Arial" font-size="16" font-weight="bold">!</text>
+    <text x="40" y="19" fill="#495057" font-family="Arial" font-size="14">Points de douleur</text>
+  </g>
+  
+  <!-- KPIs -->
+  <g transform="translate(270, 120)">
+    <circle cx="15" cy="15" r="15" fill="url(#gradient3)" />
+    <text x="15" y="19" text-anchor="middle" fill="#fff" font-family="Arial" font-size="14">KPI</text>
+    <text x="40" y="19" fill="#495057" font-family="Arial" font-size="14">Indicateurs de performance</text>
+  </g>
+  
+  <!-- Optimization Chart -->
+  <g transform="translate(50, 160)">
+    <!-- Axes -->
+    <line x1="0" y1="80" x2="400" y2="80" stroke="#6c757d" stroke-width="2"/>
+    <line x1="0" y1="0" x2="0" y2="80" stroke="#6c757d" stroke-width="2"/>
+    
+    <!-- Before Optimization -->
+    <path d="M0,80 L100,70 L200,50 L300,40 L400,30" fill="none" stroke="#dc3545" stroke-width="3"/>
+    <circle cx="100" cy="70" r="4" fill="#dc3545"/>
+    <circle cx="200" cy="50" r="4" fill="#dc3545"/>
+    <circle cx="300" cy="40" r="4" fill="#dc3545"/>
+    <circle cx="400" cy="30" r="4" fill="#dc3545"/>
+    
+    <!-- After Optimization -->
+    <path d="M0,80 L100,50 L200,20 L300,10 L400,5" fill="none" stroke="#28a745" stroke-width="3"/>
+    <circle cx="100" cy="50" r="4" fill="#28a745"/>
+    <circle cx="200" cy="20" r="4" fill="#28a745"/>
+    <circle cx="300" cy="10" r="4" fill="#28a745"/>
+    <circle cx="400" cy="5" r="4" fill="#28a745"/>
+    
+    <!-- Labels -->
+    <text x="390" y="95" text-anchor="end" fill="#6c757d" font-family="Arial" font-size="12">Temps</text>
+    <text x="-5" y="10" text-anchor="end" fill="#6c757d" font-family="Arial" font-size="12">Performance</text>
+    
+    <!-- Legend -->
+    <g transform="translate(300, 50)">
+      <rect x="0" y="0" width="90" height="40" rx="5" ry="5" fill="rgba(255, 255, 255, 0.8)" stroke="#dee2e6" stroke-width="1"/>
+      <line x1="5" y1="10" x2="25" y2="10" stroke="#dc3545" stroke-width="3"/>
+      <text x="30" y="14" fill="#495057" font-family="Arial" font-size="10">Avant</text>
+      <line x1="5" y1="30" x2="25" y2="30" stroke="#28a745" stroke-width="3"/>
+      <text x="30" y="34" fill="#495057" font-family="Arial" font-size="10">Après</text>
+    </g>
+  </g>
+  
+  <!-- Title -->
+  <text x="250" y="30" text-anchor="middle" fill="#212529" font-family="Arial" font-size="18" font-weight="bold">Analyse et Optimisation des Processus</text>
+</svg>

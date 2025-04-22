@@ -1,0 +1,118 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('training_admin_courses_title', 'Gestion des cours') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('training.training_dashboard') }}">{{ _('training_dashboard', 'Formation') }}</a></li>
+                    <li class="breadcrumb-item active">{{ _('training_admin_courses_title', 'Gestion des cours') }}</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="display-5">{{ _('training_admin_courses_title', 'Gestion des cours') }}</h1>
+                <a href="{{ url_for('training.create_course') }}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-1"></i> {{ _('training_admin_create_course', 'Créer un cours') }}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des cours -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">{{ _('training_admin_all_courses', 'Tous les cours') }}</h5>
+                        <form class="d-flex" method="GET">
+                            <input class="form-control me-2" type="search" name="q" placeholder="{{ _('training_search_placeholder', 'Rechercher...') }}" value="{{ search_query or '' }}">
+                            <button class="btn btn-outline-primary" type="submit">{{ _('search', 'Rechercher') }}</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if courses %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('training_course_title', 'Titre') }}</th>
+                                    <th>{{ _('training_course_category', 'Catégorie') }}</th>
+                                    <th>{{ _('training_course_difficulty', 'Difficulté') }}</th>
+                                    <th>{{ _('training_course_status', 'Statut') }}</th>
+                                    <th>{{ _('training_course_public', 'Public') }}</th>
+                                    <th>{{ _('training_course_certified', 'Certifié') }}</th>
+                                    <th>{{ _('actions', 'Actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in courses %}
+                                <tr>
+                                    <td>{{ course.title }}</td>
+                                    <td>{{ course.category or '-' }}</td>
+                                    <td>
+                                        {% if course.difficulty_level == 'beginner' %}
+                                            <span class="badge bg-info">{{ _('training_difficulty_beginner', 'Débutant') }}</span>
+                                        {% elif course.difficulty_level == 'intermediate' %}
+                                            <span class="badge bg-warning">{{ _('training_difficulty_intermediate', 'Intermédiaire') }}</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">{{ _('training_difficulty_advanced', 'Avancé') }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if course.status == 'draft' %}
+                                            <span class="badge bg-secondary">{{ _('training_status_draft', 'Brouillon') }}</span>
+                                        {% elif course.status == 'published' %}
+                                            <span class="badge bg-success">{{ _('training_status_published', 'Publié') }}</span>
+                                        {% else %}
+                                            <span class="badge bg-dark">{{ _('training_status_archived', 'Archivé') }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if course.is_public %}
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        {% else %}
+                                            <i class="fas fa-times-circle text-danger"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if course.is_certified %}
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        {% else %}
+                                            <i class="fas fa-times-circle text-danger"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('training.view_course', course_id=course.id) }}" class="btn btn-sm btn-outline-primary" title="{{ _('view', 'Voir') }}">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('training.edit_course', course_id=course.id) }}" class="btn btn-sm btn-outline-secondary" title="{{ _('edit', 'Modifier') }}">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{{ url_for('training.create_lesson', course_id=course.id) }}" class="btn btn-sm btn-outline-info" title="{{ _('training_add_lesson', 'Ajouter une leçon') }}">
+                                                <i class="fas fa-file-alt"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        {{ _('training_no_courses_found', 'Aucun cours trouvé. Créez votre premier cours en cliquant sur le bouton "Créer un cours".') }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

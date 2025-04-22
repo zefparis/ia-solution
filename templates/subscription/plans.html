@@ -1,0 +1,270 @@
+{% extends "layout.html" %}
+
+{% block title %}Plans d'abonnement{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+    /* Style pour le sélecteur de devise */
+    .btn-currency {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 60px;
+    }
+    
+    /* Animation pour le changement de prix */
+    .price-display {
+        transition: all 0.3s ease-in-out;
+    }
+    
+    .price-updating {
+        animation: pulse 1s;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
+        <h1 class="mb-3 mb-md-0">Choisissez votre plan d'abonnement</h1>
+        <div class="d-flex gap-3 align-items-center">
+            <!-- Sélecteur de région -->
+            <div class="btn-group me-2" role="group" aria-label="Région">
+                <a href="{{ url_for('subscription.plans') }}" class="btn btn-outline-primary {{ 'active' if current_region == 'default' else '' }}">{{ language.get_text('Europe') }}</a>
+                <a href="{{ url_for('subscription.plans', region='rdc') }}" class="btn btn-outline-primary {{ 'active' if current_region == 'rdc' else '' }}">{{ language.get_text('RDC') }}</a>
+            </div>
+            
+            <!-- Sélecteur de devise -->
+            <div class="btn-group" role="group" aria-label="Devise">
+                <button type="button" class="btn btn-outline-success active" data-currency="default">{{ 'EUR' if current_region == 'default' else 'USD' }}</button>
+                {% if current_region == 'default' %}
+                <button type="button" class="btn btn-outline-success" data-currency="USD">USD</button>
+                {% else %}
+                <button type="button" class="btn btn-outline-success" data-currency="EUR">EUR</button>
+                {% endif %}
+                <button type="button" class="btn btn-outline-success" data-currency="CDF">CDF</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
+        {% for plan in plans %}
+        <div class="col">
+            <div class="card h-100 shadow-sm subscription-card {% if current_plan_id == plan.id %}border-primary{% endif %}">
+                <div class="card-header bg-transparent text-center py-2">
+                    <h5 class="card-title mb-0">{{ plan.display_name }}</h5>
+                </div>
+                <div class="card-body d-flex flex-column p-2">
+                    <div class="text-center mb-2">
+                        <span class="display-6 price-display" 
+                              data-original-price="{{ plan.price }}" 
+                              data-original-currency="{{ plan.currency }}">
+                            {{ "%.2f"|format(plan.price) }} {% if plan.currency == 'USD' %}${% else %}€{% endif %}
+                        </span>
+                        <span class="text-muted">/{{ language.get_text('mois') }}</span>
+                    </div>
+                    
+                    <p class="card-text mb-2">{{ plan.description }}</p>
+                    
+                    <ul class="list-group list-group-flush mb-2">
+                        {% for feature in plan.features.split(',') %}
+                            <li class="list-group-item bg-transparent ps-0 subscription-feature py-1">
+                                <i class="fas fa-check-circle text-success me-1"></i>{{ feature }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    
+                    <div class="mt-auto text-center pt-2">
+                        {% if current_plan_id == plan.id %}
+                            <button class="btn btn-outline-primary w-100" disabled>
+                                {{ language.get_text('Plan actuel') }}
+                            </button>
+                        {% else %}
+                            <div class="d-grid gap-2">
+                                <div class="btn-group w-100">
+                                    <a href="{{ url_for('subscription.subscribe', plan_id=plan.id) }}" class="btn btn-primary w-70">
+                                        {% if plan.price > 0 %}{{ language.get_text('S\'abonner') }}{% else %}{{ language.get_text('Essayer gratuitement') }}{% endif %}
+                                    </a>
+                                    <a href="{{ url_for('subscription.quick_subscribe', plan_id=plan.id) }}" class="btn btn-outline-primary w-30" title="{{ language.get_text('Paiement rapide par PayPal') }}">
+                                        <i class="fas fa-bolt fa-lg"></i>
+                                    </a>
+                                </div>
+                                <a href="{{ url_for('unipesa.mobile_payment_page', plan_id=plan.id) }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-mobile-alt me-1"></i> {{ language.get_text('Paiement mobile') }}
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="alert alert-info mb-0">
+                                <h5><i class="fas fa-bolt me-2"></i>{{ language.get_text('Paiement rapide') }}</h5>
+                                <p>{{ language.get_text('Cliquez sur le bouton') }} <i class="fas fa-bolt"></i> {{ language.get_text('à côté de "S\'abonner" pour vous inscrire rapidement par PayPal sans remplir de formulaire supplémentaire.') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="alert alert-primary mb-0">
+                                <h5><i class="fas fa-mobile-alt me-2"></i>{{ language.get_text('Paiement mobile') }}</h5>
+                                <p>{{ language.get_text('Pour les utilisateurs en RDC, nous proposons désormais un paiement simple via M-Pesa, Orange Money et Airtel Money! Cliquez sur') }} <i class="fas fa-mobile-alt"></i> {{ language.get_text('Paiement mobile') }}.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5>{{ language.get_text('Informations importantes') }}</h5>
+                    <ul class="mb-0">
+                        <li>{{ language.get_text('Tous les plans incluent un accès complet à notre assistant IA et nos fonctionnalités de base.') }}</li>
+                        <li>{{ language.get_text('Vous pouvez annuler ou changer votre abonnement à tout moment.') }}</li>
+                        <li>{{ language.get_text('Votre utilisation actuelle du stockage est de') }} <strong>{{ storage_used }}</strong>.</li>
+                        <li>{{ language.get_text('Si vous changez pour un plan avec moins de stockage, assurez-vous de ne pas dépasser la nouvelle limite.') }}</li>
+                        <li>{{ language.get_text('Moyens de paiement acceptés') }} : 
+                            <ul>
+                                <li>{{ language.get_text('Cartes de crédit et PayPal') }}</li>
+                                <li>{{ language.get_text('Paiement mobile') }} (M-Pesa, Orange Money, Airtel Money)</li>
+                                <li>{{ language.get_text('Virement bancaire') }}</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Taux de change (à synchroniser avec ceux du backend)
+        const exchangeRates = {
+            'EUR_USD': 1.09,  // 1 EUR = 1.09 USD
+            'USD_EUR': 0.92,  // 1 USD = 0.92 EUR
+            'EUR_CDF': 2750,  // 1 EUR = 2750 CDF
+            'USD_CDF': 2520,  // 1 USD = 2520 CDF
+            'CDF_EUR': 0.00036,  // 1 CDF = 0.00036 EUR
+            'CDF_USD': 0.00040,  // 1 CDF = 0.00040 USD
+        };
+        
+        // Sélecteurs de devise
+        const currencyButtons = document.querySelectorAll('[data-currency]');
+        
+        // Éléments d'affichage des prix
+        const priceElements = document.querySelectorAll('.price-display');
+        
+        // Détecter si nous sommes en mode RDC ou Europe
+        const regionRdc = {{ 'true' if current_region == 'rdc' else 'false' }};
+        const defaultCurrency = regionRdc ? 'USD' : 'EUR';
+        
+        // Convertir un prix d'une devise à une autre
+        function convertPrice(amount, fromCurrency, toCurrency) {
+            if (fromCurrency === toCurrency) {
+                return amount;
+            }
+            
+            const rateKey = `${fromCurrency}_${toCurrency}`;
+            if (exchangeRates[rateKey]) {
+                return amount * exchangeRates[rateKey];
+            } else {
+                // Essayer la conversion inverse
+                const inverseRateKey = `${toCurrency}_${fromCurrency}`;
+                if (exchangeRates[inverseRateKey]) {
+                    return amount / exchangeRates[inverseRateKey];
+                }
+            }
+            
+            return amount; // Si aucune conversion n'est possible
+        }
+        
+        // Formater le prix selon la devise
+        function formatPrice(amount, currency) {
+            let formattedAmount;
+            let symbol;
+            
+            switch (currency) {
+                case 'EUR':
+                    formattedAmount = amount.toFixed(2);
+                    symbol = '€';
+                    break;
+                case 'USD':
+                    formattedAmount = amount.toFixed(2);
+                    symbol = '$';
+                    break;
+                case 'CDF':
+                    formattedAmount = Math.round(amount).toLocaleString();
+                    symbol = 'FC';
+                    break;
+                default:
+                    formattedAmount = amount.toFixed(2);
+                    symbol = currency;
+            }
+            
+            return `${formattedAmount} ${symbol}`;
+        }
+        
+        // Mettre à jour tous les prix avec la nouvelle devise
+        function updateAllPrices(targetCurrency) {
+            priceElements.forEach(elem => {
+                const originalPrice = parseFloat(elem.dataset.originalPrice);
+                const originalCurrency = elem.dataset.originalCurrency;
+                
+                // Ajouter une classe pour l'animation
+                elem.classList.add('price-updating');
+                
+                // Convertir le prix
+                const convertedPrice = convertPrice(originalPrice, originalCurrency, targetCurrency);
+                
+                // Mettre à jour l'affichage
+                setTimeout(() => {
+                    elem.textContent = formatPrice(convertedPrice, targetCurrency);
+                    elem.classList.remove('price-updating');
+                }, 300);
+            });
+        }
+        
+        // Gérer le clic sur les boutons de devise
+        currencyButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Enlever la classe active de tous les boutons
+                currencyButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Ajouter la classe active au bouton cliqué
+                this.classList.add('active');
+                
+                // Déterminer la devise cible
+                let targetCurrency = this.dataset.currency;
+                if (targetCurrency === 'default') {
+                    targetCurrency = defaultCurrency;
+                }
+                
+                // Mettre à jour tous les prix
+                updateAllPrices(targetCurrency);
+            });
+        });
+    });
+</script>
+{% endblock %}

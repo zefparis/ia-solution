@@ -1,0 +1,172 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ _('Exportation rapide') }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- En-tête de la page -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-3">{{ _('Exportation rapide multi-formats') }}</h1>
+            <p class="lead">{{ _('Exportez vos documents en PDF, Excel, CSV ou JSON en quelques clics.') }}</p>
+            <hr>
+        </div>
+    </div>
+
+    <!-- Carte des types de documents -->
+    {% if is_connected %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
+        {% for doc_type in document_types %}
+        <div class="col">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body position-relative">
+                    <div class="document-icon mb-3" style="color: {{ doc_type.color }}">
+                        <i class="bi {{ doc_type.icon }} fs-1"></i>
+                    </div>
+                    <h5 class="card-title mb-2">{{ doc_type.name }}</h5>
+                    <p class="text-muted small mb-3">
+                        {% if doc_type.count == 0 %}
+                            {{ _('Aucun document disponible') }}
+                        {% elif doc_type.count == 1 %}
+                            {{ _('1 document disponible') }}
+                        {% else %}
+                            {{ doc_type.count }} {{ _('documents disponibles') }}
+                        {% endif %}
+                    </p>
+                    
+                    {% if doc_type.count > 0 %}
+                    <a href="{{ url_for('export.list_documents', doc_type=doc_type.id) }}" class="btn btn-outline-primary btn-sm">
+                        {{ _('Voir les documents') }}
+                    </a>
+                    {% else %}
+                    <button class="btn btn-outline-secondary btn-sm" disabled>
+                        {{ _('Aucun document') }}
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h4 class="alert-heading mb-3">{{ _('Connexion requise') }}</h4>
+                <p>{{ _('Veuillez vous connecter pour accéder à vos documents et utiliser la fonctionnalité d\'exportation.') }}</p>
+                <hr>
+                <div class="d-flex gap-2">
+                    <a href="{{ language.url_with_lang('login') }}" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt me-2"></i>{{ _('Se connecter') }}
+                    </a>
+                    <a href="{{ language.url_with_lang('register') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-user-plus me-2"></i>{{ _('Créer un compte') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Guide d'utilisation -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">{{ _('Comment utiliser cette fonctionnalité ?') }}</h4>
+                    <div class="row g-4">
+                        <div class="col-md-6 col-lg-3">
+                            <div class="d-flex align-items-start">
+                                <div class="me-3">
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <strong>1</strong>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h5 class="mb-2">{{ _('Sélectionnez un type') }}</h5>
+                                    <p class="text-muted small">{{ _('Choisissez le type de document que vous souhaitez exporter.') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="d-flex align-items-start">
+                                <div class="me-3">
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <strong>2</strong>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h5 class="mb-2">{{ _('Choisissez un document') }}</h5>
+                                    <p class="text-muted small">{{ _('Sélectionnez le document spécifique à exporter.') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="d-flex align-items-start">
+                                <div class="me-3">
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <strong>3</strong>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h5 class="mb-2">{{ _('Prévisualisez') }}</h5>
+                                    <p class="text-muted small">{{ _('Vérifiez l\'aperçu du document avant exportation.') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="d-flex align-items-start">
+                                <div class="me-3">
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <strong>4</strong>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h5 class="mb-2">{{ _('Exportez') }}</h5>
+                                    <p class="text-muted small">{{ _('Téléchargez le document dans le format de votre choix.') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formats supportés -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">{{ _('Formats d\'exportation supportés') }}</h4>
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                        {% for format_id, format in formats.items() %}
+                        <div class="col">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="bi {{ format.icon }} fs-2" style="color: {{ format.color }}"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">{{ format.name }}</h5>
+                                    <p class="text-muted small mb-0">
+                                        {% if format_id == 'pdf' %}
+                                            {{ _('Format universel imprimable') }}
+                                        {% elif format_id == 'excel' %}
+                                            {{ _('Idéal pour l\'analyse de données') }}
+                                        {% elif format_id == 'csv' %}
+                                            {{ _('Compatible avec tous les tableurs') }}
+                                        {% elif format_id == 'json' %}
+                                            {{ _('Pour l\'intégration système') }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

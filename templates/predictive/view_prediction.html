@@ -1,0 +1,501 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ predictive_translations['view_prediction'][lang] }} - {{ prediction.name }}{% endblock %}
+
+{% block styles %}
+<style>
+    .card-dashboard {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        overflow: hidden;
+    }
+    
+    .card-dashboard:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.15);
+    }
+    
+    .prediction-header {
+        background-color: rgba(13, 110, 253, 0.05);
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+    
+    .prediction-title {
+        margin-bottom: 0.5rem;
+    }
+    
+    .prediction-dates {
+        font-size: 1rem;
+        color: #6c757d;
+    }
+    
+    .prediction-description {
+        margin-top: 1rem;
+        margin-bottom: 0;
+    }
+    
+    .prediction-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .prediction-meta-item {
+        display: flex;
+        align-items: center;
+    }
+    
+    .prediction-meta-icon {
+        margin-right: 0.5rem;
+        color: #6c757d;
+    }
+    
+    .chart-container {
+        height: 350px;
+    }
+    
+    .status-pill {
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .scenario-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 0.5rem;
+    }
+    
+    .scenario-optimistic {
+        background-color: #28a745;
+    }
+    
+    .scenario-realistic {
+        background-color: #007bff;
+    }
+    
+    .scenario-pessimistic {
+        background-color: #dc3545;
+    }
+    
+    .scenario-custom {
+        background-color: #6610f2;
+    }
+    
+    .kpi-card {
+        text-align: center;
+        padding: 1.5rem;
+        border-radius: 10px;
+        background-color: #f8f9fa;
+        margin-bottom: 1.5rem;
+    }
+    
+    .kpi-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .kpi-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .table-responsive {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .scenario-name {
+        font-weight: 600;
+    }
+    
+    .accuracy-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Back button and actions -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="{{ url_for('predictive.sales_predictions') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i> {{ lang == 'fr' and 'Retour aux prévisions' or 'Back to predictions' }}
+        </a>
+        
+        <div class="btn-group">
+            <a href="{{ url_for('predictive.edit_prediction', prediction_id=prediction.id) }}" class="btn btn-outline-primary">
+                <i class="bi bi-pencil me-2"></i> {{ predictive_translations['edit_prediction'][lang] }}
+            </a>
+            <button type="button" class="btn btn-outline-success">
+                <i class="bi bi-download me-2"></i> {{ predictive_translations['export_results'][lang] }}
+            </button>
+            <button type="button" class="btn btn-outline-info">
+                <i class="bi bi-file-text me-2"></i> {{ predictive_translations['generate_report'][lang] }}
+            </button>
+            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteConfirmModal">
+                <i class="bi bi-trash me-2"></i> {{ predictive_translations['delete'][lang] }}
+            </button>
+        </div>
+    </div>
+
+    <!-- Prediction header -->
+    <div class="prediction-header">
+        <div class="row">
+            <div class="col-md-9">
+                <h1 class="prediction-title mb-2">{{ prediction.name }}</h1>
+                <div class="prediction-dates">
+                    <i class="bi bi-calendar-range me-2"></i> {{ prediction.start_date.strftime('%d/%m/%Y') }} - {{ prediction.end_date.strftime('%d/%m/%Y') }}
+                </div>
+                {% if prediction.description %}
+                    <p class="prediction-description text-muted mt-3">{{ prediction.description }}</p>
+                {% endif %}
+                <div class="prediction-meta">
+                    <div class="prediction-meta-item">
+                        <i class="bi bi-clock-history prediction-meta-icon"></i>
+                        <span>{{ lang == 'fr' and 'Créé le' or 'Created on' }} {{ prediction.date_created.strftime('%d/%m/%Y') }}</span>
+                    </div>
+                    {% if prediction.prediction_parameters and prediction.prediction_parameters.granularity %}
+                        <div class="prediction-meta-item">
+                            <i class="bi bi-grid prediction-meta-icon"></i>
+                            <span>{{ lang == 'fr' and 'Granularité' or 'Granularity' }}: 
+                                {% if prediction.prediction_parameters.granularity == 'daily' %}
+                                    {{ lang == 'fr' and 'Quotidienne' or 'Daily' }}
+                                {% elif prediction.prediction_parameters.granularity == 'weekly' %}
+                                    {{ lang == 'fr' and 'Hebdomadaire' or 'Weekly' }}
+                                {% elif prediction.prediction_parameters.granularity == 'monthly' %}
+                                    {{ lang == 'fr' and 'Mensuelle' or 'Monthly' }}
+                                {% elif prediction.prediction_parameters.granularity == 'quarterly' %}
+                                    {{ lang == 'fr' and 'Trimestrielle' or 'Quarterly' }}
+                                {% elif prediction.prediction_parameters.granularity == 'yearly' %}
+                                    {{ lang == 'fr' and 'Annuelle' or 'Yearly' }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    {% endif %}
+                    <div class="prediction-meta-item">
+                        <i class="bi bi-lightning prediction-meta-icon"></i>
+                        <span>{{ lang == 'fr' and 'Scénarios' or 'Scenarios' }}: {{ scenarios|length }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 text-md-end">
+                {% if prediction.status == 'completed' %}
+                    <span class="status-pill bg-success text-white">
+                        <i class="bi bi-check-circle me-1"></i> {{ lang == 'fr' and 'Terminé' or 'Completed' }}
+                    </span>
+                {% elif prediction.status == 'processing' %}
+                    <span class="status-pill bg-warning text-dark">
+                        <i class="bi bi-hourglass-split me-1"></i> {{ lang == 'fr' and 'En cours' or 'Processing' }}
+                    </span>
+                {% elif prediction.status == 'failed' %}
+                    <span class="status-pill bg-danger text-white">
+                        <i class="bi bi-exclamation-triangle me-1"></i> {{ lang == 'fr' and 'Échoué' or 'Failed' }}
+                    </span>
+                {% else %}
+                    <span class="status-pill bg-secondary text-white">
+                        <i class="bi bi-clock me-1"></i> {{ lang == 'fr' and 'En attente' or 'Pending' }}
+                    </span>
+                {% endif %}
+                
+                {% if prediction.confidence_score %}
+                    <div class="mt-3">
+                        <div class="d-flex align-items-center justify-content-md-end">
+                            <span class="text-muted me-2">{{ lang == 'fr' and 'Confiance' or 'Confidence' }}:</span>
+                            <div class="progress" style="height: 8px; width: 100px;">
+                                <div class="progress-bar {{ 'bg-success' if prediction.confidence_score >= 0.8 else 'bg-warning' if prediction.confidence_score >= 0.6 else 'bg-danger' }}" 
+                                     role="progressbar" 
+                                     style="width: {{ prediction.confidence_score * 100 }}%;" 
+                                     aria-valuenow="{{ prediction.confidence_score * 100 }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            <span class="ms-2">{{ (prediction.confidence_score * 100)|int }}%</span>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Processing message -->
+    {% if prediction.status != 'completed' %}
+        <div class="alert alert-{{ 'warning' if prediction.status == 'processing' else 'danger' if prediction.status == 'failed' else 'info' }} mb-4">
+            {% if prediction.status == 'processing' %}
+                <i class="bi bi-hourglass-split me-2"></i> {{ lang == 'fr' and 'Cette prévision est en cours de traitement. Veuillez patienter.' or 'This prediction is currently being processed. Please wait.' }}
+            {% elif prediction.status == 'failed' %}
+                <i class="bi bi-exclamation-triangle me-2"></i> {{ lang == 'fr' and 'La génération de cette prévision a échoué. Veuillez réessayer ou contacter le support.' or 'This prediction failed to generate. Please try again or contact support.' }}
+            {% else %}
+                <i class="bi bi-clock me-2"></i> {{ lang == 'fr' and 'Cette prévision est en attente de traitement.' or 'This prediction is waiting to be processed.' }}
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <!-- Forecast Chart (only show if completed) -->
+    {% if prediction.status == 'completed' %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card card-dashboard">
+                    <div class="card-header bg-transparent">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-graph-up text-primary me-2"></i> {{ lang == 'fr' and 'Prévisions de Ventes' or 'Sales Forecast' }}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="forecastChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Key Metrics -->
+        <div class="row mb-4">
+            <!-- Expected Revenue -->
+            <div class="col-md-4">
+                <div class="kpi-card">
+                    <div class="kpi-icon mb-2 text-primary">
+                        <i class="bi bi-currency-exchange" style="font-size: 2rem;"></i>
+                    </div>
+                    <div class="kpi-value text-primary">{{ "€21,500" if lang == 'fr' else "$26,200" }}</div>
+                    <div class="kpi-label">{{ lang == 'fr' and 'Revenu mensuel moyen prévu' or 'Avg. Monthly Revenue Forecast' }}</div>
+                </div>
+            </div>
+            
+            <!-- Growth Rate -->
+            <div class="col-md-4">
+                <div class="kpi-card">
+                    <div class="kpi-icon mb-2 text-success">
+                        <i class="bi bi-graph-up-arrow" style="font-size: 2rem;"></i>
+                    </div>
+                    <div class="kpi-value text-success">+17.8%</div>
+                    <div class="kpi-label">{{ lang == 'fr' and 'Taux de croissance moyen' or 'Average Growth Rate' }}</div>
+                </div>
+            </div>
+            
+            <!-- Total Forecast -->
+            <div class="col-md-4">
+                <div class="kpi-card">
+                    <div class="kpi-icon mb-2 text-warning">
+                        <i class="bi bi-calculator" style="font-size: 2rem;"></i>
+                    </div>
+                    <div class="kpi-value text-warning">{{ "€258,000" if lang == 'fr' else "$314,400" }}</div>
+                    <div class="kpi-label">{{ lang == 'fr' and 'Revenu total prévu' or 'Total Revenue Forecast' }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Scenarios Comparison -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card card-dashboard">
+                    <div class="card-header bg-transparent">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-layers text-primary me-2"></i> {{ lang == 'fr' and 'Comparaison des Scénarios' or 'Scenario Comparison' }}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>{{ lang == 'fr' and 'Scénario' or 'Scenario' }}</th>
+                                        <th>{{ lang == 'fr' and 'Probabilité' or 'Probability' }}</th>
+                                        <th>{{ lang == 'fr' and 'Revenu Moyen' or 'Avg. Revenue' }}</th>
+                                        <th>{{ lang == 'fr' and 'Revenu Total' or 'Total Revenue' }}</th>
+                                        <th>{{ lang == 'fr' and 'Croissance' or 'Growth' }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for scenario in scenarios %}
+                                        <tr>
+                                            <td>
+                                                <span class="scenario-indicator 
+                                                        {{ 'scenario-optimistic' if scenario.scenario_type == 'optimistic' else
+                                                           'scenario-realistic' if scenario.scenario_type == 'realistic' else
+                                                           'scenario-pessimistic' if scenario.scenario_type == 'pessimistic' else
+                                                           'scenario-custom' }}">
+                                                </span>
+                                                <span class="scenario-name">{{ scenario.name }}</span>
+                                            </td>
+                                            <td>{{ (scenario.probability * 100)|int if scenario.probability else '--' }}%</td>
+                                            <td>
+                                                {% if scenario.scenario_type == 'optimistic' %}
+                                                    {{ "€26,800" if lang == 'fr' else "$32,600" }}
+                                                {% elif scenario.scenario_type == 'realistic' %}
+                                                    {{ "€21,500" if lang == 'fr' else "$26,200" }}
+                                                {% elif scenario.scenario_type == 'pessimistic' %}
+                                                    {{ "€16,200" if lang == 'fr' else "$19,700" }}
+                                                {% else %}
+                                                    --
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if scenario.scenario_type == 'optimistic' %}
+                                                    {{ "€321,600" if lang == 'fr' else "$391,200" }}
+                                                {% elif scenario.scenario_type == 'realistic' %}
+                                                    {{ "€258,000" if lang == 'fr' else "$314,400" }}
+                                                {% elif scenario.scenario_type == 'pessimistic' %}
+                                                    {{ "€194,400" if lang == 'fr' else "$236,400" }}
+                                                {% else %}
+                                                    --
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if scenario.scenario_type == 'optimistic' %}
+                                                    <span class="text-success">+32.5%</span>
+                                                {% elif scenario.scenario_type == 'realistic' %}
+                                                    <span class="text-primary">+17.8%</span>
+                                                {% elif scenario.scenario_type == 'pessimistic' %}
+                                                    <span class="text-danger">-5.2%</span>
+                                                {% else %}
+                                                    --
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteConfirmModalLabel">{{ lang == 'fr' and 'Confirmer la suppression' or 'Confirm Deletion' }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ predictive_translations['confirm_delete'][lang] }}</p>
+                <p class="text-danger fw-bold">{{ prediction.name }}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ lang == 'fr' and 'Annuler' or 'Cancel' }}</button>
+                <form action="{{ url_for('predictive.delete_prediction', prediction_id=prediction.id) }}" method="post">
+                    <button type="submit" class="btn btn-danger">{{ predictive_translations['delete'][lang] }}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if prediction.status == 'completed' %}
+            const ctx = document.getElementById('forecastChart').getContext('2d');
+            
+            // Create placeholder data for demonstration
+            const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
+            // Generate datasets based on available scenarios
+            const datasets = [];
+            
+            {% for scenario in scenarios %}
+                {% if scenario.scenario_type == 'optimistic' %}
+                    datasets.push({
+                        label: '{{ scenario.name }}',
+                        data: [12000, 13500, 15000, 16200, 17800, 19500, 21000, 22500, 24000, 26500, 29000, 32000],
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.3,
+                        fill: false
+                    });
+                {% elif scenario.scenario_type == 'realistic' %}
+                    datasets.push({
+                        label: '{{ scenario.name }}',
+                        data: [12000, 12800, 13500, 14200, 15000, 15800, 16500, 17200, 18000, 19000, 20000, 21500],
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        tension: 0.3,
+                        fill: false
+                    });
+                {% elif scenario.scenario_type == 'pessimistic' %}
+                    datasets.push({
+                        label: '{{ scenario.name }}',
+                        data: [12000, 11800, 11500, 11200, 11000, 10800, 10500, 10200, 10000, 9800, 9500, 9200],
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        tension: 0.3,
+                        fill: false
+                    });
+                {% endif %}
+            {% endfor %}
+            
+            const forecastChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += new Intl.NumberFormat('{{ lang }}', { 
+                                        style: 'currency', 
+                                        currency: '{{ lang == "fr" and "EUR" or "USD" }}' 
+                                    }).format(context.parsed.y);
+                                    return label;
+                                }
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                            align: 'end',
+                        },
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    return new Intl.NumberFormat('{{ lang }}', { 
+                                        style: 'currency', 
+                                        currency: '{{ lang == "fr" and "EUR" or "USD" }}',
+                                        maximumFractionDigits: 0
+                                    }).format(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        {% endif %}
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,297 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ template.name }} | {{ _('marketplace_automation_templates', 'Templates d\'automatisation') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('marketplace.marketplace_home') }}">{{ _('marketplace_title', 'API Marketplace') }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('marketplace.list_automation_templates') }}">{{ _('marketplace_automation_templates', 'Templates d\'automatisation') }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ template.name }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Header du template -->
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h1 class="h3 mb-2">{{ template.name }}</h1>
+                            <div class="mb-3">
+                                <span class="badge {% if template.difficulty_level == 'beginner' %}bg-success{% elif template.difficulty_level == 'intermediate' %}bg-warning{% else %}bg-danger{% endif %} me-2">
+                                    {% if template.difficulty_level == 'beginner' %}
+                                        {{ _('marketplace_difficulty_beginner', 'Débutant') }}
+                                    {% elif template.difficulty_level == 'intermediate' %}
+                                        {{ _('marketplace_difficulty_intermediate', 'Intermédiaire') }}
+                                    {% else %}
+                                        {{ _('marketplace_difficulty_advanced', 'Avancé') }}
+                                    {% endif %}
+                                </span>
+                                <span class="badge bg-secondary me-2">{{ template.category|capitalize }}</span>
+                                <span class="text-muted small">
+                                    <i class="fas fa-clock me-1"></i>
+                                    {% if template.estimated_time_minutes %}
+                                        {% if template.estimated_time_minutes < 60 %}
+                                            {{ template.estimated_time_minutes }} {{ _('marketplace_minutes', 'minutes') }}
+                                        {% else %}
+                                            {{ (template.estimated_time_minutes / 60)|int }} {{ _('marketplace_hours', 'heures') }}
+                                        {% endif %}
+                                    {% else %}
+                                        {{ _('marketplace_time_varies', 'Durée variable') }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <p class="mb-0">{{ template.description }}</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="mb-3 d-flex align-items-center justify-content-end">
+                                <a href="{{ url_for('marketplace.view_extension', slug=template.extension.slug) }}" class="text-decoration-none">
+                                    <img src="{{ template.extension.icon_url or url_for('static', filename='img/default_icon.png') }}" alt="{{ template.extension.name }}" class="me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                                    <span>{{ template.extension.name }}</span>
+                                </a>
+                            </div>
+                            {% if is_authenticated %}
+                                <a href="{{ url_for('marketplace.create_automation_instance', template_id=template.id) }}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-1"></i>{{ _('marketplace_create_instance', 'Créer une instance') }}
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('login') }}" class="btn btn-primary">
+                                    <i class="fas fa-sign-in-alt me-1"></i>{{ _('marketplace_login_to_create', 'Connectez-vous pour créer') }}
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Contenu principal -->
+        <div class="col-md-8">
+            <!-- Exemples d'utilisation -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="h6 mb-0">{{ _('marketplace_use_cases', 'Cas d\'utilisation') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="use-cases">
+                        <p>{{ _('marketplace_use_cases_desc', 'Ce template d\'automatisation peut être utilisé pour les scénarios suivants :') }}</p>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item ps-0">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                {{ _('marketplace_use_case1_prefix', 'Automatiser') }} <strong>{{ _('marketplace_use_case1', 'les processus répétitifs') }}</strong>
+                            </li>
+                            <li class="list-group-item ps-0">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                {{ _('marketplace_use_case2_prefix', 'Intégrer') }} <strong>{{ _('marketplace_use_case2', 'les données entre différents systèmes') }}</strong>
+                            </li>
+                            <li class="list-group-item ps-0">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                {{ _('marketplace_use_case3_prefix', 'Exécuter') }} <strong>{{ _('marketplace_use_case3', 'des tâches selon un planning préétabli') }}</strong>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Étapes -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="h6 mb-0">{{ _('marketplace_workflow_steps', 'Étapes du workflow') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="workflow-steps">
+                        <div class="step mb-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">1</div>
+                                <h6 class="mb-0">{{ _('marketplace_step1_title', 'Collecte des données') }}</h6>
+                            </div>
+                            <div class="ms-5">
+                                <p class="small text-muted">{{ _('marketplace_step1_desc', 'Le système collecte les données d\'entrée à partir des sources configurées.') }}</p>
+                            </div>
+                        </div>
+                        <div class="step mb-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">2</div>
+                                <h6 class="mb-0">{{ _('marketplace_step2_title', 'Transformation') }}</h6>
+                            </div>
+                            <div class="ms-5">
+                                <p class="small text-muted">{{ _('marketplace_step2_desc', 'Les données sont traitées et transformées selon les règles définies.') }}</p>
+                            </div>
+                        </div>
+                        <div class="step mb-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">3</div>
+                                <h6 class="mb-0">{{ _('marketplace_step3_title', 'Prise de décision') }}</h6>
+                            </div>
+                            <div class="ms-5">
+                                <p class="small text-muted">{{ _('marketplace_step3_desc', 'Le système analyse les données transformées et prend des décisions basées sur les conditions configurées.') }}</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">4</div>
+                                <h6 class="mb-0">{{ _('marketplace_step4_title', 'Exécution des actions') }}</h6>
+                            </div>
+                            <div class="ms-5">
+                                <p class="small text-muted">{{ _('marketplace_step4_desc', 'Les actions configurées sont exécutées en fonction des décisions prises.') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="h6 mb-0">{{ _('marketplace_required_configuration', 'Configuration requise') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="configuration">
+                        <p class="small">{{ _('marketplace_configuration_desc', 'Pour utiliser ce template, vous devrez configurer les éléments suivants :') }}</p>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>{{ _('marketplace_configuration_parameter', 'Paramètre') }}</th>
+                                        <th>{{ _('marketplace_configuration_type', 'Type') }}</th>
+                                        <th>{{ _('marketplace_configuration_description', 'Description') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>source</code></td>
+                                        <td><span class="badge bg-secondary">{{ _('marketplace_configuration_type_string', 'Texte') }}</span></td>
+                                        <td class="small">{{ _('marketplace_configuration_source_desc', 'Source des données d\'entrée') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>schedule</code></td>
+                                        <td><span class="badge bg-secondary">{{ _('marketplace_configuration_type_cron', 'CRON') }}</span></td>
+                                        <td class="small">{{ _('marketplace_configuration_schedule_desc', 'Planification d\'exécution (format CRON)') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>actions</code></td>
+                                        <td><span class="badge bg-secondary">{{ _('marketplace_configuration_type_array', 'Tableau') }}</span></td>
+                                        <td class="small">{{ _('marketplace_configuration_actions_desc', 'Liste des actions à exécuter') }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Mes instances -->
+            {% if is_authenticated and user_instances %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h5 class="h6 mb-0">{{ _('marketplace_my_instances', 'Mes instances') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            {% for instance in user_instances %}
+                                <div class="list-group-item px-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ instance.name }}</h6>
+                                            <div class="small text-muted">
+                                                {% if instance.status == 'active' %}
+                                                    <i class="fas fa-circle text-success me-1"></i>{{ _('marketplace_active', 'Active') }}
+                                                {% elif instance.status == 'paused' %}
+                                                    <i class="fas fa-circle text-warning me-1"></i>{{ _('marketplace_paused', 'En pause') }}
+                                                {% else %}
+                                                    <i class="fas fa-circle text-danger me-1"></i>{{ _('marketplace_error', 'Erreur') }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <a href="{{ url_for('marketplace.edit_automation_instance', instance_id=instance.id) }}" class="btn btn-sm btn-outline-primary">
+                                            {{ _('marketplace_manage', 'Gérer') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="mt-3">
+                            <a href="{{ url_for('marketplace.create_automation_instance', template_id=template.id) }}" class="btn btn-primary w-100">
+                                <i class="fas fa-plus me-1"></i>{{ _('marketplace_create_new_instance', 'Créer une nouvelle instance') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Informations -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="h6 mb-0">{{ _('information', 'Informations') }}</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>{{ _('marketplace_version', 'Version') }}</span>
+                            <span>{{ template.extension.version }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>{{ _('marketplace_updated_at', 'Mise à jour') }}</span>
+                            <span>{{ template.updated_at.strftime('%d/%m/%Y') }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>{{ _('marketplace_extension', 'Extension') }}</span>
+                            <a href="{{ url_for('marketplace.view_extension', slug=template.extension.slug) }}">{{ template.extension.name }}</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Prérequis -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="h6 mb-0">{{ _('marketplace_requirements', 'Prérequis') }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small mb-3">{{ _('marketplace_requirements_desc', 'Pour utiliser ce template d\'automatisation, vous devez avoir :') }}</p>
+                    <ul class="small ps-3">
+                        <li class="mb-2">{{ _('marketplace_requirements_extension', 'L\'extension installée') }}</li>
+                        <li class="mb-2">{{ _('marketplace_requirements_api', 'Une connexion API configurée') }}</li>
+                        <li>{{ _('marketplace_requirements_permissions', 'Les permissions nécessaires') }}</li>
+                    </ul>
+
+                    {% if not is_authentication %}
+                        <div class="alert alert-warning small mt-3 mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            {{ _('marketplace_login_required', 'Vous devez être connecté pour utiliser ce template d\'automatisation.') }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-grid gap-2">
+                {% if is_authenticated %}
+                    <a href="{{ url_for('marketplace.create_automation_instance', template_id=template.id) }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>{{ _('marketplace_create_instance', 'Créer une instance') }}
+                    </a>
+                    <a href="{{ url_for('marketplace.list_automation_instances') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-cogs me-1"></i>{{ _('marketplace_view_instances', 'Voir mes instances') }}
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt me-1"></i>{{ _('marketplace_login_to_create', 'Connectez-vous pour créer') }}
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

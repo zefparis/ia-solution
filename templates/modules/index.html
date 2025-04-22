@@ -1,0 +1,276 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('Système de Modules') }} - IA-Solution{% endblock %}
+
+{% block styles %}
+<style>
+    .module-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+    }
+    .module-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+    .category-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    .module-badge {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+    }
+    .module-rating {
+        color: #ffc107;
+    }
+    .module-header {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        padding: 4rem 0;
+        margin-bottom: 2rem;
+        color: white;
+    }
+    .installed-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background-color: #28a745;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.8rem;
+    }
+    .official-badge {
+        position: absolute;
+        bottom: 1rem;
+        left: 1rem;
+        background-color: #17a2b8;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- En-tête du système de modules -->
+<div class="module-header text-center">
+    <div class="container">
+        <h1>{{ _('Système de Modules Métiers') }}</h1>
+        <p class="lead">{{ _('Étendez les fonctionnalités de votre application avec des modules personnalisés') }}</p>
+        <div class="mt-4">
+            <a href="{{ url_for('modules.modules_marketplace') }}" class="btn btn-light btn-lg mr-2">
+                <i class="fas fa-store"></i> {{ _('Explorer la Boutique') }}
+            </a>
+            {% if session.get('access_token') %}
+            <a href="{{ url_for('modules.my_modules') }}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-cubes"></i> {{ _('Mes Modules') }}
+            </a>
+            {% else %}
+            <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-sign-in-alt"></i> {{ _('Se connecter pour installer des modules') }}
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <!-- Catégories de modules -->
+    <section class="mb-5">
+        <h2 class="mb-4">{{ _('Catégories') }}</h2>
+        <div class="row">
+            {% for category in categories %}
+            <div class="col-md-4 col-lg-3 mb-4">
+                <a href="{{ url_for('modules.modules_marketplace', category=category.id) }}" class="text-decoration-none">
+                    <div class="card h-100 module-card text-center">
+                        <div class="card-body">
+                            <div class="category-icon">
+                                <i class="fas {{ category.icon or 'fa-cube' }}" style="color: {{ category.color or '#007bff' }};"></i>
+                            </div>
+                            <h5 class="card-title">{{ category.name }}</h5>
+                            <p class="card-text small text-muted">{{ category.description }}</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Modules mis en avant -->
+    {% if featured_modules %}
+    <section class="mb-5">
+        <h2 class="mb-4">{{ _('Modules à Découvrir') }}</h2>
+        <div class="row">
+            {% for module in featured_modules %}
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="card h-100 module-card">
+                    {% if module.is_official %}
+                    <span class="official-badge">
+                        <i class="fas fa-check-circle"></i> {{ _('Officiel') }}
+                    </span>
+                    {% endif %}
+                    {% if user_modules and module.id in [um.module_id for um in user_modules] %}
+                    <span class="installed-badge">
+                        <i class="fas fa-check"></i> {{ _('Installé') }}
+                    </span>
+                    {% endif %}
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            {% if module.icon %}
+                            {% if 'http' in module.icon %}
+                            <img src="{{ module.icon }}" alt="{{ module.name }}" class="mr-3" style="width: 48px; height: 48px; object-fit: contain;">
+                            {% else %}
+                            <i class="fas {{ module.icon }} fa-2x mr-3" style="color: {{ module.category.color or '#007bff' if module.category else '#007bff' }};"></i>
+                            {% endif %}
+                            {% else %}
+                            <i class="fas fa-cube fa-2x mr-3" style="color: #007bff;"></i>
+                            {% endif %}
+                            <h5 class="card-title mb-0">{{ module.name }}</h5>
+                        </div>
+                        <p class="card-text">{{ module.short_description }}</p>
+                        <div class="module-rating mb-2">
+                            {% set avg_rating = module.average_rating|round|int %}
+                            {% for i in range(5) %}
+                                {% if i < avg_rating %}
+                                <i class="fas fa-star"></i>
+                                {% else %}
+                                <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                            <small class="text-muted ml-1">{{ module.review_count }} {{ _('avis') }}</small>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            {% if module.price %}
+                            <span class="font-weight-bold">{{ module.price }}{{ '€' if module.currency == 'EUR' else '$' }}</span>
+                            {% else %}
+                            <span class="text-success font-weight-bold">{{ _('Gratuit') }}</span>
+                            {% endif %}
+                            <a href="{{ url_for('modules.module_details', module_id=module.id) }}" class="btn btn-sm btn-primary">{{ _('Détails') }}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Modules populaires -->
+    {% if popular_modules %}
+    <section class="mb-5">
+        <h2 class="mb-4">{{ _('Modules Populaires') }}</h2>
+        <div class="row">
+            {% for module in popular_modules %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 module-card">
+                    {% if module.is_official %}
+                    <span class="official-badge">
+                        <i class="fas fa-check-circle"></i> {{ _('Officiel') }}
+                    </span>
+                    {% endif %}
+                    {% if user_modules and module.id in [um.module_id for um in user_modules] %}
+                    <span class="installed-badge">
+                        <i class="fas fa-check"></i> {{ _('Installé') }}
+                    </span>
+                    {% endif %}
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            {% if module.icon %}
+                            {% if 'http' in module.icon %}
+                            <img src="{{ module.icon }}" alt="{{ module.name }}" class="mr-3" style="width: 48px; height: 48px; object-fit: contain;">
+                            {% else %}
+                            <i class="fas {{ module.icon }} fa-2x mr-3" style="color: {{ module.category.color or '#007bff' if module.category else '#007bff' }};"></i>
+                            {% endif %}
+                            {% else %}
+                            <i class="fas fa-cube fa-2x mr-3" style="color: #007bff;"></i>
+                            {% endif %}
+                            <h5 class="card-title mb-0">{{ module.name }}</h5>
+                        </div>
+                        <p class="card-text">{{ module.short_description }}</p>
+                        <div class="module-rating mb-2">
+                            {% set avg_rating = module.average_rating|round|int %}
+                            {% for i in range(5) %}
+                                {% if i < avg_rating %}
+                                <i class="fas fa-star"></i>
+                                {% else %}
+                                <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                            <small class="text-muted ml-1">{{ module.review_count }} {{ _('avis') }}</small>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            {% if module.price %}
+                            <span class="font-weight-bold">{{ module.price }}{{ '€' if module.currency == 'EUR' else '$' }}</span>
+                            {% else %}
+                            <span class="text-success font-weight-bold">{{ _('Gratuit') }}</span>
+                            {% endif %}
+                            <a href="{{ url_for('modules.module_details', module_id=module.id) }}" class="btn btn-sm btn-primary">{{ _('Détails') }}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{{ url_for('modules.modules_marketplace') }}" class="btn btn-outline-primary">
+                {{ _('Voir tous les modules') }} <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Mes modules installés (si connecté) -->
+    {% if user_modules %}
+    <section class="mb-5">
+        <h2 class="mb-4">{{ _('Mes Modules Installés') }}</h2>
+        <div class="row">
+            {% for installation in user_modules %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 module-card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            {% if installation.module.icon %}
+                            {% if 'http' in installation.module.icon %}
+                            <img src="{{ installation.module.icon }}" alt="{{ installation.module.name }}" class="mr-3" style="width: 48px; height: 48px; object-fit: contain;">
+                            {% else %}
+                            <i class="fas {{ installation.module.icon }} fa-2x mr-3" style="color: {{ installation.module.category.color or '#007bff' if installation.module.category else '#007bff' }};"></i>
+                            {% endif %}
+                            {% else %}
+                            <i class="fas fa-cube fa-2x mr-3" style="color: #007bff;"></i>
+                            {% endif %}
+                            <h5 class="card-title mb-0">{{ installation.module.name }}</h5>
+                        </div>
+                        <p class="card-text">{{ installation.module.short_description }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">{{ _('Installé le') }} {{ installation.installation_date.strftime('%d/%m/%Y') }}</small>
+                            <a href="{{ url_for('modules.module_details', module_id=installation.module.id) }}" class="btn btn-sm btn-outline-primary">{{ _('Gérer') }}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{{ url_for('modules.my_modules') }}" class="btn btn-outline-primary">
+                {{ _('Gérer tous mes modules') }} <i class="fas fa-cog ml-2"></i>
+            </a>
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Animations sur le survol des cartes
+    $('.module-card').hover(
+        function() { $(this).addClass('shadow'); },
+        function() { $(this).removeClass('shadow'); }
+    );
+});
+</script>
+{% endblock %}

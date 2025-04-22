@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Business Consultation</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">Test de Consultation Business</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">Cette page est une version simplifiée pour tester le fonctionnement.</p>
+                        
+                        <form method="POST" action="{{ url_for('business.business_test') }}">
+                            
+                            <div class="mb-3">
+                                <label for="company_name" class="form-label">Nom de l'entreprise</label>
+                                <input type="text" class="form-control" id="company_name" name="company_name" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="industry" class="form-label">Secteur d'activité</label>
+                                <select class="form-select" id="industry" name="industry" required>
+                                    <option value="Technologie">Technologie</option>
+                                    <option value="Commerce">Commerce</option>
+                                    <option value="Services">Services</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-primary">Tester</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="mt-4 text-center">
+                    <a href="/" class="btn btn-secondary">Retour à l'accueil</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

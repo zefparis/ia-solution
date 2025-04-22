@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyse Business {{ document.company_name }}</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            margin-bottom: 30px;
+        }
+        .company-info {
+            float: left;
+            width: 50%;
+        }
+        .document-info {
+            float: right;
+            width: 45%;
+            text-align: right;
+        }
+        .document-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .clear {
+            clear: both;
+        }
+        .section {
+            margin: 20px 0;
+            clear: both;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        .subsection-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #34495e;
+            margin: 15px 0 10px 0;
+        }
+        .label {
+            font-weight: bold;
+            color: #666;
+        }
+        .swot-box {
+            float: left;
+            width: 47%;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .swot-box:nth-child(odd) {
+            margin-right: 6%;
+        }
+        .strengths {
+            border-color: #27ae60;
+        }
+        .weaknesses {
+            border-color: #e74c3c;
+        }
+        .opportunities {
+            border-color: #3498db;
+        }
+        .threats {
+            border-color: #f39c12;
+        }
+        .swot-title {
+            font-weight: bold;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .strengths .swot-title {
+            color: #27ae60;
+        }
+        .weaknesses .swot-title {
+            color: #e74c3c;
+        }
+        .opportunities .swot-title {
+            color: #3498db;
+        }
+        .threats .swot-title {
+            color: #f39c12;
+        }
+        ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 5px;
+        }
+        .footer {
+            margin-top: 50px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 10px;
+            color: #999;
+        }
+        .recommendations {
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .notes {
+            font-style: italic;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-left: 3px solid #3498db;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-info">
+            <div class="document-title">ANALYSE BUSINESS</div>
+            <div style="font-weight: bold;">{{ document.company_name }}</div>
+            <div>Secteur: {{ document.industry }}</div>
+            {% if document.contact_email %}
+            <div>Contact: {{ document.contact_email }}</div>
+            {% endif %}
+        </div>
+        <div class="document-info">
+            <div><span class="label">Référence:</span> BSRPT-{{ document.id }}</div>
+            <div><span class="label">Date d'analyse:</span> {{ document.created_at.strftime('%d/%m/%Y') }}</div>
+            <div><span class="label">Auteur:</span> {{ document.user.username }}</div>
+        </div>
+    </div>
+    
+    <div class="clear"></div>
+    
+    <div class="section">
+        <div class="section-title">Résumé exécutif</div>
+        <p>{{ document.summary|safe }}</p>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">Analyse SWOT</div>
+        
+        <div class="swot-box strengths">
+            <div class="swot-title">Forces</div>
+            {{ document.strengths|safe }}
+        </div>
+        
+        <div class="swot-box weaknesses">
+            <div class="swot-title">Faiblesses</div>
+            {{ document.weaknesses|safe }}
+        </div>
+        
+        <div class="clear"></div>
+        
+        <div class="swot-box opportunities">
+            <div class="swot-title">Opportunités</div>
+            {{ document.opportunities|safe }}
+        </div>
+        
+        <div class="swot-box threats">
+            <div class="swot-title">Menaces</div>
+            {{ document.threats|safe }}
+        </div>
+    </div>
+    
+    <div class="clear"></div>
+    
+    <div class="section">
+        <div class="section-title">Recommandations stratégiques</div>
+        <div class="recommendations">
+            {{ document.recommendations|safe }}
+        </div>
+    </div>
+    
+    {% if document.additional_notes %}
+    <div class="section">
+        <div class="section-title">Notes additionnelles</div>
+        <div class="notes">
+            {{ document.additional_notes|safe }}
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="footer">
+        <p>Document généré le {{ document.created_at.strftime('%d/%m/%Y à %H:%M') }} via IA-Solution.</p>
+        <p>Cette analyse est basée sur les informations fournies et ne constitue pas un conseil financier professionnel.</p>
+    </div>
+</body>
+</html>

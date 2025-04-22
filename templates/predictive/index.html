@@ -1,0 +1,503 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ predictive_translations['title'][lang] }}{% endblock %}
+
+{% block styles %}
+<style>
+    .card-dashboard {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        overflow: hidden;
+        height: 100%;
+    }
+    
+    .card-dashboard:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.15);
+    }
+    
+    .highlight-bg {
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    .card-header-custom {
+        border-bottom: none;
+        padding: 1.25rem 1.25rem 0;
+    }
+    
+    .card-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .alert-high {
+        border-left: 4px solid #dc3545;
+    }
+    
+    .alert-medium {
+        border-left: 4px solid #fd7e14;
+    }
+    
+    .alert-low {
+        border-left: 4px solid #0dcaf0;
+    }
+    
+    .alert-opportunity {
+        border-left: 4px solid #198754;
+    }
+    
+    .metric-card {
+        padding: 1.25rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+    
+    .metric-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .metric-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+    }
+    
+    .trend-up {
+        color: #198754;
+    }
+    
+    .trend-down {
+        color: #dc3545;
+    }
+    
+    .metric-change {
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .widget {
+        margin-bottom: 1.5rem;
+    }
+    
+    .widget-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+    
+    .customer-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">{{ predictive_translations['dashboard'][lang] }}</h1>
+    
+    <!-- Metrics Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="metric-card bg-light">
+                <div class="metric-title text-muted">{{ predictive_translations['sales_predictions'][lang] }}</div>
+                <div class="metric-value">{{ latest_predictions|length if latest_predictions else 0 }}</div>
+                <div class="metric-change">
+                    <i class="bi bi-graph-up text-success"></i> {{ lang == 'fr' and 'Prévisions actives' or 'Active predictions' }}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card bg-light">
+                <div class="metric-title text-muted">{{ predictive_translations['customer_insights'][lang] }}</div>
+                <div class="metric-value">{{ high_potential_customers|length if high_potential_customers else 0 }}</div>
+                <div class="metric-change trend-up">
+                    <i class="bi bi-arrow-up-right"></i> {{ lang == 'fr' and 'Clients à fort potentiel' or 'High potential customers' }}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card bg-light">
+                <div class="metric-title text-muted">{{ predictive_translations['market_trends'][lang] }}</div>
+                <div class="metric-value">{{ latest_trends|length if latest_trends else 0 }}</div>
+                <div class="metric-change">
+                    <i class="bi bi-lightning-charge text-warning"></i> {{ lang == 'fr' and 'Tendances identifiées' or 'Identified trends' }}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card bg-light">
+                <div class="metric-title text-muted">{{ predictive_translations['alerts'][lang] }}</div>
+                <div class="metric-value">{{ recent_alerts|length if recent_alerts else 0 }}</div>
+                <div class="metric-change trend-up">
+                    <i class="bi bi-bell"></i> {{ lang == 'fr' and 'Alertes non lues' or 'Unread alerts' }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Dashboard -->
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-md-8">
+            <!-- Sales Forecast Chart -->
+            <div class="card card-dashboard mb-4">
+                <div class="card-header card-header-custom bg-transparent">
+                    <h5 class="card-title">
+                        <i class="bi bi-graph-up text-primary"></i> 
+                        {{ lang == 'fr' and 'Prévisions de ventes' or 'Sales Forecast' }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="salesForecastChart"></canvas>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent d-flex justify-content-end">
+                    <a href="{{ url_for('predictive.sales_predictions') }}" class="btn btn-sm btn-outline-primary">
+                        {{ lang == 'fr' and 'Voir toutes les prévisions' or 'View all forecasts' }} <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Customer Insights -->
+            <div class="card card-dashboard mb-4">
+                <div class="card-header card-header-custom bg-transparent">
+                    <h5 class="card-title">
+                        <i class="bi bi-people text-success"></i> 
+                        {{ predictive_translations['customer_insights'][lang] }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- High Potential Customers -->
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">
+                                <i class="bi bi-arrow-up-right-circle"></i> 
+                                {{ lang == 'fr' and 'Clients à fort potentiel' or 'High Potential Customers' }}
+                            </h6>
+                            {% if high_potential_customers %}
+                                <div class="list-group">
+                                    {% for customer in high_potential_customers[:3] %}
+                                    <div class="list-group-item border-0 p-0 mb-2">
+                                        <div class="d-flex align-items-center">
+                                            <div class="customer-avatar bg-success">
+                                                {{ customer.customer_name[:2] }}
+                                            </div>
+                                            <div class="ms-3">
+                                                <h6 class="mb-0">{{ customer.customer_name }}</h6>
+                                                <small class="text-success">
+                                                    <i class="bi bi-graph-up"></i> 
+                                                    {{ customer.development_potential_score|round(1) }}%
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted">{{ lang == 'fr' and 'Aucun client à fort potentiel identifié' or 'No high potential customers identified' }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- At Risk Customers -->
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">
+                                <i class="bi bi-exclamation-triangle"></i> 
+                                {{ lang == 'fr' and 'Clients à risque' or 'At-Risk Customers' }}
+                            </h6>
+                            {% if high_risk_customers %}
+                                <div class="list-group">
+                                    {% for customer in high_risk_customers[:3] %}
+                                    <div class="list-group-item border-0 p-0 mb-2">
+                                        <div class="d-flex align-items-center">
+                                            <div class="customer-avatar bg-danger">
+                                                {{ customer.customer_name[:2] }}
+                                            </div>
+                                            <div class="ms-3">
+                                                <h6 class="mb-0">{{ customer.customer_name }}</h6>
+                                                <small class="text-danger">
+                                                    <i class="bi bi-graph-down"></i> 
+                                                    {{ customer.churn_risk_score|round(1) }}%
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted">{{ lang == 'fr' and 'Aucun client à risque identifié' or 'No at-risk customers identified' }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent d-flex justify-content-end">
+                    <a href="{{ url_for('predictive.customer_insights') }}" class="btn btn-sm btn-outline-success">
+                        {{ lang == 'fr' and 'Voir tous les clients' or 'View all customers' }} <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Market Trends -->
+            <div class="card card-dashboard">
+                <div class="card-header card-header-custom bg-transparent">
+                    <h5 class="card-title">
+                        <i class="bi bi-compass text-warning"></i> 
+                        {{ predictive_translations['market_trends'][lang] }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if latest_trends %}
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>{{ lang == 'fr' and 'Tendance' or 'Trend' }}</th>
+                                        <th>{{ lang == 'fr' and 'Type' or 'Type' }}</th>
+                                        <th>{{ lang == 'fr' and 'Impact' or 'Impact' }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for trend in latest_trends[:3] %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ trend.name }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ trend.description|truncate(60) }}</small>
+                                        </td>
+                                        <td>
+                                            {% if trend.trend_type == 'emerging' %}
+                                                <span class="badge bg-success">
+                                                    {{ lang == 'fr' and 'Émergente' or 'Emerging' }}
+                                                </span>
+                                            {% elif trend.trend_type == 'seasonal' %}
+                                                <span class="badge bg-info">
+                                                    {{ lang == 'fr' and 'Saisonnière' or 'Seasonal' }}
+                                                </span>
+                                            {% elif trend.trend_type == 'declining' %}
+                                                <span class="badge bg-danger">
+                                                    {{ lang == 'fr' and 'En déclin' or 'Declining' }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ trend.trend_type }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="progress" style="height: 10px;">
+                                                <div class="progress-bar {{ 'bg-danger' if trend.impact_score >= 8 else 'bg-warning' if trend.impact_score >= 5 else 'bg-info' }}" 
+                                                     role="progressbar" 
+                                                     style="width: {{ trend.impact_score * 10 }}%;" 
+                                                     aria-valuenow="{{ trend.impact_score }}" 
+                                                     aria-valuemin="0" 
+                                                     aria-valuemax="10">
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">{{ trend.impact_score }}/10</small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">{{ lang == 'fr' and 'Aucune tendance de marché identifiée' or 'No market trends identified' }}</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent d-flex justify-content-end">
+                    <a href="{{ url_for('predictive.market_trends') }}" class="btn btn-sm btn-outline-warning">
+                        {{ lang == 'fr' and 'Voir toutes les tendances' or 'View all trends' }} <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column -->
+        <div class="col-md-4">
+            <!-- Quick Actions Card -->
+            <div class="card card-dashboard mb-4">
+                <div class="card-header card-header-custom bg-transparent">
+                    <h5 class="card-title">
+                        <i class="bi bi-lightning text-primary"></i> 
+                        {{ lang == 'fr' and 'Actions rapides' or 'Quick Actions' }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-3">
+                        <a href="{{ url_for('predictive.new_prediction') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-graph-up me-2"></i> {{ predictive_translations['new_prediction'][lang] }}
+                        </a>
+                        <a href="{{ url_for('predictive.customer_insights') }}" class="btn btn-outline-success">
+                            <i class="bi bi-people me-2"></i> {{ lang == 'fr' and 'Analyser les clients' or 'Analyze Customers' }}
+                        </a>
+                        <a href="{{ url_for('predictive.product_catalog') }}" class="btn btn-outline-info">
+                            <i class="bi bi-box-seam me-2"></i> {{ lang == 'fr' and 'Optimiser le catalogue' or 'Optimize Catalog' }}
+                        </a>
+                        <a href="{{ url_for('predictive.market_trends') }}" class="btn btn-outline-warning">
+                            <i class="bi bi-compass me-2"></i> {{ lang == 'fr' and 'Identifier les tendances' or 'Identify Trends' }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alerts -->
+            <div class="card card-dashboard">
+                <div class="card-header card-header-custom bg-transparent">
+                    <h5 class="card-title">
+                        <i class="bi bi-bell text-danger"></i> 
+                        {{ predictive_translations['alerts'][lang] }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_alerts %}
+                        <div class="list-group">
+                            {% for alert in recent_alerts %}
+                            <div class="list-group-item border-0 bg-light mb-2 rounded
+                                        {{ 'alert-high' if alert.priority >= 4 else 'alert-medium' if alert.priority >= 3 else 'alert-low' }} 
+                                        {{ 'alert-opportunity' if alert.alert_type == 'opportunity' }}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-1">{{ alert.title }}</h6>
+                                    <small class="{{ 'text-danger' if alert.priority >= 4 else 'text-warning' if alert.priority >= 3 else 'text-info' }}">
+                                        {% for i in range(alert.priority) %}
+                                            <i class="bi bi-star-fill"></i>
+                                        {% endfor %}
+                                        {% for i in range(5 - alert.priority) %}
+                                            <i class="bi bi-star"></i>
+                                        {% endfor %}
+                                    </small>
+                                </div>
+                                <p class="mb-1 small">{{ alert.message|truncate(100) }}</p>
+                                <small class="text-muted">{{ alert.date_created.strftime('%d/%m/%Y %H:%M') }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">{{ lang == 'fr' and 'Aucune alerte active' or 'No active alerts' }}</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent d-flex justify-content-end">
+                    <a href="{{ url_for('predictive.alerts') }}" class="btn btn-sm btn-outline-danger">
+                        {{ lang == 'fr' and 'Voir toutes les alertes' or 'View all alerts' }} <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Demo data for the sales forecast chart
+        const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
+        const optimisticData = [
+            12000, 13500, 15000, 16200, 17800, 19500, 21000, 22500, 24000, 26500, 29000, 32000
+        ];
+        
+        const realisticData = [
+            12000, 12800, 13500, 14200, 15000, 15800, 16500, 17200, 18000, 19000, 20000, 21500
+        ];
+        
+        const pessimisticData = [
+            12000, 11800, 11500, 11200, 11000, 10800, 10500, 10200, 10000, 9800, 9500, 9200
+        ];
+        
+        const ctx = document.getElementById('salesForecastChart').getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: '{{ lang == "fr" and "Optimiste" or "Optimistic" }}',
+                        data: optimisticData,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: '{{ lang == "fr" and "Réaliste" or "Realistic" }}',
+                        data: realisticData,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: '{{ lang == "fr" and "Pessimiste" or "Pessimistic" }}',
+                        data: pessimisticData,
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        tension: 0.3,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: false
+                    },
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.raw.toLocaleString('{{ lang }}', { 
+                                    style: 'currency', 
+                                    currency: '{{ lang == "fr" and "EUR" or "USD" }}'
+                                });
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            drawBorder: false
+                        },
+                        ticks: {
+                            callback: function(value, index, values) {
+                                return value.toLocaleString('{{ lang }}', { 
+                                    style: 'currency', 
+                                    currency: '{{ lang == "fr" and "EUR" or "USD" }}',
+                                    maximumFractionDigits: 0
+                                });
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            drawBorder: false,
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

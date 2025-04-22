@@ -1,0 +1,167 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('Mes Modules') }} - IA-Solution{% endblock %}
+
+{% block styles %}
+<style>
+    .module-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+    }
+    .module-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+    .module-rating {
+        color: #ffc107;
+    }
+    .module-icon {
+        width: 48px;
+        height: 48px;
+        object-fit: contain;
+    }
+    .module-header {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        padding: 3rem 0;
+        margin-bottom: 2rem;
+        color: white;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 4rem 0;
+    }
+    .empty-state-icon {
+        font-size: 4rem;
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- En-tête -->
+<div class="module-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1>{{ _('Mes Modules Installés') }}</h1>
+            <a href="{{ url_for('modules.modules_marketplace') }}" class="btn btn-light">
+                <i class="fas fa-plus mr-1"></i> {{ _('Découvrir plus de modules') }}
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    {% if installed_modules %}
+    <div class="row">
+        {% for installation in installed_modules %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 module-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        {% if installation.module.icon %}
+                        {% if 'http' in installation.module.icon %}
+                        <img src="{{ installation.module.icon }}" alt="{{ installation.module.name }}" class="module-icon mr-3">
+                        {% else %}
+                        <i class="fas {{ installation.module.icon }} fa-2x mr-3" style="color: {{ installation.module.category.color or '#007bff' if installation.module.category else '#007bff' }};"></i>
+                        {% endif %}
+                        {% else %}
+                        <i class="fas fa-cube fa-2x mr-3" style="color: #007bff;"></i>
+                        {% endif %}
+                        <h5 class="card-title mb-0">{{ installation.module.name }}</h5>
+                    </div>
+                    
+                    <p class="card-text">{{ installation.module.short_description }}</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <span class="badge badge-pill badge-primary">v{{ installation.version.version_number if installation.version else installation.module.version }}</span>
+                            {% if installation.module.is_official %}
+                            <span class="badge badge-info ml-1">{{ _('Officiel') }}</span>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted">{{ _('Installé le') }} {{ installation.installation_date.strftime('%d/%m/%Y') }}</small>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('modules.module_details', module_id=installation.module.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-info-circle mr-1"></i> {{ _('Détails') }}
+                        </a>
+                        <button class="btn btn-sm btn-outline-danger uninstall-btn" data-module-id="{{ installation.module.id }}">
+                            <i class="fas fa-trash-alt mr-1"></i> {{ _('Désinstaller') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="fas fa-cubes"></i>
+        </div>
+        <h4>{{ _('Aucun module installé') }}</h4>
+        <p class="text-muted mb-4">{{ _('Vous n\'avez pas encore installé de modules. Découvrez notre marketplace pour améliorer votre expérience.') }}</p>
+        <a href="{{ url_for('modules.modules_marketplace') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-store mr-1"></i> {{ _('Explorer le Marketplace') }}
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Animation des cartes
+    $('.module-card').hover(
+        function() { $(this).addClass('shadow'); },
+        function() { $(this).removeClass('shadow'); }
+    );
+    
+    // Désinstallation des modules
+    $('.uninstall-btn').click(function() {
+        if (!confirm('{{ _("Êtes-vous sûr de vouloir désinstaller ce module ?") }}')) {
+            return;
+        }
+        
+        var moduleId = $(this).data('module-id');
+        var btn = $(this);
+        var card = btn.closest('.col-md-6');
+        
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>');
+        
+        $.ajax({
+            url: '{{ url_for("modules.uninstall_module", module_id=0) }}'.replace('0', moduleId),
+            method: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                    // Animation de suppression de la carte
+                    card.fadeOut(400, function() {
+                        card.remove();
+                        // Si plus aucun module, afficher l'état vide
+                        if ($('.module-card').length === 0) {
+                            location.reload();
+                        }
+                    });
+                } else {
+                    toastr.error(response.message);
+                    btn.prop('disabled', false).html('<i class="fas fa-trash-alt mr-1"></i> {{ _("Désinstaller") }}');
+                }
+            },
+            error: function(xhr) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    toastr.error(response.message || 'Erreur lors de la désinstallation');
+                } catch (e) {
+                    toastr.error('Erreur lors de la désinstallation');
+                }
+                btn.prop('disabled', false).html('<i class="fas fa-trash-alt mr-1"></i> {{ _("Désinstaller") }}');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,275 @@
+{% extends "layout.html" %}
+
+{% block title %}Analyse de votre entreprise en cours...{% endblock %}
+
+{% block content %}
+<style>
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        text-align: center;
+    }
+    .progress {
+        height: 15px;
+        width: 100%;
+        max-width: 600px;
+        margin: 30px auto;
+        border-radius: 30px;
+        overflow: hidden;
+    }
+    .analysis-steps {
+        width: 100%;
+        max-width: 600px;
+        margin: 20px auto;
+        text-align: left;
+    }
+    .analysis-step {
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        transition: all 0.3s;
+        opacity: 0.6;
+    }
+    .analysis-step.active {
+        background-color: rgba(var(--bs-primary-rgb), 0.1);
+        border-left: 3px solid var(--bs-primary);
+        opacity: 1;
+    }
+    .analysis-step.completed {
+        background-color: rgba(var(--bs-success-rgb), 0.1);
+        border-left: 3px solid var(--bs-success);
+        opacity: 0.8;
+    }
+    .step-icon {
+        width: 24px;
+        display: inline-block;
+        text-align: center;
+    }
+    .analysis-console {
+        background-color: #1a1a1a;
+        border-radius: 5px;
+        padding: 15px;
+        font-family: monospace;
+        margin-top: 40px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 1s ease-in-out;
+        width: 100%;
+        max-width: 700px;
+    }
+    .analysis-console.visible {
+        max-height: 500px;
+        overflow-y: auto;
+        margin-bottom: 30px;
+    }
+    .console-line {
+        margin-bottom: 5px;
+        opacity: 0;
+        animation: fadeIn 0.5s forwards;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .typing {
+        border-right: 2px solid var(--bs-primary);
+        animation: blink 1s step-end infinite;
+    }
+    @keyframes blink {
+        from, to { border-color: transparent; }
+        50% { border-color: var(--bs-primary); }
+    }
+    .btn-continue {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.5s;
+    }
+    .btn-continue.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+</style>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="loading-container">
+                <div class="mb-4">
+                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Analyse en cours...</span>
+                    </div>
+                </div>
+                
+                <h1 class="mb-4">Analyse business en cours</h1>
+                <p class="lead mb-3">Nous préparons l'analyse détaillée pour <strong>{{ company_name }}</strong></p>
+                
+                <div class="progress mb-2">
+                    <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 10%"></div>
+                </div>
+                <p id="progress-text" class="text-muted small mb-4">Initialisation de l'analyse...</p>
+                
+                <div class="analysis-steps">
+                    <div id="step1" class="analysis-step active">
+                        <span class="step-icon"><i class="bi bi-search"></i></span>
+                        <span class="step-text">Analyse des données de l'entreprise</span>
+                    </div>
+                    <div id="step2" class="analysis-step">
+                        <span class="step-icon"><i class="bi bi-bar-chart"></i></span>
+                        <span class="step-text">Création de l'analyse SWOT</span>
+                    </div>
+                    <div id="step3" class="analysis-step">
+                        <span class="step-icon"><i class="bi bi-lightbulb"></i></span>
+                        <span class="step-text">Génération des recommandations</span>
+                    </div>
+                    <div id="step4" class="analysis-step">
+                        <span class="step-icon"><i class="bi bi-list-check"></i></span>
+                        <span class="step-text">Élaboration du plan d'action</span>
+                    </div>
+                    <div id="step5" class="analysis-step">
+                        <span class="step-icon"><i class="bi bi-file-earmark-text"></i></span>
+                        <span class="step-text">Finalisation du rapport</span>
+                    </div>
+                </div>
+                
+                <div id="analysis-console" class="analysis-console">
+                    <div class="console-line">Initialisation de l'analyse pour {{ company_name }}...</div>
+                </div>
+                
+                <a id="continue-btn" href="{{ url_for('business.business_report', report_id=report_id) }}" class="btn btn-primary btn-lg btn-continue">
+                    Voir le rapport complet
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simulation du processus d'analyse
+    document.addEventListener('DOMContentLoaded', function() {
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const analysisConsole = document.getElementById('analysis-console');
+        const continueBtn = document.getElementById('continue-btn');
+        const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
+        let currentStep = 0;
+        
+        // Messages de la console pour chaque étape
+        const consoleMessages = [
+            [
+                "Initialisation de l'analyse pour {{ company_name }}...",
+                "Récupération des données sectorielles pour l'industrie: {{ company_name }}",
+                "Analyse des défis spécifiques au secteur...",
+                "Recherche des tendances du marché...",
+                "Comparaison avec les données de performance du secteur..."
+            ],
+            [
+                "Génération de l'analyse SWOT...",
+                "Identification des forces de l'entreprise...",
+                "Évaluation des faiblesses potentielles...",
+                "Analyse des opportunités du marché...",
+                "Détection des menaces concurrentielles et sectorielles..."
+            ],
+            [
+                "Élaboration des recommandations stratégiques...",
+                "Priorisation des actions selon leur impact...",
+                "Définition des objectifs à court et long terme...",
+                "Adaptation des recommandations au contexte de l'entreprise...",
+                "Finalisation des recommandations..."
+            ],
+            [
+                "Création du plan d'action détaillé...",
+                "Définition des étapes d'implémentation...",
+                "Estimation des ressources nécessaires...",
+                "Établissement des indicateurs de performance...",
+                "Finalisation du plan d'action..."
+            ],
+            [
+                "Compilation des résultats d'analyse...",
+                "Mise en forme du rapport final...",
+                "Vérification de la cohérence des recommandations...",
+                "Optimisation de la présentation...",
+                "Rapport d'analyse prêt !"
+            ]
+        ];
+        
+        // Fonction pour ajouter une ligne dans la console
+        function addConsoleLine(text, isLast = false) {
+            const line = document.createElement('div');
+            line.className = 'console-line';
+            if (isLast) {
+                line.classList.add('typing');
+                line.textContent = text;
+                setTimeout(() => {
+                    line.classList.remove('typing');
+                }, 1500);
+            } else {
+                line.textContent = text;
+            }
+            analysisConsole.appendChild(line);
+            analysisConsole.scrollTop = analysisConsole.scrollHeight;
+        }
+        
+        // Afficher la console après un court délai
+        setTimeout(() => {
+            analysisConsole.classList.add('visible');
+        }, 1000);
+        
+        // Simuler les étapes de l'analyse
+        function updateStep() {
+            // Mettre à jour la barre de progression
+            const progress = Math.min(((currentStep + 1) / steps.length) * 100, 95);
+            progressBar.style.width = `${progress}%`;
+            
+            // Mettre à jour le texte de progression
+            const stepNames = ["Analyse des données", "Création SWOT", "Recommandations", "Plan d'action", "Finalisation"];
+            progressText.textContent = `Étape ${currentStep + 1}/5: ${stepNames[currentStep]}`;
+            
+            // Mettre à jour l'étape active
+            document.querySelectorAll('.analysis-step').forEach(step => step.classList.remove('active'));
+            if (currentStep > 0) {
+                document.getElementById(steps[currentStep - 1]).classList.add('completed');
+            }
+            document.getElementById(steps[currentStep]).classList.add('active');
+            
+            // Ajouter les messages de la console pour cette étape
+            const messages = consoleMessages[currentStep];
+            let messageIndex = 0;
+            
+            function addNextMessage() {
+                if (messageIndex < messages.length) {
+                    const isLast = messageIndex === messages.length - 1;
+                    addConsoleLine(messages[messageIndex], isLast);
+                    messageIndex++;
+                    setTimeout(addNextMessage, 800 + Math.random() * 500);
+                } else {
+                    currentStep++;
+                    if (currentStep < steps.length) {
+                        setTimeout(updateStep, 1200);
+                    } else {
+                        // Analyse terminée
+                        progressBar.style.width = "100%";
+                        progressBar.classList.remove('progress-bar-animated');
+                        progressText.textContent = "Analyse terminée ! Votre rapport est prêt.";
+                        document.getElementById(steps[steps.length - 1]).classList.add('completed');
+                        
+                        // Afficher le bouton de continuation
+                        setTimeout(() => {
+                            continueBtn.classList.add('visible');
+                            // Désactiver la redirection automatique pour que l'utilisateur puisse voir la simulation
+                            // L'utilisateur doit cliquer sur le bouton pour continuer
+                        }, 1000);
+                    }
+                }
+            }
+            
+            addNextMessage();
+        }
+        
+        // Démarrer la simulation
+        setTimeout(updateStep, 1500);
+    });
+</script>
+{% endblock %}

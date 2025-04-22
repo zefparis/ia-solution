@@ -1,0 +1,295 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ lesson.title }} | {{ course.title }}{% endblock %}
+
+{% block styles %}
+<style>
+    .lesson-navigation {
+        position: sticky;
+        top: 20px;
+    }
+    
+    .video-container {
+        position: relative;
+        padding-bottom: 56.25%; /* 16:9 aspect ratio */
+        height: 0;
+        overflow: hidden;
+        max-width: 100%;
+    }
+    
+    .video-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .lesson-content {
+        line-height: 1.7;
+    }
+    
+    .lesson-content img {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    .lesson-content h1, .lesson-content h2, .lesson-content h3 {
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .lesson-content ul, .lesson-content ol {
+        margin-bottom: 1rem;
+    }
+    
+    .lesson-content pre {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.25rem;
+        overflow-x: auto;
+    }
+    
+    .lesson-content blockquote {
+        border-left: 5px solid #dee2e6;
+        padding-left: 1rem;
+        margin-left: 0;
+        color: #6c757d;
+    }
+    
+    .lesson-resources {
+        background-color: rgba(0, 0, 0, 0.02);
+        border-radius: 0.25rem;
+        padding: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Fil d'Ariane -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('training.training_dashboard') }}">{{ _('training_dashboard', 'Formation') }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('training.list_courses') }}">{{ _('training_courses', 'Cours') }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('training.view_course', course_id=course.id) }}">{{ course.title }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ lesson.title }}</li>
+        </ol>
+    </nav>
+    
+    <!-- Barre de navigation de leçon -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body d-flex justify-content-between align-items-center p-2">
+                    <div>
+                        {% if prev_lesson %}
+                            <a href="{{ url_for('training.view_lesson', lesson_id=prev_lesson.id) }}" class="btn btn-sm btn-outline-primary me-2">
+                                <i class="bi bi-arrow-left"></i> {{ _('training_previous', 'Précédent') }}
+                            </a>
+                        {% else %}
+                            <button class="btn btn-sm btn-outline-secondary me-2" disabled>
+                                <i class="bi bi-arrow-left"></i> {{ _('training_previous', 'Précédent') }}
+                            </button>
+                        {% endif %}
+                        
+                        <a href="{{ url_for('training.view_course', course_id=course.id) }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-grid"></i> {{ _('training_course_overview', 'Aperçu du cours') }}
+                        </a>
+                    </div>
+                    
+                    <div>
+                        <form action="{{ url_for('training.complete_lesson', lesson_id=lesson.id) }}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-success me-2" {% if progress and progress.status == 'completed' %}disabled{% endif %}>
+                                <i class="bi bi-check-lg"></i> {{ _('training_mark_complete', 'Marquer comme terminé') }}
+                            </button>
+                        </form>
+                        
+                        {% if next_lesson %}
+                            <a href="{{ url_for('training.view_lesson', lesson_id=next_lesson.id) }}" class="btn btn-sm btn-outline-primary">
+                                {{ _('training_next', 'Suivant') }} <i class="bi bi-arrow-right"></i>
+                            </a>
+                        {% else %}
+                            <button class="btn btn-sm btn-outline-secondary" disabled>
+                                {{ _('training_next', 'Suivant') }} <i class="bi bi-arrow-right"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Contenu principal de la leçon -->
+        <div class="col-md-9 order-2 order-md-1">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h1 class="h3 mb-4">{{ lesson.title }}</h1>
+                    
+                    {% if lesson.lesson_type == 'video' and lesson.media_url %}
+                        <div class="video-container mb-4">
+                            {% if 'youtube.com' in lesson.media_url or 'youtu.be' in lesson.media_url %}
+                                {% set video_id = None %}
+                                {% if 'youtube.com/watch?v=' in lesson.media_url %}
+                                    {% set video_id = lesson.media_url.split('watch?v=')[1].split('&')[0] %}
+                                {% elif 'youtu.be/' in lesson.media_url %}
+                                    {% set video_id = lesson.media_url.split('youtu.be/')[1].split('?')[0] %}
+                                {% endif %}
+                                
+                                {% if video_id %}
+                                    <iframe src="https://www.youtube.com/embed/{{ video_id }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                {% endif %}
+                            {% elif 'vimeo.com' in lesson.media_url %}
+                                {% set video_id = lesson.media_url.split('vimeo.com/')[1].split('?')[0] %}
+                                <iframe src="https://player.vimeo.com/video/{{ video_id }}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+                            {% else %}
+                                <video controls width="100%">
+                                    <source src="{{ lesson.media_url }}" type="video/mp4">
+                                    {{ _('training_video_not_supported', 'Votre navigateur ne prend pas en charge la lecture de vidéos.') }}
+                                </video>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="lesson-content">
+                        {{ lesson.content|safe }}
+                    </div>
+                    
+                    {% if additional_resources and additional_resources|length > 0 %}
+                        <div class="lesson-resources mt-4">
+                            <h3 class="h5 mb-3"><i class="bi bi-link-45deg"></i> {{ _('training_additional_resources', 'Ressources additionnelles') }}</h3>
+                            <ul class="list-group list-group-flush">
+                                {% for resource in additional_resources %}
+                                    <li class="list-group-item border-0 ps-0">
+                                        <a href="{{ resource.url }}" target="_blank" rel="noopener">
+                                            {{ resource.title }} <i class="bi bi-box-arrow-up-right small"></i>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quiz associés à cette leçon -->
+            {% if quizzes and quizzes|length > 0 %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h2 class="h5 mb-0">{{ _('training_quizzes', 'Quiz et évaluations') }}</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            {% for quiz in quizzes %}
+                                <div class="list-group-item border-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h3 class="h6 mb-1">{{ quiz.title }}</h3>
+                                            {% if quiz.is_required %}
+                                                <span class="badge bg-danger">{{ _('training_required', 'Requis') }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ _('training_optional', 'Optionnel') }}</span>
+                                            {% endif %}
+                                            
+                                            {% if quiz.id in quiz_status %}
+                                                {% if quiz_status[quiz.id] == 'passed' %}
+                                                    <span class="badge bg-success ms-1">{{ _('training_passed', 'Réussi') }}</span>
+                                                {% elif quiz_status[quiz.id] == 'failed' %}
+                                                    <span class="badge bg-warning ms-1">{{ _('training_failed', 'Échoué') }}</span>
+                                                {% endif %}
+                                            {% endif %}
+                                            
+                                            <p class="small text-muted mb-0">
+                                                {% if quiz.description %}{{ quiz.description }}{% endif %}
+                                                {% if quiz.time_limit_minutes %}
+                                                    <span class="ms-1">
+                                                        <i class="bi bi-stopwatch"></i> {{ quiz.time_limit_minutes }} {{ _('training_minutes', 'minutes') }}
+                                                    </span>
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <a href="{{ url_for('training.start_quiz', quiz_id=quiz.id) }}" class="btn btn-sm btn-outline-primary">
+                                                {% if quiz.id in quiz_status and quiz_status[quiz.id] == 'passed' %}
+                                                    {{ _('training_retake_quiz', 'Refaire le quiz') }}
+                                                {% elif quiz.id in quiz_status and quiz_status[quiz.id] == 'failed' %}
+                                                    {{ _('training_try_again', 'Réessayer') }}
+                                                {% else %}
+                                                    {{ _('training_start_quiz', 'Commencer le quiz') }}
+                                                {% endif %}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Navigation de leçon en bas -->
+            <div class="d-flex justify-content-between">
+                {% if prev_lesson %}
+                    <a href="{{ url_for('training.view_lesson', lesson_id=prev_lesson.id) }}" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-left"></i> {{ prev_lesson.title }}
+                    </a>
+                {% else %}
+                    <div></div>
+                {% endif %}
+                
+                {% if next_lesson %}
+                    <a href="{{ url_for('training.view_lesson', lesson_id=next_lesson.id) }}" class="btn btn-outline-primary">
+                        {{ next_lesson.title }} <i class="bi bi-arrow-right"></i>
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('training.view_course', course_id=course.id) }}" class="btn btn-outline-success">
+                        {{ _('training_finish_course', 'Terminer le cours') }} <i class="bi bi-check-circle"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Barre latérale (plan du cours) -->
+        <div class="col-md-3 order-1 order-md-2 mb-4 mb-md-0">
+            <div class="card shadow-sm lesson-navigation">
+                <div class="card-header bg-transparent">
+                    <h2 class="h6 mb-0">{{ _('training_course_content', 'Contenu du cours') }}</h2>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for l in all_lessons %}
+                            <a href="{{ url_for('training.view_lesson', lesson_id=l.id) }}" 
+                               class="list-group-item list-group-item-action py-2 px-3 {% if l.id == lesson.id %}active{% endif %}">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-2 text-center" style="width: 24px;">
+                                        {% if l.id in lesson_progress and lesson_progress[l.id] == 'completed' %}
+                                            <i class="bi bi-check-circle-fill text-success"></i>
+                                        {% elif l.id in lesson_progress and lesson_progress[l.id] == 'in_progress' %}
+                                            <i class="bi bi-hourglass-split text-warning"></i>
+                                        {% elif l.id == lesson.id %}
+                                            <i class="bi bi-caret-right-fill"></i>
+                                        {% else %}
+                                            <i class="bi bi-circle"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="small lh-sm text-truncate">{{ l.title }}</div>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Scripts pour la page de leçon
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fonctionnalité de suivi du temps passé (à implémenter)
+    });
+</script>
+{% endblock %}

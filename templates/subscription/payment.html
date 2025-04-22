@@ -1,0 +1,151 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ language.get_text('Paiement') }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">{{ language.get_text('Paiement') }}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">{{ language.get_text(plan.display_name) }}</h5>
+                                <p class="mb-0">{{ language.get_text('Abonnement mensuel') }}</p>
+                            </div>
+                            <div class="text-end">
+                                <h5 class="mb-0">{{ "%.2f"|format(plan.price) }} {% if plan.currency == 'USD' %}${% else %}€{% endif %}</h5>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sélection du mode de paiement -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">{{ language.get_text('Choisissez votre mode de paiement') }}</h5>
+                        <ul class="nav nav-pills mb-3" id="payment-tab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="credit-card-tab" data-bs-toggle="pill" data-bs-target="#credit-card" type="button" role="tab" aria-controls="credit-card" aria-selected="true">
+                                    <i class="bi bi-credit-card me-1"></i> {{ language.get_text('Carte bancaire') }}
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="mobile-payment-tab" data-bs-toggle="pill" data-bs-target="#mobile-payment" type="button" role="tab" aria-controls="mobile-payment" aria-selected="false">
+                                    <i class="bi bi-phone me-1"></i> {{ language.get_text('Paiement mobile') }}
+                                </button>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="payment-tab-content">
+                            <!-- Option Carte bancaire -->
+                            <div class="tab-pane fade show active" id="credit-card" role="tabpanel" aria-labelledby="credit-card-tab">
+                                <form method="post">
+                                    {{ form.hidden_tag() }}
+                                    
+                                    <div class="mb-3">
+                                        {{ form.card_number.label(class="form-label") }}
+                                        {{ form.card_number(class="form-control", placeholder="1234 5678 9012 3456") }}
+                                        {% if form.card_number.errors %}
+                                            <div class="text-danger">
+                                                {% for error in form.card_number.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        {{ form.cardholder_name.label(class="form-label") }}
+                                        {{ form.cardholder_name(class="form-control", placeholder="Prénom Nom") }}
+                                        {% if form.cardholder_name.errors %}
+                                            <div class="text-danger">
+                                                {% for error in form.cardholder_name.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-8">
+                                            <label class="form-label">{{ language.get_text('Date d\'expiration') }}</label>
+                                            <div class="input-group">
+                                                {{ form.expiry_month(class="form-select") }}
+                                                <span class="input-group-text">/</span>
+                                                {{ form.expiry_year(class="form-select") }}
+                                            </div>
+                                            {% if form.expiry_month.errors or form.expiry_year.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.expiry_month.errors %}
+                                                        {{ error }}
+                                                    {% endfor %}
+                                                    {% for error in form.expiry_year.errors %}
+                                                        {{ error }}
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-4">
+                                            {{ form.cvv.label(class="form-label") }}
+                                            {{ form.cvv(class="form-control", placeholder="123") }}
+                                            {% if form.cvv.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.cvv.errors %}
+                                                        {{ error }}
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2">
+                                        {{ form.submit(class="btn btn-primary btn-lg") }}
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <!-- Option Paiement mobile -->
+                            <div class="tab-pane fade" id="mobile-payment" role="tabpanel" aria-labelledby="mobile-payment-tab">
+                                <div class="text-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center mb-3">
+                                        <img src="{{ url_for('static', filename='img/unipesa-logo.svg') }}" alt="UniPesa" height="40" class="me-2">
+                                        <h5 class="mb-0">{{ language.get_text('Paiement Mobile') }}</h5>
+                                    </div>
+                                    <p>{{ language.get_text('Payer facilement via M-Pesa, Orange Money ou Airtel Money') }}</p>
+                                    
+                                    <div class="d-flex justify-content-center mb-3">
+                                        <img src="{{ url_for('static', filename='img/mpesa-logo.svg') }}" alt="M-Pesa" height="30" class="mx-2">
+                                        <img src="{{ url_for('static', filename='img/orange-money-logo.svg') }}" alt="Orange Money" height="30" class="mx-2">
+                                        <img src="{{ url_for('static', filename='img/airtel-money-logo.svg') }}" alt="Airtel Money" height="30" class="mx-2">
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <a href="{{ url_for('unipesa.mobile_payment_page', plan_id=plan.id) }}" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-phone me-2"></i>{{ language.get_text('Continuer avec paiement mobile') }}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-success mb-4">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-shield-lock-fill fs-4 me-2"></i>
+                            <div>{{ language.get_text('Vos informations de paiement sont sécurisées.') }}<br>
+                            <small>{{ language.get_text('Toutes les transactions sont chiffrées et sécurisées.') }}</small></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('subscription.plans') }}" class="btn btn-link">
+                        <i class="bi bi-arrow-left me-1"></i>{{ language.get_text('Annuler et retourner aux plans') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

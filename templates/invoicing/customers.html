@@ -1,0 +1,85 @@
+{% extends 'layout.html' %}
+
+{% block title %}Liste des clients - IA Solution{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Liste des clients</h1>
+        <a href="{{ url_for('invoicing.add_customer') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i>Ajouter un client
+        </a>
+    </div>
+
+    {% for message in get_flashed_messages(with_categories=true) %}
+    <div class="alert alert-{{ message[0] }}" role="alert">
+        {{ message[1] }}
+    </div>
+    {% endfor %}
+
+    <div class="card">
+        <div class="card-body p-0">
+            {% if customers %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Type</th>
+                            <th>Email</th>
+                            <th>Téléphone</th>
+                            <th>Ville</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('invoicing.view_customer', customer_id=customer.id) }}">
+                                    {{ customer.name }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if customer.is_company %}
+                                <span class="badge bg-info">Entreprise</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Particulier</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ customer.email or '-' }}</td>
+                            <td>{{ customer.phone or '-' }}</td>
+                            <td>{{ customer.city or '-' }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('invoicing.view_customer', customer_id=customer.id) }}" class="btn btn-outline-primary" title="Voir">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('invoicing.edit_customer', customer_id=customer.id) }}" class="btn btn-outline-secondary" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{{ url_for('invoicing.add_invoice') }}?customer_id={{ customer.id }}" class="btn btn-outline-success" title="Créer une facture">
+                                        <i class="fas fa-file-invoice"></i>
+                                    </a>
+                                    <a href="{{ url_for('invoicing.add_quote') }}?customer_id={{ customer.id }}" class="btn btn-outline-info" title="Créer un devis">
+                                        <i class="fas fa-file-contract"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center p-4">
+                <p class="text-muted mb-3">Aucun client pour le moment</p>
+                <a href="{{ url_for('invoicing.add_customer') }}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter un client
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

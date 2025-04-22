@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Main Invoice -->
+  <rect x="50" y="40" width="200" height="230" fill="#FFFFFF" stroke="#BDBDBD" stroke-width="2" rx="5" ry="5"/>
+  
+  <!-- Header -->
+  <rect x="50" y="40" width="200" height="40" fill="#3F51B5" rx="5" ry="5"/>
+  <text x="150" y="65" font-family="Arial" font-weight="bold" font-size="16" fill="#FFFFFF" text-anchor="middle">FACTURE</text>
+  
+  <!-- Company Info -->
+  <text x="70" y="100" font-family="Arial" font-weight="bold" font-size="12" fill="#212121">IA-Solution</text>
+  <text x="70" y="115" font-family="Arial" font-size="10" fill="#757575">123 Rue de l'Innovation</text>
+  <text x="70" y="130" font-family="Arial" font-size="10" fill="#757575">75000 Paris, France</text>
+  
+  <!-- Invoice details -->
+  <rect x="70" y="145" width="160" height="1" fill="#EEEEEE"/>
+  <text x="70" y="160" font-family="Arial" font-size="10" fill="#757575">Facture #: INV-2025-042</text>
+  <text x="70" y="175" font-family="Arial" font-size="10" fill="#757575">Date: 18/04/2025</text>
+  <text x="70" y="190" font-family="Arial" font-size="10" fill="#757575">À: Client Example SARL</text>
+  
+  <!-- Table Header -->
+  <rect x="70" y="200" width="160" height="20" fill="#E8EAF6"/>
+  <text x="85" y="214" font-family="Arial" font-weight="bold" font-size="10" fill="#3F51B5">Description</text>
+  <text x="190" y="214" font-family="Arial" font-weight="bold" font-size="10" fill="#3F51B5">Montant</text>
+  
+  <!-- Table Content -->
+  <text x="85" y="234" font-family="Arial" font-size="10" fill="#212121">Consultation Business</text>
+  <text x="190" y="234" font-family="Arial" font-size="10" fill="#212121">800,00 €</text>
+  
+  <text x="85" y="254" font-family="Arial" font-size="10" fill="#212121">Analyse de documents</text>
+  <text x="190" y="254" font-family="Arial" font-size="10" fill="#212121">250,00 €</text>
+  
+  <!-- Total Line -->
+  <line x1="70" y1="265" x2="230" y2="265" stroke="#BDBDBD" stroke-width="1"/>
+  <text x="85" y="280" font-family="Arial" font-weight="bold" font-size="12" fill="#212121">Total TTC</text>
+  <text x="190" y="280" font-family="Arial" font-weight="bold" font-size="12" fill="#3F51B5">1.050,00 €</text>
+  
+  <!-- Decorative Element -->
+  <circle cx="230" cy="60" r="10" fill="#FFC107"/>
+  <text x="230" y="64" font-family="Arial" font-weight="bold" font-size="12" fill="#FFFFFF" text-anchor="middle">€</text>
+  
+  <!-- Draft Stamp -->
+  <g transform="translate(150, 170) rotate(-30)">
+    <rect x="-40" y="-10" width="80" height="20" fill="#F44336" opacity="0.5" rx="3" ry="3"/>
+    <text x="0" y="5" font-family="Arial" font-weight="bold" font-size="14" fill="#FFFFFF" text-anchor="middle">BROUILLON</text>
+  </g>
+</svg>

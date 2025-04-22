@@ -1,0 +1,351 @@
+{% extends "layout.html" %}
+
+{% block title %}Rapport d'Analyse Business{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .swot-card {
+        height: 100%;
+        transition: transform 0.2s;
+    }
+    .swot-card:hover {
+        transform: translateY(-5px);
+    }
+    .swot-item {
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    .swot-item:last-child {
+        border-bottom: none;
+    }
+    .recommendation-card {
+        transition: transform 0.2s;
+        margin-bottom: 1.5rem;
+    }
+    .recommendation-card:hover {
+        transform: translateY(-3px);
+    }
+    .priority-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    .action-item {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 0.5rem;
+        border-left: 5px solid var(--bs-primary);
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+    }
+    .action-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: var(--bs-primary);
+        color: white;
+        margin-right: 1rem;
+    }
+    .company-info-item {
+        margin-bottom: 0.5rem;
+    }
+    .company-info-item strong {
+        display: inline-block;
+        min-width: 120px;
+    }
+    .timeframe-badge {
+        font-size: 0.75rem;
+    }
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .container {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        .swot-card, .recommendation-card {
+            break-inside: avoid;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Rapport d'Analyse Business</h1>
+                <div class="no-print">
+                    <a href="javascript:window.print()" class="btn btn-outline-primary">
+                        <i class="bi bi-printer"></i> Imprimer
+                    </a>
+                    <a href="{{ url_for('business.business_consultation') }}" class="btn btn-outline-secondary ms-2">
+                        <i class="bi bi-pencil"></i> Modifier
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="card-title">{{ company_data.company_name }}</h5>
+                            <div class="company-info-item">
+                                <strong>Secteur :</strong> {{ company_data.industry }}
+                            </div>
+                            <div class="company-info-item">
+                                <strong>Taille :</strong> {{ company_data.company_size }}
+                            </div>
+                            <div class="company-info-item">
+                                <strong>Âge :</strong> {{ company_data.company_age }}
+                            </div>
+                            <div class="company-info-item">
+                                <strong>Chiffre d'affaires :</strong> {{ company_data.annual_revenue }}
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <div class="text-muted mb-2">Rapport généré le {{ analysis_date }}</div>
+                            <div class="badge bg-primary mb-2">Analyse IA-Solution</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Résumé de l'analyse -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary bg-gradient text-white py-3">
+                    <h5 class="card-title mb-0">Synthèse de l'Analyse</h5>
+                </div>
+                <div class="card-body p-4">
+                    {% if analysis.summary %}
+                        {% for paragraph in analysis.summary.split('\n\n') %}
+                            <p>{{ paragraph }}</p>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">Aucun résumé disponible.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Analyse SWOT -->
+    <div class="row mb-4">
+        <div class="col-12 mb-3">
+            <h2>Analyse SWOT</h2>
+        </div>
+        
+        <!-- Forces -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card swot-card shadow-sm border-success h-100">
+                <div class="card-header bg-success bg-gradient text-white py-3">
+                    <h5 class="card-title mb-0">Forces</h5>
+                </div>
+                <div class="card-body">
+                    {% if analysis.strengths %}
+                        <ul class="list-unstyled">
+                            {% for strength in analysis.strengths %}
+                                <li class="swot-item">
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    {{ strength }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Aucune force identifiée.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Faiblesses -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card swot-card shadow-sm border-danger h-100">
+                <div class="card-header bg-danger bg-gradient text-white py-3">
+                    <h5 class="card-title mb-0">Faiblesses</h5>
+                </div>
+                <div class="card-body">
+                    {% if analysis.weaknesses %}
+                        <ul class="list-unstyled">
+                            {% for weakness in analysis.weaknesses %}
+                                <li class="swot-item">
+                                    <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+                                    {{ weakness }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Aucune faiblesse identifiée.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Opportunités -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card swot-card shadow-sm border-info h-100">
+                <div class="card-header bg-info bg-gradient text-white py-3">
+                    <h5 class="card-title mb-0">Opportunités</h5>
+                </div>
+                <div class="card-body">
+                    {% if analysis.opportunities %}
+                        <ul class="list-unstyled">
+                            {% for opportunity in analysis.opportunities %}
+                                <li class="swot-item">
+                                    <i class="bi bi-lightbulb-fill text-info me-2"></i>
+                                    {{ opportunity }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Aucune opportunité identifiée.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Menaces -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card swot-card shadow-sm border-warning h-100">
+                <div class="card-header bg-warning bg-gradient text-dark py-3">
+                    <h5 class="card-title mb-0">Menaces</h5>
+                </div>
+                <div class="card-body">
+                    {% if analysis.threats %}
+                        <ul class="list-unstyled">
+                            {% for threat in analysis.threats %}
+                                <li class="swot-item">
+                                    <i class="bi bi-shield-exclamation text-warning me-2"></i>
+                                    {{ threat }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Aucune menace identifiée.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recommandations -->
+    <div class="row mb-5">
+        <div class="col-12 mb-3">
+            <h2>Recommandations Stratégiques</h2>
+        </div>
+        
+        {% if analysis.recommendations %}
+            {% for category, recommendations in analysis.recommendations.items() %}
+                {% if recommendations %}
+                    <div class="col-12 mb-4">
+                        <h3 class="h5 mb-3">{{ category }}</h3>
+                        <div class="row">
+                            {% for recommendation in recommendations %}
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="card recommendation-card shadow-sm">
+                                        {% if recommendation.priority %}
+                                            <span class="badge bg-{{ recommendation.priority_color or 'secondary' }} priority-badge">
+                                                Priorité {{ recommendation.priority }}
+                                            </span>
+                                        {% endif %}
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ recommendation.title }}</h5>
+                                            <p class="card-text">{{ recommendation.description }}</p>
+                                            {% if recommendation.impact %}
+                                                <div class="mt-3">
+                                                    <small class="text-muted">
+                                                        <strong>Impact potentiel :</strong> {{ recommendation.impact }}
+                                                    </small>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    Aucune recommandation spécifique n'a été générée. Veuillez compléter le formulaire avec plus de détails pour obtenir des recommandations personnalisées.
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Plan d'action -->
+    <div class="row mb-4">
+        <div class="col-12 mb-3">
+            <h2>Plan d'Action Proposé</h2>
+            <p class="text-muted">Voici les actions concrètes que nous recommandons pour votre entreprise, organisées par horizons temporels.</p>
+        </div>
+        
+        <div class="col-12">
+            {% if analysis.action_plan %}
+                {% for action in analysis.action_plan %}
+                    <div class="d-flex action-item">
+                        <div class="action-icon">
+                            <i class="bi bi-{{ action.icon|default('arrow-right') }}"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="mb-0">{{ action.title }}</h5>
+                                {% if action.timeframe %}
+                                    <span class="badge bg-secondary timeframe-badge">{{ action.timeframe }}</span>
+                                {% endif %}
+                            </div>
+                            <p class="mb-0">{{ action.description }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info">
+                    Aucun plan d'action n'a été généré. Veuillez compléter le formulaire avec plus de détails pour obtenir un plan d'action personnalisé.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Conclusion et disclaimer -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5>Note importante</h5>
+                    <p class="mb-0">
+                        Ce rapport a été généré automatiquement à partir des informations que vous avez fournies. 
+                        Les analyses et recommandations sont basées sur des modèles d'intelligence artificielle et ne remplacent pas les conseils de professionnels du conseil en stratégie. 
+                        Pour un accompagnement personnalisé, n'hésitez pas à contacter un consultant spécialisé.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Boutons d'action -->
+    <div class="row mt-4 no-print">
+        <div class="col-12 text-center">
+            <a href="{{ url_for('business.business_consultation') }}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Modifier les informations
+            </a>
+            <a href="javascript:window.print()" class="btn btn-outline-secondary ms-2">
+                <i class="bi bi-printer"></i> Imprimer ce rapport
+            </a>
+            <a href="{{ url_for('home') }}" class="btn btn-outline-secondary ms-2">
+                <i class="bi bi-house"></i> Retour à l'accueil
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

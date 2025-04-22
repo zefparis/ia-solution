@@ -1,0 +1,357 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ extension.name }} | {{ _('marketplace_extensions', 'Extensions API') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('marketplace.marketplace_home') }}">{{ _('marketplace_title', 'API Marketplace') }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('marketplace.list_extensions') }}">{{ _('marketplace_extensions', 'Extensions') }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ extension.name }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Header de l'extension -->
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2 text-center">
+                            {% if extension.icon_url %}
+                                <img src="{{ extension.icon_url }}" alt="{{ extension.name }}" class="img-fluid rounded" style="max-width: 120px; max-height: 120px;">
+                            {% else %}
+                                <div class="bg-light rounded p-4 d-inline-block">
+                                    <i class="fas fa-puzzle-piece fa-4x text-secondary"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-7">
+                            <h1 class="h3 mb-2">{{ extension.name }}</h1>
+                            <p class="text-muted mb-2">{{ _('marketplace_by', 'Par') }} <strong>{{ extension.developer.username if extension.developer else 'IA-Solution' }}</strong></p>
+                            <div class="mb-2">
+                                <span class="badge bg-secondary me-2">{{ extension.category }}</span>
+                                <span class="badge bg-info">{{ extension.extension_type }}</span>
+                                
+                                <span class="ms-3">
+                                    {% for i in range(5) %}
+                                        {% if i < extension.average_rating|int %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-muted"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <small class="text-muted ms-1">({{ reviews|length }})</small>
+                                </span>
+                            </div>
+                            <p class="mb-0">{{ extension.short_description }}</p>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <div class="mb-3">
+                                <span class="d-block mb-2">
+                                    {% if extension.price_type == 'free' %}
+                                        <span class="badge bg-success p-2">{{ _('marketplace_free', 'Gratuit') }}</span>
+                                    {% else %}
+                                        <span class="h5 mb-0">{{ extension.price }} {{ extension.currency }}</span>
+                                    {% endif %}
+                                </span>
+                                <span class="text-muted small">{{ _('marketplace_version', 'Version') }}: {{ versions[0].version_number if versions else '1.0.0' }}</span>
+                            </div>
+                            {% if is_installed %}
+                                <form action="{{ url_for('marketplace.uninstall_extension', slug=extension.slug) }}" method="post">
+                                    <button type="submit" class="btn btn-danger">{{ _('marketplace_uninstall', 'Désinstaller') }}</button>
+                                </form>
+                            {% else %}
+                                <form action="{{ url_for('marketplace.install_extension', slug=extension.slug) }}" method="post">
+                                    <button type="submit" class="btn btn-primary">{{ _('marketplace_install', 'Installer') }}</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Contenu principal -->
+        <div class="col-md-8">
+            <!-- Screenshots -->
+            {% if extension.get_screenshots() %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h5 class="h6 mb-0">{{ _('marketplace_screenshots', 'Captures d\'écran') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="screenshotCarousel" class="carousel slide" data-bs-ride="carousel">
+                            <div class="carousel-inner">
+                                {% for screenshot in extension.get_screenshots() %}
+                                    <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                        <img src="{{ screenshot }}" class="d-block w-100" alt="Screenshot {{ loop.index }}">
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#screenshotCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#screenshotCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Description -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="h6 mb-0">{{ _('marketplace_details', 'Détails') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="description">
+                        {{ extension.description|safe }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Avis -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="h6 mb-0">{{ _('marketplace_reviews', 'Avis') }} ({{ reviews|length }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if reviews %}
+                        <div class="mb-4">
+                            <div class="row align-items-center">
+                                <div class="col-md-3 text-center">
+                                    <div class="display-4">{{ extension.average_rating|round(1) }}</div>
+                                    <div class="mb-2">
+                                        {% for i in range(5) %}
+                                            {% if i < extension.average_rating|int %}
+                                                <i class="fas fa-star text-warning"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-muted"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <div class="text-muted small">{{ reviews|length }} {{ _('reviews', 'avis') }}</div>
+                                </div>
+                                <div class="col-md-9">
+                                    <!-- Distribution des notes -->
+                                    {% for rating in range(5, 0, -1) %}
+                                        {% set count = reviews|selectattr('rating', 'eq', rating)|list|length %}
+                                        {% set percentage = (count / reviews|length * 100)|int if reviews|length > 0 else 0 %}
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="text-muted me-2">{{ rating }} <i class="fas fa-star text-warning small"></i></div>
+                                            <div class="progress flex-grow-1" style="height: 8px;">
+                                                <div class="progress-bar bg-warning" role="progressbar" style="width: {{ percentage }}%" aria-valuenow="{{ percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                            <div class="text-muted ms-2 small">{{ percentage }}%</div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Liste des avis -->
+                        <div class="border-top pt-4">
+                            {% for review in reviews %}
+                                <div class="mb-4 pb-4 {% if not loop.last %}border-bottom{% endif %}">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div>
+                                            <strong>{{ review.user.username }}</strong>
+                                            <span class="text-muted small ms-2">{{ review.created_at.strftime('%d/%m/%Y') }}</span>
+                                        </div>
+                                        <div>
+                                            {% for i in range(5) %}
+                                                {% if i < review.rating %}
+                                                    <i class="fas fa-star text-warning small"></i>
+                                                {% else %}
+                                                    <i class="far fa-star text-muted small"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% if review.title %}
+                                        <h6>{{ review.title }}</h6>
+                                    {% endif %}
+                                    <p class="text-muted mb-0">{{ review.comment }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted">{{ _('marketplace_no_reviews', 'Aucun avis pour le moment. Soyez le premier à donner votre avis !') }}</p>
+                        </div>
+                    {% endif %}
+
+                    <!-- Formulaire d'avis -->
+                    {% if is_authenticated %}
+                        <div class="mt-4 pt-4 border-top">
+                            <h6>{{ _('marketplace_add_review', 'Ajouter un avis') }}</h6>
+                            <form action="{{ url_for('marketplace.submit_review', slug=extension.slug) }}" method="post">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ _('marketplace_your_rating', 'Votre note') }}</label>
+                                    <div class="rating">
+                                        {% for i in range(1, 6) %}
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="rating" id="rating{{ i }}" value="{{ i }}" required>
+                                                <label class="form-check-label" for="rating{{ i }}">{{ i }}</label>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">{{ _('marketplace_review_title', 'Titre de l\'avis') }}</label>
+                                    <input type="text" class="form-control" id="title" name="title">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="comment" class="form-label">{{ _('marketplace_review_comment', 'Commentaire') }}</label>
+                                    <textarea class="form-control" id="comment" name="comment" rows="3" required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">{{ _('marketplace_submit_review', 'Soumettre l\'avis') }}</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Informations -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="h6 mb-0">{{ _('information', 'Informations') }}</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>{{ _('marketplace_version', 'Version') }}</span>
+                            <span>{{ versions[0].version_number if versions else '1.0.0' }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>{{ _('marketplace_last_update', 'Dernière mise à jour') }}</span>
+                            <span>{{ extension.updated_at.strftime('%d/%m/%Y') }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>{{ _('marketplace_category', 'Catégorie') }}</span>
+                            <span class="badge bg-secondary">{{ extension.category }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>{{ _('marketplace_downloads', 'Téléchargements') }}</span>
+                            <span>{{ extension.downloads_count }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Documentation et Support -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="h6 mb-0">{{ _('marketplace_documentation', 'Documentation') }} & {{ _('marketplace_support', 'Support') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if extension.documentation_url %}
+                            <a href="{{ extension.documentation_url }}" target="_blank" class="btn btn-outline-primary">
+                                <i class="fas fa-book me-2"></i>{{ _('marketplace_view_documentation', 'Voir la documentation') }}
+                            </a>
+                        {% endif %}
+                        {% if extension.support_email %}
+                            <a href="mailto:{{ extension.support_email }}" class="btn btn-outline-primary">
+                                <i class="fas fa-envelope me-2"></i>{{ _('marketplace_contact_support', 'Contacter le support') }}
+                            </a>
+                        {% endif %}
+                        {% if extension.website_url %}
+                            <a href="{{ extension.website_url }}" target="_blank" class="btn btn-outline-primary">
+                                <i class="fas fa-globe me-2"></i>{{ _('marketplace_visit_website', 'Visiter le site web') }}
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Extensions similaires -->
+            {% if similar_extensions %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h5 class="h6 mb-0">{{ _('marketplace_similar_extensions', 'Extensions similaires') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            {% for ext in similar_extensions %}
+                                <a href="{{ url_for('marketplace.view_extension', slug=ext.slug) }}" class="list-group-item list-group-item-action px-0">
+                                    <div class="d-flex">
+                                        {% if ext.icon_url %}
+                                            <img src="{{ ext.icon_url }}" alt="{{ ext.name }}" class="me-3" style="width: 48px; height: 48px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="me-3 bg-light rounded d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                                <i class="fas fa-puzzle-piece text-secondary"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="mb-1">{{ ext.name }}</h6>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-2">
+                                                    {% for i in range(5) %}
+                                                        {% if i < ext.average_rating|int %}
+                                                            <i class="fas fa-star text-warning small"></i>
+                                                        {% else %}
+                                                            <i class="far fa-star text-muted small"></i>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                                <span class="small text-muted">
+                                                    {% if ext.price_type == 'free' %}
+                                                        {{ _('marketplace_free', 'Gratuit') }}
+                                                    {% else %}
+                                                        {{ ext.price }} {{ ext.currency }}
+                                                    {% endif %}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialisation du carousel
+        var carousel = new bootstrap.Carousel(document.getElementById('screenshotCarousel'), {
+            interval: 5000
+        })
+        
+        // Style pour le système de notation
+        const ratingInputs = document.querySelectorAll('.rating input');
+        ratingInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                ratingInputs.forEach(i => {
+                    const label = i.nextElementSibling;
+                    if (parseInt(i.value) <= parseInt(this.value)) {
+                        label.innerHTML = '<i class="fas fa-star text-warning"></i>';
+                    } else {
+                        label.innerHTML = '<i class="far fa-star text-muted"></i>';
+                    }
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

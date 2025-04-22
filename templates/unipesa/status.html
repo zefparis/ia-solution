@@ -1,0 +1,140 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ language.get_text('Statut du paiement') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white d-flex align-items-center gap-3">
+                    <img src="{{ url_for('static', filename='img/unipesa-logo.svg') }}" alt="UniPesa Logo" height="30">
+                    <h4 class="mb-0">{{ language.get_text('Statut du paiement') }}</h4>
+                </div>
+                <div class="card-body p-4">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="text-center my-4">
+                        {% if payment_status.get('status') == 'success' %}
+                            <div class="mb-4">
+                                <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+                            </div>
+                            <h3 class="mb-3 text-success">{{ language.get_text('Paiement réussi!') }}</h3>
+                            <p class="lead mb-4">{{ language.get_text('Votre paiement a été traité avec succès.') }}</p>
+                        {% elif payment_status.get('status') == 'pending' %}
+                            <div class="mb-4">
+                                <i class="bi bi-hourglass-split text-warning" style="font-size: 5rem;"></i>
+                            </div>
+                            <h3 class="mb-3 text-warning">{{ language.get_text('Paiement en attente') }}</h3>
+                            <p class="lead mb-4">{{ language.get_text('Veuillez confirmer le paiement sur votre téléphone mobile.') }}</p>
+                            <div class="alert alert-info mb-4">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    <strong>{{ language.get_text('Instructions:') }}</strong>
+                                </div>
+                                <ol class="mb-0 ps-3 text-start">
+                                    <li>{{ language.get_text('Vérifiez les notifications sur votre téléphone') }}</li>
+                                    <li>{{ language.get_text('Confirmez la demande de paiement') }}</li>
+                                    <li>{{ language.get_text('Entrez votre code PIN si demandé') }}</li>
+                                    <li>{{ language.get_text('Attendez la confirmation') }}</li>
+                                </ol>
+                            </div>
+                            <div class="d-flex justify-content-center mb-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">{{ language.get_text('Chargement...') }}</span>
+                                </div>
+                            </div>
+                            <p class="text-muted">{{ language.get_text('Cette page se rafraîchira automatiquement. Veuillez ne pas fermer cette fenêtre.') }}</p>
+                        {% else %}
+                            <div class="mb-4">
+                                <i class="bi bi-x-circle-fill text-danger" style="font-size: 5rem;"></i>
+                            </div>
+                            <h3 class="mb-3 text-danger">{{ language.get_text('Paiement échoué') }}</h3>
+                            <p class="lead mb-4">{{ language.get_text('Nous n\'avons pas pu traiter votre paiement.') }}</p>
+                            {% if payment_status.get('error') %}
+                                <div class="alert alert-danger mb-4">
+                                    <p class="mb-0"><strong>{{ language.get_text('Erreur:') }}</strong> {{ payment_status.get('error') }}</p>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+
+                        {% if transaction_id %}
+                            <div class="mb-4 text-start">
+                                <p class="mb-1"><strong>{{ language.get_text('ID de transaction:') }}</strong></p>
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" value="{{ transaction_id }}" id="transaction-id" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard()">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </div>
+                                <p class="text-muted small">{{ language.get_text('Conservez cet identifiant pour référence future.') }}</p>
+                            </div>
+                        {% endif %}
+
+                        <div class="d-grid gap-2 mt-4">
+                            {% if payment_status.get('status') == 'success' %}
+                                <a href="{{ url_for('unified_dashboard.dashboard_home') }}" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-speedometer2 me-2"></i>{{ language.get_text('Accéder au tableau de bord') }}
+                                </a>
+                                <a href="{{ url_for('subscription.plans') }}" class="btn btn-outline-success">
+                                    <i class="bi bi-check-circle me-2"></i>{{ language.get_text('Voir mon abonnement') }}
+                                </a>
+                            {% elif payment_status.get('status') == 'pending' %}
+                                <a href="{{ url_for('unipesa.payment_status', transaction_id=transaction_id) }}" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>{{ language.get_text('Rafraîchir') }}
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('unipesa.mobile_payment_page') }}" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-arrow-repeat me-2"></i>{{ language.get_text('Réessayer') }}
+                                </a>
+                                <a href="{{ url_for('subscription.plans') }}" class="btn btn-outline-primary">
+                                    <i class="bi bi-grid-3x3-gap me-2"></i>{{ language.get_text('Voir les autres plans') }}
+                                </a>
+                            {% endif %}
+                            <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-house me-2"></i>{{ language.get_text('Retour à l\'accueil') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function copyToClipboard() {
+        const transactionIdElement = document.getElementById('transaction-id');
+        transactionIdElement.select();
+        document.execCommand('copy');
+        
+        // Afficher une notification
+        const button = document.querySelector('button[onclick="copyToClipboard()"]');
+        const originalIcon = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-check"></i>';
+        button.classList.add('btn-success');
+        button.classList.remove('btn-outline-secondary');
+        
+        setTimeout(() => {
+            button.innerHTML = originalIcon;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-secondary');
+        }, 2000);
+    }
+    
+    // Mise à jour automatique pour les paiements en attente
+    {% if payment_status.get('status') == 'pending' %}
+    setTimeout(() => {
+        window.location.reload();
+    }, 10000); // Rafraîchir toutes les 10 secondes
+    {% endif %}
+</script>
+{% endblock %}

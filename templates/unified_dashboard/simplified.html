@@ -1,0 +1,160 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ language.get_text('dashboard.title') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">{{ language.get_text('dashboard.title') }}</h1>
+            <p class="text-muted">{{ language.get_text('dashboard.welcome') }} {{ username }}</p>
+        </div>
+    </div>
+
+    <!-- Cartes de statistiques principales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">{{ language.get_text('dashboard.balance') }}</h5>
+                    <h2 class="mb-2">{{ "%.2f"|format(balance) }} €</h2>
+                    <p class="card-text text-muted">{{ language.get_text('finance.dashboard.balance_desc') }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-success">{{ language.get_text('dashboard.income') }}</h5>
+                    <h2 class="mb-2">{{ "%.2f"|format(total_income) }} €</h2>
+                    <p class="card-text text-muted">{{ language.get_text('finance.dashboard.income_desc') }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">{{ language.get_text('dashboard.expenses') }}</h5>
+                    <h2 class="mb-2">{{ "%.2f"|format(total_expenses) }} €</h2>
+                    <p class="card-text text-muted">{{ language.get_text('finance.dashboard.expenses_desc') }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-info">{{ language.get_text('invoicing.invoices') }}</h5>
+                    <h2 class="mb-2">{{ "%.2f"|format(total_invoiced) }} €</h2>
+                    <p class="card-text text-muted">{{ language.get_text('invoicing.amount_invoiced') or 'Montant facturé cette année' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="row mb-4">
+        <div class="col-12 mb-3">
+            <h4>{{ language.get_text('dashboard.quick_actions') or 'Actions rapides' }}</h4>
+        </div>
+        
+        <!-- Finance & Accounting Section -->
+        <div class="col-12 mb-2">
+            <h5 class="text-muted">{{ language.get_text('finance.title') }}</h5>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <a href="{{ url_for('ocr', lang=lang) }}" class="text-decoration-none">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-camera fa-2x mb-3 text-primary"></i>
+                        <h5 class="card-title">{{ language.get_text('finance.dashboard.scan_document') }}</h5>
+                        <p class="card-text text-muted">{{ language.get_text('ocr.subtitle') }}</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <a href="{{ url_for('finance.add_transaction', lang=lang) }}" class="text-decoration-none">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-plus-circle fa-2x mb-3 text-success"></i>
+                        <h5 class="card-title">{{ language.get_text('finance.dashboard.add_transaction') }}</h5>
+                        <p class="card-text text-muted">{{ language.get_text('finance.add_transaction.description') }}</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <a href="{{ url_for('finance.financial_reports', lang=lang) }}" class="text-decoration-none">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-file-invoice-dollar fa-2x mb-3 text-info"></i>
+                        <h5 class="card-title">{{ language.get_text('finance.tax_report.generate') }}</h5>
+                        <p class="card-text text-muted">{{ language.get_text('finance.tax_report.description') }}</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <!-- Invoicing Section -->
+        <div class="col-12 mb-2 mt-3">
+            <h5 class="text-muted">{{ language.get_text('invoicing.title') }}</h5>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <a href="{{ url_for('invoicing.add_invoice', lang=lang) }}" class="text-decoration-none">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-file-invoice fa-2x mb-3 text-primary"></i>
+                        <h5 class="card-title">{{ language.get_text('invoicing.create_invoice') }}</h5>
+                        <p class="card-text text-muted">{{ language.get_text('invoicing.create_invoice_desc') }}</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <a href="{{ url_for('invoicing.add_quote', lang=lang) }}" class="text-decoration-none">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-file-signature fa-2x mb-3 text-success"></i>
+                        <h5 class="card-title">{{ language.get_text('invoicing.create_quote') }}</h5>
+                        <p class="card-text text-muted">{{ language.get_text('invoicing.create_quote_desc') }}</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <!-- Business & Assistance -->
+        <div class="col-12 mb-2 mt-3">
+            <h5 class="text-muted">{{ language.get_text('business.title') }}</h5>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <a href="{{ url_for('business.business_test', lang=lang) }}" class="text-decoration-none">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-chart-line fa-2x mb-3 text-danger"></i>
+                        <h5 class="card-title">{{ language.get_text('business.new_consultation') }}</h5>
+                        <p class="card-text text-muted">{{ language.get_text('business.description') }}</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <a href="{{ url_for('chat_page', lang=lang) }}" class="text-decoration-none">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-comment-dots fa-2x mb-3 text-warning"></i>
+                        <h5 class="card-title">{{ language.get_text('chat.title') }}</h5>
+                        <p class="card-text text-muted">{{ language.get_text('chat.description') }}</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

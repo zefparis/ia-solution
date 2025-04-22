@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirection...</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            text-align: center;
+            padding-top: 100px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        .loader {
+            border: 5px solid #333;
+            border-radius: 50%;
+            border-top: 5px solid #0078d7;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .message {
+            margin: 20px 0;
+        }
+        .app-name {
+            font-weight: bold;
+            color: #0078d7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Redirection en cours...</h1>
+        <div class="loader"></div>
+        <p class="message">Vous allez être redirigé vers <span class="app-name">Benji Assistant</span> dans un instant.</p>
+    </div>
+
+    <script>
+        // Rediriger vers la page principale après 1 seconde
+        setTimeout(function() {
+            window.location.href = "/";
+        }, 1000);
+    </script>
+</body>
+</html>

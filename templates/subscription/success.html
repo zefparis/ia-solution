@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+
+{% block title %}Abonnement réussi{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <div class="display-1 text-success mb-4">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h2 class="mb-4">Félicitations !</h2>
+                    <p class="lead mb-4">Votre abonnement a été activé avec succès !</p>
+                    
+                    {% if subscription %}
+                    <div class="alert alert-info mb-4">
+                        <h5 class="mb-3">Détails de votre abonnement</h5>
+                        <p><strong>Plan :</strong> {{ subscription.plan.display_name }}</p>
+                        <p><strong>Date de début :</strong> {{ subscription.start_date.strftime('%d/%m/%Y') }}</p>
+                        <p><strong>Date d'expiration :</strong> {{ subscription.end_date.strftime('%d/%m/%Y') }}</p>
+                        <p><strong>Renouvellement automatique :</strong> {% if subscription.auto_renew %}Activé{% else %}Désactivé{% endif %}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-4">
+                        <p>Vous pouvez maintenant profiter de toutes les fonctionnalités de notre service.</p>
+                        <p>Merci de votre confiance !</p>
+                    </div>
+                    
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{{ url_for('home') }}" class="btn btn-primary">
+                            <i class="fas fa-home me-2"></i>Retour à l'accueil
+                        </a>
+                        <a href="{{ url_for('subscription.index') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-cog me-2"></i>Gérer mon abonnement
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

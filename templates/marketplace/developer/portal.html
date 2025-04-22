@@ -1,0 +1,191 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('marketplace_developer_portal', 'Portail développeur') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('marketplace.marketplace_home') }}">{{ _('marketplace_title', 'API Marketplace') }}</a></li>
+                    <li class="breadcrumb-item active">{{ _('marketplace_developer_portal', 'Portail développeur') }}</li>
+                </ol>
+            </nav>
+            <h1 class="h2 mb-3">{{ _('marketplace_developer_portal', 'Portail développeur') }}</h1>
+            <p class="lead">{{ _('marketplace_developer_subtitle', 'Créez et publiez vos extensions et templates sur IA-Solution') }}</p>
+        </div>
+    </div>
+
+    <!-- Tableau de bord et ressources -->
+    <div class="row mb-5">
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-chart-line fa-4x text-primary"></i>
+                    </div>
+                    <h2 class="h4">{{ _('marketplace_developer_dashboard', 'Tableau de bord développeur') }}</h2>
+                    <p class="text-muted mb-4">{{ _('marketplace_developer_dashboard_desc', 'Consultez les statistiques et gérez vos extensions publiées.') }}</p>
+                    <a href="{{ url_for('marketplace.developer_dashboard') }}" class="btn btn-primary">
+                        {{ _('marketplace_developer_access_dashboard', 'Accéder au tableau de bord') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-book fa-4x text-primary"></i>
+                    </div>
+                    <h2 class="h4">{{ _('marketplace_developer_resources', 'Ressources développeur') }}</h2>
+                    <p class="text-muted mb-4">{{ _('marketplace_developer_resources_desc', 'Documentation, tutoriels et outils pour développer des extensions.') }}</p>
+                    <a href="#" class="btn btn-primary">
+                        {{ _('marketplace_developer_access_resources', 'Accéder aux ressources') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions principales -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-9">
+                            <h2 class="h4 mb-2">{{ _('marketplace_create_extension', 'Créer une nouvelle extension') }}</h2>
+                            <p class="mb-md-0">{{ _('marketplace_create_extension_desc', 'Publiez une extension personnalisée pour étendre les fonctionnalités d\'IA-Solution.') }}</p>
+                        </div>
+                        <div class="col-md-3 text-md-end mt-3 mt-md-0">
+                            <a href="{{ url_for('marketplace.create_extension') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>{{ _('marketplace_create_extension_button', 'Créer') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Extensions du développeur -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="h3 mb-4">{{ _('marketplace_your_extensions', 'Vos extensions') }}</h2>
+            
+            {% if extensions %}
+                <div class="row">
+                    {% for extension in extensions %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card shadow-sm h-100">
+                                {% if extension.cover_image %}
+                                    <img src="{{ extension.cover_image }}" class="card-img-top" alt="{{ extension.name }}" style="height: 140px; object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-light text-center py-4">
+                                        <i class="fas fa-puzzle-piece fa-3x text-secondary"></i>
+                                    </div>
+                                {% endif %}
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h5 class="card-title">{{ extension.name }}</h5>
+                                        <span class="badge {% if extension.is_published %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {% if extension.is_published %}
+                                                {{ _('marketplace_published', 'Publié') }}
+                                            {% else %}
+                                                {{ _('marketplace_draft', 'Brouillon') }}
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <p class="card-text text-muted small">{{ extension.short_description or extension.description|truncate(80) }}</p>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <span class="small text-muted">
+                                            <i class="fas fa-download me-1"></i> {{ extension.downloads_count or 0 }}
+                                        </span>
+                                        <a href="#" class="btn btn-sm btn-outline-primary">{{ _('marketplace_manage', 'Gérer') }}</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <div class="mb-3">
+                            <i class="fas fa-puzzle-piece fa-4x text-muted"></i>
+                        </div>
+                        <h3 class="h5 mb-3">{{ _('marketplace_no_extensions_yet', 'Vous n\'avez pas encore d\'extensions') }}</h3>
+                        <p class="text-muted mb-4">{{ _('marketplace_no_extensions_desc', 'Créez votre première extension pour le marketplace IA-Solution.') }}</p>
+                        <a href="{{ url_for('marketplace.create_extension') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>{{ _('marketplace_create_extension_button', 'Créer une extension') }}
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Guide étape par étape -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="h3 mb-4">{{ _('marketplace_developer_guide', 'Guide du développeur') }}</h2>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-3 mb-3 mb-md-0 text-center text-md-start">
+                            <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle mb-3" style="width: 48px; height: 48px;">
+                                <span class="h5 mb-0">1</span>
+                            </div>
+                            <h3 class="h5">{{ _('marketplace_step_plan', 'Planifier') }}</h3>
+                        </div>
+                        <div class="col-md-9">
+                            <p>{{ _('marketplace_step_plan_desc', 'Définissez clairement le problème que votre extension résout et les fonctionnalités qu\'elle apporte. Consultez la documentation pour comprendre l\'architecture et les APIs disponibles.') }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-3 mb-3 mb-md-0 text-center text-md-start">
+                            <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle mb-3" style="width: 48px; height: 48px;">
+                                <span class="h5 mb-0">2</span>
+                            </div>
+                            <h3 class="h5">{{ _('marketplace_step_develop', 'Développer') }}</h3>
+                        </div>
+                        <div class="col-md-9">
+                            <p>{{ _('marketplace_step_develop_desc', 'Utilisez notre SDK pour développer votre extension. Assurez-vous de suivre les bonnes pratiques de sécurité et de performance. Testez votre extension dans un environnement de développement.') }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-3 mb-3 mb-md-0 text-center text-md-start">
+                            <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle mb-3" style="width: 48px; height: 48px;">
+                                <span class="h5 mb-0">3</span>
+                            </div>
+                            <h3 class="h5">{{ _('marketplace_step_submit', 'Soumettre') }}</h3>
+                        </div>
+                        <div class="col-md-9">
+                            <p>{{ _('marketplace_step_submit_desc', 'Soumettez votre extension pour révision. Préparez une description claire, des captures d\'écran et une documentation complète pour aider les utilisateurs à comprendre votre extension.') }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3 mb-3 mb-md-0 text-center text-md-start">
+                            <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle mb-3" style="width: 48px; height: 48px;">
+                                <span class="h5 mb-0">4</span>
+                            </div>
+                            <h3 class="h5">{{ _('marketplace_step_maintain', 'Maintenir') }}</h3>
+                        </div>
+                        <div class="col-md-9">
+                            <p>{{ _('marketplace_step_maintain_desc', 'Une fois publiée, maintenez votre extension à jour, répondez aux avis et suggestions des utilisateurs, et publiez régulièrement des mises à jour pour améliorer la qualité et les fonctionnalités.') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

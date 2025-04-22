@@ -1,0 +1,186 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ language.get_text('finance.tax_report.title') or 'Rapport fiscal' }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('finance.finance_dashboard') }}">{{ language.get_text('nav.finance') }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('finance.financial_reports') }}">{{ language.get_text('finance.reports') }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ language.get_text('finance.tax_report.title') or 'Rapport fiscal' }}</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="display-5">{{ language.get_text('finance.tax_report.title') or 'Rapport fiscal' }}</h1>
+                <a href="{{ url_for('dashboard.dashboard_home') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-tachometer-alt me-2"></i>{{ language.get_text('dashboard.title') or 'Tableau de bord' }}
+                </a>
+            </div>
+            <p class="lead">{{ language.get_text('finance.tax_report.description') or 'Générez des rapports fiscaux détaillés pour vos déclarations.' }}</p>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0">
+                    <h5>{{ language.get_text('finance.tax_report.new') or 'Nouveau rapport' }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('finance.generate_tax_report') }}">
+                        <div class="mb-3">
+                            <label for="report_name" class="form-label">{{ language.get_text('finance.tax_report.name') or 'Nom du rapport' }}</label>
+                            <input type="text" class="form-control" id="report_name" name="report_name" required 
+                                   placeholder="{{ language.get_text('finance.tax_report.name_placeholder') or 'ex: Rapport fiscal Q1 2025' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label">{{ language.get_text('finance.tax_report.start_date') or 'Date de début' }}</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="end_date" class="form-label">{{ language.get_text('finance.tax_report.end_date') or 'Date de fin' }}</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" required>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="include_ai_analysis" name="include_ai_analysis" checked>
+                            <label class="form-check-label" for="include_ai_analysis">
+                                {{ language.get_text('finance.tax_report.include_ai') or 'Inclure l\'analyse IA' }}
+                            </label>
+                            <div class="form-text">
+                                {{ language.get_text('finance.tax_report.ai_description') or 'L\'analyse IA fournit des observations et des conseils personnalisés sur vos finances.' }}
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-file-invoice-dollar me-2"></i>{{ language.get_text('finance.tax_report.generate') or 'Générer le rapport' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5>{{ language.get_text('finance.tax_report.my_reports') or 'Mes rapports fiscaux' }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if reports %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{{ language.get_text('finance.tax_report.name_column') or 'Nom' }}</th>
+                                        <th>{{ language.get_text('finance.tax_report.period') or 'Période' }}</th>
+                                        <th>{{ language.get_text('finance.tax_report.income') or 'Revenus' }}</th>
+                                        <th>{{ language.get_text('finance.tax_report.expenses') or 'Dépenses' }}</th>
+                                        <th>{{ language.get_text('finance.tax_report.profit') or 'Bénéfice' }}</th>
+                                        <th>{{ language.get_text('finance.tax_report.actions') or 'Actions' }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for report in reports %}
+                                        <tr>
+                                            <td>{{ report.name or report.title }}</td>
+                                            <td>{{ report.start_date.strftime('%d/%m/%Y') }} - {{ report.end_date.strftime('%d/%m/%Y') }}</td>
+                                            <td class="text-end text-success">{{ report.total_income|round(2) }} €</td>
+                                            <td class="text-end text-danger">{{ report.total_expenses|round(2) }} €</td>
+                                            <td class="text-end {% if (report.profit or report.net_profit) >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                                {{ (report.profit or report.net_profit)|round(2) }} €
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('finance.view_tax_report', report_id=report.id) }}" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{{ url_for('finance.view_tax_report', report_id=report.id, format='pdf') }}" class="btn btn-sm btn-outline-secondary" title="{{ language.get_text('finance.tax_report.download_pdf') or 'Télécharger en PDF' }}">
+                                                    <i class="fas fa-file-pdf"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-invoice-dollar fa-3x text-muted mb-3"></i>
+                            <p>{{ language.get_text('finance.tax_report.no_reports') or 'Aucun rapport fiscal généré' }}</p>
+                            <p class="text-muted">{{ language.get_text('finance.tax_report.create_first') or 'Créez votre premier rapport fiscal pour faciliter votre déclaration d\'impôts.' }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5>{{ language.get_text('finance.tax_report.about') or 'À propos des rapports fiscaux' }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-calculator fa-2x text-primary"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5>{{ language.get_text('finance.tax_report.feature1_title') or 'Calculs automatiques' }}</h5>
+                                    <p class="text-muted">{{ language.get_text('finance.tax_report.feature1_desc') or 'Tous vos revenus et dépenses sont automatiquement calculés pour la période sélectionnée.' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-file-export fa-2x text-primary"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5>{{ language.get_text('finance.tax_report.feature2_title') or 'Exportation facile' }}</h5>
+                                    <p class="text-muted">{{ language.get_text('finance.tax_report.feature2_desc') or 'Exportez vos rapports au format PDF pour les partager avec votre comptable.' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-robot fa-2x text-primary"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5>{{ language.get_text('finance.tax_report.feature3_title') or 'Analyse IA' }}</h5>
+                                    <p class="text-muted">{{ language.get_text('finance.tax_report.feature3_desc') or 'Obtenez des conseils personnalisés grâce à notre analyse intelligente de vos données financières.' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Définir des dates par défaut pour le formulaire
+        const now = new Date();
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const endOfYear = new Date(now.getFullYear(), 11, 31);
+        
+        document.getElementById('start_date').valueAsDate = startOfYear;
+        document.getElementById('end_date').valueAsDate = endOfYear;
+        
+        // Pré-remplir le nom du rapport avec l'année en cours
+        document.getElementById('report_name').value = `Rapport fiscal ${now.getFullYear()}`;
+    });
+</script>
+{% endblock %}

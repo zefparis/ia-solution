@@ -1,0 +1,599 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('editorial_calendar') }}{% endblock %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+<style>
+  .fc-event {
+    cursor: pointer;
+  }
+  .calendar-stats-card {
+    border-left: 5px solid var(--bs-primary);
+  }
+  .social-stats {
+    border-left-color: var(--bs-info);
+  }
+  .blog-stats {
+    border-left-color: var(--bs-success);
+  }
+  .ad-stats {
+    border-left-color: var(--bs-warning);
+  }
+  .upcoming-content-card {
+    transition: all 0.2s ease;
+  }
+  .upcoming-content-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+  .content-email {
+    border-left: 3px solid var(--bs-primary);
+  }
+  .content-social {
+    border-left: 3px solid var(--bs-info);
+  }
+  .content-blog {
+    border-left: 3px solid var(--bs-success);
+  }
+  .content-ad {
+    border-left: 3px solid var(--bs-warning);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ _('editorial_calendar') }}</h1>
+    <div>
+      <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#generateCalendarModal">
+        <i class="bi bi-calendar-plus"></i> {{ _('generate_calendar') }}
+      </button>
+      <a href="{{ url_for('marketing.export_calendar') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-download"></i> {{ _('export') }}
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- Statistiques du calendrier -->
+    <div class="col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-transparent">
+          <h5 class="card-title mb-0">{{ _('calendar_statistics') }}</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3 p-3 bg-light rounded calendar-stats-card">
+            <div class="d-flex justify-content-between">
+              <div>{{ _('total_content_items') }}</div>
+              <div class="fw-bold">{{ stats.total_items }}</div>
+            </div>
+          </div>
+          <div class="mb-3 p-3 bg-light rounded calendar-stats-card">
+            <div class="d-flex justify-content-between">
+              <div>{{ _('email_campaigns') }}</div>
+              <div class="fw-bold">{{ stats.email_count }}</div>
+            </div>
+          </div>
+          <div class="mb-3 p-3 bg-light rounded calendar-stats-card social-stats">
+            <div class="d-flex justify-content-between">
+              <div>{{ _('social_posts') }}</div>
+              <div class="fw-bold">{{ stats.social_count }}</div>
+            </div>
+          </div>
+          <div class="mb-3 p-3 bg-light rounded calendar-stats-card blog-stats">
+            <div class="d-flex justify-content-between">
+              <div>{{ _('blog_articles') }}</div>
+              <div class="fw-bold">{{ stats.blog_count }}</div>
+            </div>
+          </div>
+          <div class="mb-3 p-3 bg-light rounded calendar-stats-card ad-stats">
+            <div class="d-flex justify-content-between">
+              <div>{{ _('ad_campaigns') }}</div>
+              <div class="fw-bold">{{ stats.ad_count }}</div>
+            </div>
+          </div>
+          <div class="mt-4">
+            <p><strong>{{ _('most_active_platform') }}:</strong> {{ stats.most_active_platform }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendrier -->
+    <div class="col-lg-9">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div id="calendar"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenus à venir -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-transparent">
+      <h5 class="card-title mb-0">{{ _('upcoming_content') }}</h5>
+    </div>
+    <div class="card-body pb-0">
+      <div class="row g-3">
+        {% if upcoming_contents %}
+          {% for content in upcoming_contents %}
+            <div class="col-md-6 col-lg-4">
+              <div class="card upcoming-content-card shadow-sm mb-4 content-{{ content.content_type }}">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="card-title mb-0">{{ content.title }}</h6>
+                    <span class="badge {% if content.content_type == 'email' %}bg-primary{% elif content.content_type == 'social' %}bg-info{% elif content.content_type == 'blog' %}bg-success{% elif content.content_type == 'ad' %}bg-warning{% else %}bg-secondary{% endif %}">
+                      {{ content.content_type }}
+                    </span>
+                  </div>
+                  <p class="card-text small mb-2">{{ content.description[:100] }}{% if content.description|length > 100 %}...{% endif %}</p>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                      <i class="bi bi-calendar-event"></i> {{ content.scheduled_date.strftime('%d/%m/%Y %H:%M') }}
+                    </small>
+                    <div>
+                      <button type="button" class="btn btn-sm btn-outline-primary" 
+                        onclick="openEventDetails({{ content.id }}, '{{ content.title|escape('js') }}', '{{ content.description|escape('js') }}', '{{ content.scheduled_date.strftime('%Y-%m-%d') }}', '{{ content.scheduled_date.strftime('%H:%M') }}', '{{ content.platform }}', '{{ content.content_type }}')">
+                        {{ _('view') }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="col-12">
+            <div class="alert alert-info">
+              {{ _('no_upcoming_content') }}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal pour générer le calendrier -->
+<div class="modal fade" id="generateCalendarModal" tabindex="-1" aria-labelledby="generateCalendarModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="generateCalendarModalLabel">{{ _('generate_editorial_calendar') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="generateCalendarForm" action="{{ url_for('marketing.generate_calendar') }}" method="post">
+        <div class="modal-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="business_sector" class="form-label">{{ _('business_sector') }}</label>
+              <input type="text" class="form-control" id="business_sector" name="business_sector" required>
+            </div>
+            <div class="col-md-6">
+              <label for="frequency" class="form-label">{{ _('post_frequency') }}</label>
+              <select class="form-select" id="frequency" name="frequency" required>
+                <option value="" selected disabled>{{ _('select_frequency') }}</option>
+                <option value="daily">{{ _('daily') }}</option>
+                <option value="weekly">{{ _('weekly') }}</option>
+                <option value="biweekly">{{ _('biweekly') }}</option>
+                <option value="monthly">{{ _('monthly') }}</option>
+                <option value="custom">{{ _('custom') }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="start_date" class="form-label">{{ _('start_date') }}</label>
+              <input type="date" class="form-control" id="start_date" name="start_date" required>
+            </div>
+            <div class="col-md-6">
+              <label for="end_date" class="form-label">{{ _('end_date') }}</label>
+              <input type="date" class="form-control" id="end_date" name="end_date" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ _('platforms') }}</label>
+            <div class="row">
+              <div class="col-md-3 mb-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="platforms" value="facebook" id="platform_facebook">
+                  <label class="form-check-label" for="platform_facebook">Facebook</label>
+                </div>
+              </div>
+              <div class="col-md-3 mb-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="platforms" value="instagram" id="platform_instagram">
+                  <label class="form-check-label" for="platform_instagram">Instagram</label>
+                </div>
+              </div>
+              <div class="col-md-3 mb-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="platforms" value="linkedin" id="platform_linkedin">
+                  <label class="form-check-label" for="platform_linkedin">LinkedIn</label>
+                </div>
+              </div>
+              <div class="col-md-3 mb-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="platforms" value="twitter" id="platform_twitter">
+                  <label class="form-check-label" for="platform_twitter">Twitter</label>
+                </div>
+              </div>
+              <div class="col-md-3 mb-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="platforms" value="blog" id="platform_blog">
+                  <label class="form-check-label" for="platform_blog">{{ _('blog') }}</label>
+                </div>
+              </div>
+              <div class="col-md-3 mb-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="platforms" value="email" id="platform_email">
+                  <label class="form-check-label" for="platform_email">{{ _('email') }}</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="topics" class="form-label">{{ _('key_topics') }}</label>
+            <input type="text" class="form-control" id="topics" name="topics" placeholder="{{ _('topics_placeholder') }}">
+            <div class="form-text">{{ _('topics_help_text') }}</div>
+          </div>
+          <div class="mb-3">
+            <label for="additional_notes" class="form-label">{{ _('additional_notes') }}</label>
+            <textarea class="form-control" id="additional_notes" name="additional_notes" rows="3" placeholder="{{ _('notes_placeholder') }}"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('cancel') }}</button>
+          <button type="submit" class="btn btn-primary" id="generateCalendarButton">
+            {{ _('generate') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal pour les détails de l'événement -->
+<div class="modal fade" id="eventDetailsModal" tabindex="-1" aria-labelledby="eventDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="eventDetailsModalLabel">{{ _('content_details') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="eventDetailsForm">
+        <div class="modal-body">
+          <input type="hidden" id="content_id" name="content_id">
+          <div class="mb-3">
+            <label for="event_title" class="form-label">{{ _('title') }}</label>
+            <input type="text" class="form-control" id="event_title" name="title" required>
+          </div>
+          <div class="mb-3">
+            <label for="event_description" class="form-label">{{ _('description') }}</label>
+            <textarea class="form-control" id="event_description" name="description" rows="3"></textarea>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="event_date" class="form-label">{{ _('date') }}</label>
+              <input type="date" class="form-control" id="event_date" name="date" required>
+            </div>
+            <div class="col-md-6">
+              <label for="event_time" class="form-label">{{ _('time') }}</label>
+              <input type="time" class="form-control" id="event_time" name="time" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="event_platform" class="form-label">{{ _('platform') }}</label>
+            <select class="form-select" id="event_platform" name="platform">
+              <option value="facebook">Facebook</option>
+              <option value="instagram">Instagram</option>
+              <option value="linkedin">LinkedIn</option>
+              <option value="twitter">Twitter</option>
+              <option value="blog">{{ _('blog') }}</option>
+              <option value="email">{{ _('email') }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger me-auto" id="deleteEventButton">{{ _('delete') }}</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('cancel') }}</button>
+          <button type="button" class="btn btn-primary" id="saveEventButton">{{ _('save') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal pour ajouter un événement -->
+<div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addEventModalLabel">{{ _('add_content') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="addEventForm">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="add_event_title" class="form-label">{{ _('title') }}</label>
+            <input type="text" class="form-control" id="add_event_title" name="title" required>
+          </div>
+          <div class="mb-3">
+            <label for="add_event_description" class="form-label">{{ _('description') }}</label>
+            <textarea class="form-control" id="add_event_description" name="description" rows="3"></textarea>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="add_event_date" class="form-label">{{ _('date') }}</label>
+              <input type="date" class="form-control" id="add_event_date" name="date" required>
+            </div>
+            <div class="col-md-6">
+              <label for="add_event_time" class="form-label">{{ _('time') }}</label>
+              <input type="time" class="form-control" id="add_event_time" name="time" value="12:00" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="add_event_platform" class="form-label">{{ _('platform') }}</label>
+            <select class="form-select" id="add_event_platform" name="platform">
+              <option value="facebook">Facebook</option>
+              <option value="instagram">Instagram</option>
+              <option value="linkedin">LinkedIn</option>
+              <option value="twitter">Twitter</option>
+              <option value="blog">{{ _('blog') }}</option>
+              <option value="email">{{ _('email') }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('cancel') }}</button>
+          <button type="button" class="btn btn-primary" id="saveAddEventButton">{{ _('add') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser le calendrier
+    const calendarEl = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,listWeek'
+      },
+      buttonText: {
+        today: '{{ _('today') }}',
+        month: '{{ _('month') }}',
+        week: '{{ _('week') }}',
+        list: '{{ _('list') }}'
+      },
+      events: '{{ url_for('marketing.calendar_events') }}',
+      eventClick: function(info) {
+        openEventDetails(
+          info.event.id,
+          info.event.title,
+          info.event.extendedProps.description || '',
+          info.event.start.toISOString().split('T')[0],
+          info.event.start.toISOString().split('T')[1].slice(0, 5),
+          info.event.extendedProps.platform || '',
+          info.event.extendedProps.content_type || 'other'
+        );
+      },
+      dateClick: function(info) {
+        // Ouvrir le modal pour ajouter un événement
+        document.getElementById('add_event_date').value = info.dateStr;
+        const addEventModal = new bootstrap.Modal(document.getElementById('addEventModal'));
+        addEventModal.show();
+      },
+      editable: true,
+      eventDrop: function(info) {
+        // Mettre à jour la date de l'événement après le déplacement
+        updateEvent(
+          info.event.id,
+          info.event.title,
+          info.event.extendedProps.description || '',
+          info.event.start.toISOString().split('T')[0],
+          info.event.start.toISOString().split('T')[1].slice(0, 5),
+          info.event.extendedProps.platform || ''
+        );
+      }
+    });
+    calendar.render();
+
+    // Fonction pour ouvrir les détails d'un événement
+    window.openEventDetails = function(id, title, description, date, time, platform, contentType) {
+      document.getElementById('content_id').value = id;
+      document.getElementById('event_title').value = title;
+      document.getElementById('event_description').value = description;
+      document.getElementById('event_date').value = date;
+      document.getElementById('event_time').value = time;
+      document.getElementById('event_platform').value = platform;
+      
+      const modal = new bootstrap.Modal(document.getElementById('eventDetailsModal'));
+      modal.show();
+    };
+
+    // Gestion de la génération du calendrier
+    document.getElementById('generateCalendarForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const form = this;
+      const generateBtn = document.getElementById('generateCalendarButton');
+      
+      // Convertir les topics en liste
+      const topicsInput = document.getElementById('topics');
+      const topicsList = topicsInput.value.split(',').map(topic => topic.trim()).filter(topic => topic !== '');
+      
+      // Désactiver le bouton et montrer un indicateur de chargement
+      generateBtn.disabled = true;
+      generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> {{ _('generating_calendar') }}';
+      
+      // Collecter les données du formulaire
+      const formData = new FormData(form);
+      
+      // Remplacer les topics avec la liste
+      formData.delete('topics');
+      topicsList.forEach(topic => {
+        formData.append('topics', topic);
+      });
+      
+      // Envoyer la requête
+      fetch(form.action, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '{{ _('generate') }}';
+        
+        if (data.success) {
+          // Fermer le modal et montrer un message de succès
+          bootstrap.Modal.getInstance(document.getElementById('generateCalendarModal')).hide();
+          alert(data.message);
+          // Recharger la page pour voir les nouveaux événements
+          location.reload();
+        } else {
+          // Afficher l'erreur
+          alert(data.error || '{{ _('error_occurred') }}');
+        }
+      })
+      .catch(error => {
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '{{ _('generate') }}';
+        alert('{{ _('calendar_generation_error') }}: ' + error);
+      });
+    });
+
+    // Gestion de la mise à jour d'un événement
+    document.getElementById('saveEventButton').addEventListener('click', function() {
+      const form = document.getElementById('eventDetailsForm');
+      const contentId = document.getElementById('content_id').value;
+      const title = document.getElementById('event_title').value;
+      const description = document.getElementById('event_description').value;
+      const date = document.getElementById('event_date').value;
+      const time = document.getElementById('event_time').value;
+      const platform = document.getElementById('event_platform').value;
+      
+      updateEvent(contentId, title, description, date, time, platform);
+    });
+    
+    function updateEvent(contentId, title, description, date, time, platform) {
+      const formData = new FormData();
+      formData.append('content_id', contentId);
+      formData.append('title', title);
+      formData.append('description', description);
+      formData.append('date', date);
+      formData.append('time', time);
+      formData.append('platform', platform);
+      
+      fetch('{{ url_for('marketing.update_calendar_event') }}', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          bootstrap.Modal.getInstance(document.getElementById('eventDetailsModal')).hide();
+          alert(data.message);
+          
+          // Mettre à jour le calendrier
+          calendar.refetchEvents();
+          // Recharger la page après un court délai pour mettre à jour les statistiques
+          setTimeout(() => location.reload(), 500);
+        } else {
+          alert(data.error || '{{ _('error_occurred') }}');
+        }
+      })
+      .catch(error => {
+        alert('{{ _('content_update_error') }}: ' + error);
+      });
+    }
+    
+    // Gestion de la suppression d'un événement
+    document.getElementById('deleteEventButton').addEventListener('click', function() {
+      if (confirm('{{ _('confirm_delete_content') }}')) {
+        const contentId = document.getElementById('content_id').value;
+        
+        fetch(`{{ url_for('marketing.delete_calendar_event') }}?id=${contentId}`, {
+          method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('eventDetailsModal')).hide();
+            alert(data.message);
+            
+            // Mettre à jour le calendrier
+            calendar.refetchEvents();
+            // Recharger la page après un court délai pour mettre à jour les statistiques
+            setTimeout(() => location.reload(), 500);
+          } else {
+            alert(data.error || '{{ _('error_occurred') }}');
+          }
+        })
+        .catch(error => {
+          alert('{{ _('content_deletion_error') }}: ' + error);
+        });
+      }
+    });
+    
+    // Gestion de l'ajout d'un événement
+    document.getElementById('saveAddEventButton').addEventListener('click', function() {
+      const title = document.getElementById('add_event_title').value;
+      const description = document.getElementById('add_event_description').value;
+      const date = document.getElementById('add_event_date').value;
+      const time = document.getElementById('add_event_time').value;
+      const platform = document.getElementById('add_event_platform').value;
+      
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('description', description);
+      formData.append('date', date);
+      formData.append('time', time);
+      formData.append('platform', platform);
+      
+      fetch('{{ url_for('marketing.add_calendar_event') }}', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          bootstrap.Modal.getInstance(document.getElementById('addEventModal')).hide();
+          alert(data.message);
+          
+          // Mettre à jour le calendrier
+          calendar.refetchEvents();
+          // Recharger la page après un court délai pour mettre à jour les statistiques
+          setTimeout(() => location.reload(), 500);
+        } else {
+          alert(data.error || '{{ _('error_occurred') }}');
+        }
+      })
+      .catch(error => {
+        alert('{{ _('content_addition_error') }}: ' + error);
+      });
+    });
+
+    // Initialisation du formulaire de génération du calendrier
+    document.getElementById('start_date').valueAsDate = new Date();
+    let endDate = new Date();
+    endDate.setDate(endDate.getDate() + 30);
+    document.getElementById('end_date').valueAsDate = endDate;
+
+    // Initialisation du secteur d'activité avec la valeur par défaut (si disponible)
+    if (localStorage.getItem('userBusinessSector')) {
+      document.getElementById('business_sector').value = localStorage.getItem('userBusinessSector');
+    }
+  });
+</script>
+{% endblock %}

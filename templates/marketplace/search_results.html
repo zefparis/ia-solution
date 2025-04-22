@@ -1,0 +1,144 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('marketplace_search_results', 'Résultats de recherche') }} - {{ query }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('marketplace.marketplace_home') }}">{{ _('marketplace_title', 'API Marketplace') }}</a></li>
+                    <li class="breadcrumb-item active">{{ _('marketplace_search_results', 'Résultats de recherche') }}</li>
+                </ol>
+            </nav>
+            <h1 class="h2 mb-3">{{ _('marketplace_search_results', 'Résultats de recherche') }}: "{{ query }}"</h1>
+        </div>
+    </div>
+
+    <!-- Section de recherche -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <form action="{{ url_for('marketplace.search') }}" method="get">
+                <div class="input-group">
+                    <input type="text" class="form-control" name="q" value="{{ query }}" placeholder="{{ _('marketplace_search_placeholder', 'Rechercher des extensions, API, templates...') }}">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Aucun résultat -->
+    {% if not extensions and not templates %}
+        <div class="row mb-5">
+            <div class="col-12 text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-search fa-4x text-muted"></i>
+                </div>
+                <h2 class="h4 mb-3">{{ _('marketplace_no_results', 'Aucun résultat trouvé.') }}</h2>
+                <p class="text-muted">{{ _('marketplace_try_different_filters', 'Essayez de modifier vos filtres de recherche.') }}</p>
+                <div class="mt-4">
+                    <a href="{{ url_for('marketplace.marketplace_home') }}" class="btn btn-primary">{{ _('marketplace_title', 'API Marketplace') }}</a>
+                    <a href="{{ url_for('marketplace.list_extensions') }}" class="btn btn-outline-primary ms-2">{{ _('marketplace_view_all_extensions', 'Voir toutes les extensions') }}</a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Résultats d'extensions -->
+    {% if extensions %}
+        <div class="row mb-5">
+            <div class="col-12">
+                <h2 class="h4 mb-3">{{ _('marketplace_extensions', 'Extensions API') }} ({{ extensions|length }})</h2>
+                <div class="row">
+                    {% for extension in extensions %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card shadow-sm h-100">
+                                {% if extension.cover_image %}
+                                    <img src="{{ extension.cover_image }}" class="card-img-top" alt="{{ extension.name }}" style="height: 140px; object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-light text-center py-4">
+                                        <i class="fas fa-puzzle-piece fa-3x text-secondary"></i>
+                                    </div>
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ extension.name }}</h5>
+                                    <p class="card-text small text-muted mb-2">{{ _('marketplace_by', 'Par') }} {{ extension.developer.username if extension.developer else 'IA-Solution' }}</p>
+                                    <p class="card-text text-muted small">{{ extension.short_description or extension.description|truncate(80) }}</p>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <span class="badge bg-secondary">{{ extension.category }}</span>
+                                        <div>
+                                            {% if extension.price_type == 'free' %}
+                                                <span class="badge bg-success me-2">{{ _('marketplace_free', 'Gratuit') }}</span>
+                                            {% endif %}
+                                            <a href="{{ url_for('marketplace.view_extension', slug=extension.slug) }}" class="btn btn-sm btn-primary">{{ _('marketplace_details', 'Détails') }}</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Résultats des templates d'automatisation -->
+    {% if templates %}
+        <div class="row mb-5">
+            <div class="col-12">
+                <h2 class="h4 mb-3">{{ _('marketplace_automation_templates', 'Templates d\'automatisation') }} ({{ templates|length }})</h2>
+                <div class="row">
+                    {% for template in templates %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h5 class="card-title">{{ template.name }}</h5>
+                                        <span class="badge {% if template.difficulty_level == 'beginner' %}bg-success{% elif template.difficulty_level == 'intermediate' %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {% if template.difficulty_level == 'beginner' %}
+                                                {{ _('marketplace_difficulty_beginner', 'Débutant') }}
+                                            {% elif template.difficulty_level == 'intermediate' %}
+                                                {{ _('marketplace_difficulty_intermediate', 'Intermédiaire') }}
+                                            {% else %}
+                                                {{ _('marketplace_difficulty_advanced', 'Avancé') }}
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <p class="card-text text-muted small mb-3">{{ template.description }}</p>
+                                    
+                                    <div class="d-flex mb-3">
+                                        <div class="me-3">
+                                            <i class="fas fa-tag text-muted me-1"></i>
+                                            <span class="small">{{ template.category|capitalize }}</span>
+                                        </div>
+                                        {% if template.estimated_time_minutes %}
+                                            <div>
+                                                <i class="fas fa-clock text-muted me-1"></i>
+                                                <span class="small">
+                                                    {% if template.estimated_time_minutes < 60 %}
+                                                        {{ template.estimated_time_minutes }} {{ _('marketplace_minutes', 'minutes') }}
+                                                    {% else %}
+                                                        {{ (template.estimated_time_minutes / 60)|int }} {{ _('marketplace_hours', 'heures') }}
+                                                    {% endif %}
+                                                </span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="small text-muted">{{ _('marketplace_by', 'Par') }} {{ template.extension.name }}</div>
+                                        <a href="{{ url_for('marketplace.view_automation_template', template_id=template.id) }}" class="btn btn-sm btn-outline-primary">{{ _('marketplace_details', 'Détails') }}</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

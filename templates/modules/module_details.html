@@ -1,0 +1,640 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ module.name }} - {{ _('Modules') }} - IA-Solution{% endblock %}
+
+{% block styles %}
+<style>
+    .module-header {
+        padding: 3rem 0;
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        color: white;
+        margin-bottom: 2rem;
+    }
+    .module-icon {
+        width: 72px;
+        height: 72px;
+        object-fit: contain;
+        background-color: white;
+        padding: 10px;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        margin-right: 1.5rem;
+    }
+    .module-rating {
+        color: #ffc107;
+    }
+    .module-price {
+        background: rgba(255,255,255,0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        margin-left: 1rem;
+    }
+    .version-badge {
+        background-color: #6c757d;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.8rem;
+    }
+    .module-info {
+        border-left: 3px solid #007bff;
+        padding-left: 1rem;
+    }
+    .nav-tabs .nav-link {
+        border: none;
+        border-bottom: 3px solid transparent;
+        border-radius: 0;
+        color: #495057;
+        font-weight: 500;
+    }
+    .nav-tabs .nav-link.active {
+        color: #007bff;
+        border-bottom: 3px solid #007bff;
+        background-color: transparent;
+    }
+    .review-card {
+        border-left: 3px solid #6c757d;
+    }
+    .review-card.review-5 {
+        border-left-color: #28a745;
+    }
+    .review-card.review-4 {
+        border-left-color: #7CB342;
+    }
+    .review-card.review-3 {
+        border-left-color: #FFC107;
+    }
+    .review-card.review-2 {
+        border-left-color: #FF9800;
+    }
+    .review-card.review-1 {
+        border-left-color: #dc3545;
+    }
+    .star-rating {
+        direction: rtl;
+        display: inline-block;
+    }
+    .star-rating input {
+        display: none;
+    }
+    .star-rating label {
+        color: #ddd;
+        font-size: 1.5rem;
+        padding: 0 0.1rem;
+        cursor: pointer;
+    }
+    .star-rating label:before {
+        content: '\2605';
+    }
+    .star-rating input:checked ~ label {
+        color: #ffc107;
+    }
+    .star-rating:not(:checked) label:hover,
+    .star-rating:not(:checked) label:hover ~ label {
+        color: #ffc107;
+    }
+    .similar-module-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .similar-module-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- En-tête du module -->
+<div class="module-header">
+    <div class="container">
+        <div class="d-flex align-items-center mb-3">
+            <a href="{{ url_for('modules.modules_marketplace') }}" class="text-white mr-3">
+                <i class="fas fa-arrow-left"></i> {{ _('Retour au marché') }}
+            </a>
+        </div>
+        <div class="d-flex align-items-center">
+            {% if module.icon %}
+            {% if 'http' in module.icon %}
+            <img src="{{ module.icon }}" alt="{{ module.name }}" class="module-icon">
+            {% else %}
+            <div class="module-icon d-flex align-items-center justify-content-center">
+                <i class="fas {{ module.icon }} fa-3x" style="color: {{ module.category.color or '#007bff' if module.category else '#007bff' }};"></i>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="module-icon d-flex align-items-center justify-content-center">
+                <i class="fas fa-cube fa-3x" style="color: #007bff;"></i>
+            </div>
+            {% endif %}
+            
+            <div>
+                <h1 class="mb-1">{{ module.name }}</h1>
+                <div class="d-flex align-items-center">
+                    <span class="badge badge-pill badge-light mr-2">v{{ module.version }}</span>
+                    {% if module.category %}
+                    <a href="{{ url_for('modules.modules_marketplace', category=module.category.id) }}" class="text-white">
+                        <i class="fas fa-folder mr-1"></i> {{ module.category.name }}
+                    </a>
+                    {% endif %}
+                    {% if module.is_official %}
+                    <span class="badge badge-info ml-2">
+                        <i class="fas fa-check-circle"></i> {{ _('Officiel') }}
+                    </span>
+                    {% endif %}
+                    {% if module.price %}
+                    <span class="module-price">{{ module.price }}{{ '€' if module.currency == 'EUR' else '$' }}</span>
+                    {% else %}
+                    <span class="module-price">{{ _('Gratuit') }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="mt-4 d-flex align-items-center">
+            <div class="mr-4">
+                <div class="module-rating mb-1">
+                    {% set avg_rating = module.average_rating|round|int %}
+                    {% for i in range(5) %}
+                        {% if i < avg_rating %}
+                        <i class="fas fa-star"></i>
+                        {% else %}
+                        <i class="far fa-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div>
+                    <span class="mr-2">{{ module.average_rating|round(1) }}/5</span>
+                    <span>({{ module.review_count }} {{ _('avis') }})</span>
+                </div>
+            </div>
+            <div class="mr-4">
+                <div class="mb-1">
+                    <i class="fas fa-download mr-1"></i> {{ _('Téléchargements') }}
+                </div>
+                <div>{{ module.download_count }}</div>
+            </div>
+            <div>
+                <div class="mb-1">
+                    <i class="fas fa-clock mr-1"></i> {{ _('Dernière mise à jour') }}
+                </div>
+                <div>{{ module.last_updated.strftime('%d/%m/%Y') if module.last_updated else module.created_at.strftime('%d/%m/%Y') }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    <div class="row">
+        <!-- Contenu principal -->
+        <div class="col-lg-8">
+            <!-- Navigation par onglets -->
+            <ul class="nav nav-tabs mb-4" id="moduleTab" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="details-tab" data-toggle="tab" href="#details" role="tab" aria-controls="details" aria-selected="true">
+                        {{ _('Description') }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="versions-tab" data-toggle="tab" href="#versions" role="tab" aria-controls="versions" aria-selected="false">
+                        {{ _('Versions') }} <span class="badge badge-pill badge-secondary">{{ versions|length }}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="reviews-tab" data-toggle="tab" href="#reviews" role="tab" aria-controls="reviews" aria-selected="false">
+                        {{ _('Avis') }} <span class="badge badge-pill badge-secondary">{{ reviews|length }}</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <!-- Contenu des onglets -->
+            <div class="tab-content" id="moduleTabContent">
+                <!-- Onglet Description -->
+                <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+                    {% if module.banner_image %}
+                    <img src="{{ module.banner_image }}" alt="{{ module.name }}" class="img-fluid rounded mb-4" style="width: 100%;">
+                    {% endif %}
+                    
+                    <h4 class="mb-3">{{ _('À propos de ce module') }}</h4>
+                    <div class="module-description mb-4">
+                        {{ module.description|safe }}
+                    </div>
+                    
+                    {% if module.requirements %}
+                    <div class="module-info mb-4">
+                        <h5 class="mb-2">{{ _('Prérequis') }}</h5>
+                        <p class="mb-0">{{ module.requirements }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if module.author or module.website %}
+                    <div class="module-info">
+                        <h5 class="mb-2">{{ _('Développeur') }}</h5>
+                        <p class="mb-0">
+                            {{ module.author }}
+                            {% if module.website %}
+                            - <a href="{{ module.website }}" target="_blank">{{ module.website }}</a>
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Onglet Versions -->
+                <div class="tab-pane fade" id="versions" role="tabpanel" aria-labelledby="versions-tab">
+                    <h4 class="mb-3">{{ _('Historique des versions') }}</h4>
+                    
+                    {% if versions %}
+                    <div class="list-group">
+                        {% for version in versions %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-1">
+                                    <span class="version-badge mr-2">v{{ version.version_number }}</span>
+                                    {% if version.is_latest %}
+                                    <span class="badge badge-success">{{ _('Dernière version') }}</span>
+                                    {% endif %}
+                                </h5>
+                                <small>{{ version.created_at.strftime('%d/%m/%Y') }}</small>
+                            </div>
+                            <p class="mb-1 mt-2">{{ version.release_notes }}</p>
+                            
+                            {% if is_installed and user_installation.version_id != version.id %}
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-outline-primary update-version-btn" data-module-id="{{ module.id }}" data-version-id="{{ version.id }}">
+                                    <i class="fas fa-sync-alt"></i> {{ _('Mettre à jour vers cette version') }}
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        {{ _('Aucun historique de version disponible.') }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Onglet Avis -->
+                <div class="tab-pane fade" id="reviews" role="tabpanel" aria-labelledby="reviews-tab">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="mb-0">{{ _('Avis des utilisateurs') }}</h4>
+                        
+                        {% if session.get('access_token') %}
+                        <button class="btn btn-primary" data-toggle="modal" data-target="#addReviewModal">
+                            <i class="fas fa-star mr-1"></i> {{ _('Laisser un avis') }}
+                        </button>
+                        {% else %}
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-sign-in-alt mr-1"></i> {{ _('Se connecter pour laisser un avis') }}
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    {% if reviews %}
+                    <div>
+                        {% for review in reviews %}
+                        <div class="card mb-3 review-card review-{{ review.rating }}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="card-title mb-1">{{ review.title or _('Avis') }}</h5>
+                                        <div class="module-rating mb-2">
+                                            {% for i in range(5) %}
+                                                {% if i < review.rating %}
+                                                <i class="fas fa-star"></i>
+                                                {% else %}
+                                                <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">{{ review.created_at.strftime('%d/%m/%Y') }}</small>
+                                </div>
+                                <p class="card-text">{{ review.comment }}</p>
+                                <div class="text-muted">
+                                    <small>{{ review.user.username or review.user.email }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info text-center py-4">
+                        <i class="fas fa-comments fa-3x mb-3"></i>
+                        <h5>{{ _('Aucun avis pour le moment') }}</h5>
+                        <p>{{ _('Soyez le premier à donner votre avis sur ce module !') }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Barre latérale -->
+        <div class="col-lg-4">
+            <!-- Action d'installation -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    {% if is_installed %}
+                    <div class="alert alert-success mb-3">
+                        <i class="fas fa-check-circle mr-2"></i> {{ _('Ce module est déjà installé') }}
+                    </div>
+                    <button id="uninstallBtn" class="btn btn-danger btn-block" data-module-id="{{ module.id }}">
+                        <i class="fas fa-trash-alt mr-1"></i> {{ _('Désinstaller') }}
+                    </button>
+                    {% else %}
+                    {% if session.get('access_token') %}
+                    <button id="installBtn" class="btn btn-primary btn-lg btn-block" data-module-id="{{ module.id }}">
+                        <i class="fas fa-download mr-1"></i> 
+                        {% if module.price %}
+                        {{ _('Acheter et installer') }} - {{ module.price }}{{ '€' if module.currency == 'EUR' else '$' }}
+                        {% else %}
+                        {{ _('Installer gratuitement') }}
+                        {% endif %}
+                    </button>
+                    {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg btn-block">
+                        <i class="fas fa-sign-in-alt mr-1"></i> {{ _('Se connecter pour installer') }}
+                    </a>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Informations supplémentaires -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    {{ _('Informations') }}
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>{{ _('Version') }}</span>
+                        <span class="font-weight-bold">{{ module.version }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>{{ _('Catégorie') }}</span>
+                        <span>{{ module.category.name if module.category else _('Non catégorisé') }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>{{ _('Date de publication') }}</span>
+                        <span>{{ module.publish_date.strftime('%d/%m/%Y') if module.publish_date else module.created_at.strftime('%d/%m/%Y') }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>{{ _('Dernière mise à jour') }}</span>
+                        <span>{{ module.last_updated.strftime('%d/%m/%Y') if module.last_updated else module.created_at.strftime('%d/%m/%Y') }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>{{ _('Téléchargements') }}</span>
+                        <span>{{ module.download_count }}</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Modules similaires -->
+            {% if similar_modules %}
+            <div class="card">
+                <div class="card-header">
+                    {{ _('Modules similaires') }}
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for similar in similar_modules %}
+                        <a href="{{ url_for('modules.module_details', module_id=similar.id) }}" class="list-group-item list-group-item-action similar-module-card">
+                            <div class="d-flex align-items-center">
+                                {% if similar.icon %}
+                                {% if 'http' in similar.icon %}
+                                <img src="{{ similar.icon }}" alt="{{ similar.name }}" class="mr-3" style="width: 32px; height: 32px; object-fit: contain;">
+                                {% else %}
+                                <i class="fas {{ similar.icon }} fa-lg mr-3" style="color: {{ similar.category.color or '#007bff' if similar.category else '#007bff' }};"></i>
+                                {% endif %}
+                                {% else %}
+                                <i class="fas fa-cube fa-lg mr-3" style="color: #007bff;"></i>
+                                {% endif %}
+                                
+                                <div>
+                                    <h6 class="mb-0">{{ similar.name }}</h6>
+                                    <div class="small">
+                                        <span class="module-rating">
+                                            {% set avg_rating = similar.average_rating|round|int %}
+                                            {% for i in range(5) %}
+                                                {% if i < avg_rating %}
+                                                <i class="fas fa-star fa-xs"></i>
+                                                {% else %}
+                                                <i class="far fa-star fa-xs"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </span>
+                                        {% if similar.price %}
+                                        <span class="ml-2">{{ similar.price }}{{ '€' if similar.currency == 'EUR' else '$' }}</span>
+                                        {% else %}
+                                        <span class="ml-2 text-success">{{ _('Gratuit') }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour ajouter un avis -->
+<div class="modal fade" id="addReviewModal" tabindex="-1" role="dialog" aria-labelledby="addReviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addReviewModalLabel">{{ _('Laisser un avis sur') }} {{ module.name }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="reviewForm" action="{{ url_for('modules.add_review', module_id=module.id) }}" method="POST">
+                <div class="modal-body">
+                    <div class="form-group text-center">
+                        <label>{{ _('Votre note') }}</label>
+                        <div class="star-rating mb-2">
+                            <input type="radio" id="star5" name="rating" value="5" required />
+                            <label for="star5"></label>
+                            <input type="radio" id="star4" name="rating" value="4" />
+                            <label for="star4"></label>
+                            <input type="radio" id="star3" name="rating" value="3" />
+                            <label for="star3"></label>
+                            <input type="radio" id="star2" name="rating" value="2" />
+                            <label for="star2"></label>
+                            <input type="radio" id="star1" name="rating" value="1" />
+                            <label for="star1"></label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reviewTitle">{{ _('Titre de votre avis') }}</label>
+                        <input type="text" class="form-control" id="reviewTitle" name="title" placeholder="{{ _('Résumez votre expérience en quelques mots') }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="reviewComment">{{ _('Votre commentaire') }}</label>
+                        <textarea class="form-control" id="reviewComment" name="comment" rows="4" placeholder="{{ _('Partagez votre expérience avec ce module...') }}"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ _('Annuler') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ _('Envoyer mon avis') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Installation du module
+    $('#installBtn').click(function() {
+        var moduleId = $(this).data('module-id');
+        var btn = $(this);
+        
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> {{ _("Installation...") }}');
+        
+        $.ajax({
+            url: '{{ url_for("modules.install_module", module_id=0) }}'.replace('0', moduleId),
+            method: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    // Rediriger vers la page "Mes modules" ou rafraîchir
+                    toastr.success(response.message);
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    toastr.error(response.message);
+                    btn.prop('disabled', false).html('<i class="fas fa-download mr-1"></i> {{ _("Installer") }}');
+                }
+            },
+            error: function(xhr) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    toastr.error(response.message || 'Erreur lors de l\'installation');
+                } catch (e) {
+                    toastr.error('Erreur lors de l\'installation');
+                }
+                btn.prop('disabled', false).html('<i class="fas fa-download mr-1"></i> {{ _("Installer") }}');
+            }
+        });
+    });
+    
+    // Désinstallation du module
+    $('#uninstallBtn').click(function() {
+        if (!confirm('{{ _("Êtes-vous sûr de vouloir désinstaller ce module ?") }}')) {
+            return;
+        }
+        
+        var moduleId = $(this).data('module-id');
+        var btn = $(this);
+        
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> {{ _("Désinstallation...") }}');
+        
+        $.ajax({
+            url: '{{ url_for("modules.uninstall_module", module_id=0) }}'.replace('0', moduleId),
+            method: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    toastr.error(response.message);
+                    btn.prop('disabled', false).html('<i class="fas fa-trash-alt mr-1"></i> {{ _("Désinstaller") }}');
+                }
+            },
+            error: function(xhr) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    toastr.error(response.message || 'Erreur lors de la désinstallation');
+                } catch (e) {
+                    toastr.error('Erreur lors de la désinstallation');
+                }
+                btn.prop('disabled', false).html('<i class="fas fa-trash-alt mr-1"></i> {{ _("Désinstaller") }}');
+            }
+        });
+    });
+    
+    // Mise à jour vers une version spécifique
+    $('.update-version-btn').click(function() {
+        if (!confirm('{{ _("Êtes-vous sûr de vouloir mettre à jour vers cette version ?") }}')) {
+            return;
+        }
+        
+        var moduleId = $(this).data('module-id');
+        var versionId = $(this).data('version-id');
+        var btn = $(this);
+        
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> {{ _("Mise à jour...") }}');
+        
+        $.ajax({
+            url: '{{ url_for("modules.update_module", module_id=0, version_id=0) }}'.replace('0', moduleId).replace('version_id=0', 'version_id=' + versionId),
+            method: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    toastr.error(response.message);
+                    btn.prop('disabled', false).html('<i class="fas fa-sync-alt mr-1"></i> {{ _("Mettre à jour vers cette version") }}');
+                }
+            },
+            error: function(xhr) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    toastr.error(response.message || 'Erreur lors de la mise à jour');
+                } catch (e) {
+                    toastr.error('Erreur lors de la mise à jour');
+                }
+                btn.prop('disabled', false).html('<i class="fas fa-sync-alt mr-1"></i> {{ _("Mettre à jour vers cette version") }}');
+            }
+        });
+    });
+    
+    // Soumission de l'avis
+    $('#reviewForm').submit(function(e) {
+        e.preventDefault();
+        
+        var form = $(this);
+        var submitBtn = form.find('button[type="submit"]');
+        
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> {{ _("Envoi...") }}');
+        
+        $.ajax({
+            url: form.attr('action'),
+            method: 'POST',
+            data: form.serialize(),
+            success: function(response) {
+                if (response.success) {
+                    $('#addReviewModal').modal('hide');
+                    toastr.success(response.message);
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    toastr.error(response.message);
+                    submitBtn.prop('disabled', false).html('{{ _("Envoyer mon avis") }}');
+                }
+            },
+            error: function(xhr) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    toastr.error(response.message || 'Erreur lors de l\'envoi de l\'avis');
+                } catch (e) {
+                    toastr.error('Erreur lors de l\'envoi de l\'avis');
+                }
+                submitBtn.prop('disabled', false).html('{{ _("Envoyer mon avis") }}');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

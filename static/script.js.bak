@@ -1,0 +1,583 @@
+document.addEventListener('DOMContentLoaded', () => {
+    // Elements
+    const chatContainer = document.getElementById('chatContainer');
+    const messageForm = document.getElementById('messageForm');
+    const userMessageInput = document.getElementById('userMessage');
+    const sendBtn = document.getElementById('sendBtn');
+    const voiceBtn = document.getElementById('voiceBtn');
+    const toggleSpeechBtn = document.getElementById('toggleSpeechBtn');
+    const voiceFeedback = document.getElementById('voiceFeedback');
+    const voiceStatus = document.getElementById('voiceStatus');
+    const typingIndicator = document.getElementById('typingIndicator');
+    const clearBtn = document.getElementById('clearBtn');
+    const emptyState = document.getElementById('emptyState');
+    const errorToast = document.getElementById('errorToast');
+    const errorToastBody = document.getElementById('errorToastBody');
+    const themeToggle = document.getElementById('themeToggle');
+    const darkIcon = document.getElementById('darkIcon');
+    const lightIcon = document.getElementById('lightIcon');
+    
+    // Speech recognition and synthesis
+    let recognition = null;
+    let synthesis = null;
+    
+    // Speech synthesis enabled state
+    let speechEnabled = localStorage.getItem('speechEnabled') === 'true';
+    
+    // Initialize voice recognition with Annyang as fallback
+    let annyangActive = false;
+    let usingAnnyang = false;
+    
+    function setupVoiceRecognition() {
+        try {
+            // Try native Web Speech API first
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+                
+                recognition = new SpeechRecognitionAPI();
+                recognition.continuous = false;
+                recognition.interimResults = true;
+                recognition.lang = 'fr-FR'; // Set language to French
+                
+                // Speech recognition event handlers
+                recognition.onstart = () => {
+                    voiceBtn.classList.add('active');
+                    voiceFeedback.classList.remove('d-none');
+                    voiceFeedback.classList.add('voice-active');
+                    voiceStatus.textContent = 'Parlez maintenant...';
+                };
+                
+                recognition.onresult = (event) => {
+                    try {
+                        const transcript = Array.from(event.results)
+                            .map(result => result[0])
+                            .map(result => result.transcript)
+                            .join('');
+                            
+                        userMessageInput.value = transcript;
+                        voiceStatus.textContent = `"${transcript}"`;
+                    } catch (err) {
+                        console.error('Error processing speech result:', err);
+                    }
+                };
+                
+                recognition.onerror = (event) => {
+                    console.error('Speech recognition error:', event);
+                    voiceBtn.classList.remove('active');
+                    voiceFeedback.classList.add('d-none');
+                    
+                    let errorMessage = 'Problème avec la reconnaissance vocale';
+                    if (event.error === 'not-allowed') {
+                        errorMessage = 'Accès au microphone refusé. Vérifiez les autorisations.';
+                    } else if (event.error === 'network') {
+                        errorMessage = 'Problème de réseau lors de la reconnaissance vocale.';
+                    }
+                    
+                    showError(errorMessage);
+                };
+                
+                recognition.onend = () => {
+                    voiceBtn.classList.remove('active');
+                    voiceFeedback.classList.remove('voice-active');
+                    
+                    // Submit message after brief delay if text was recognized
+                    if (userMessageInput.value.trim() !== '') {
+                        setTimeout(() => {
+                            voiceFeedback.classList.add('d-none');
+                            messageForm.dispatchEvent(new Event('submit'));
+                        }, 1000);
+                    } else {
+                        voiceFeedback.classList.add('d-none');
+                    }
+                };
+                
+                return true;
+            } else {
+                return false;
+            }
+        } catch (error) {
+            console.error('Failed to initialize Web Speech API:', error);
+            return false;
+        }
+    }
+    
+    // Try to set up native Web Speech API first
+    const nativeSpeechAvailable = setupVoiceRecognition();
+    
+    // If native speech is not available, try Annyang
+    if (!nativeSpeechAvailable && typeof annyang !== 'undefined') {
+        try {
+            // Check if annyang is supported
+            if (annyang) {
+                console.log('Using Annyang as fallback for speech recognition');
+                usingAnnyang = true;
+                
+                // Debug mode pour voir les résultats intermédiaires
+                annyang.debug(true);
+                
+                // Définir la langue en français
+                annyang.setLanguage('fr-FR');
+                
+                // Capturer tout ce qui est dit avec une commande générique
+                annyang.addCallback('result', function(phrases) {
+                    if (annyangActive) {
+                        console.log("Annyang a détecté :", phrases);
+                        if (phrases && phrases.length > 0) {
+                            const text = phrases[0]; // Prendre la première reconnaissance
+                            userMessageInput.value = text;
+                            voiceStatus.textContent = `"${text}"`;
+                            
+                            // Stop listening and submit after a brief delay
+                            if (text.trim() !== '') {
+                                setTimeout(() => {
+                                    // On arrête l'écoute
+                                    annyang.abort();
+                                    annyangActive = false;
+                                    
+                                    voiceBtn.classList.remove('active');
+                                    voiceFeedback.classList.remove('voice-active');
+                                    voiceFeedback.classList.add('d-none');
+                                    
+                                    // Soumet le formulaire
+                                    messageForm.dispatchEvent(new Event('submit'));
+                                }, 1000);
+                            }
+                        }
+                    }
+                });
+                
+                // Ajouter un gestionnaire pour les erreurs
+                annyang.addCallback('errorNetwork', function() {
+                    showError('Erreur réseau dans la reconnaissance vocale');
+                    voiceBtn.classList.remove('active');
+                    voiceFeedback.classList.add('d-none');
+                    annyangActive = false;
+                });
+                
+                annyang.addCallback('errorPermissionBlocked', function() {
+                    showError('L\'autorisation du microphone est bloquée');
+                    voiceBtn.classList.remove('active');
+                    voiceFeedback.classList.add('d-none');
+                    annyangActive = false;
+                });
+                
+                annyang.addCallback('errorPermissionDenied', function() {
+                    showError('L\'autorisation du microphone est refusée');
+                    voiceBtn.classList.remove('active');
+                    voiceFeedback.classList.add('d-none');
+                    annyangActive = false;
+                });
+                
+                // Ajouter une commande pour capturer tout ce qui est dit
+                annyang.addCommands({'*phrase': function(phrase) {
+                    console.log('Annyang a capturé la commande:', phrase);
+                }});
+            } else {
+                throw new Error('Annyang not supported');
+            }
+        } catch (error) {
+            console.error('Failed to initialize Annyang:', error);
+            usingAnnyang = false;
+            
+            // Disable the voice button if neither method works
+            voiceBtn.disabled = true;
+            voiceBtn.classList.add('btn-secondary');
+            voiceBtn.classList.remove('btn-outline-info');
+            voiceBtn.title = 'Reconnaissance vocale non disponible';
+        }
+    } else if (!nativeSpeechAvailable) {
+        // Disable the voice button if neither method works
+        console.error('No speech recognition available');
+        voiceBtn.disabled = true;
+        voiceBtn.classList.add('btn-secondary');
+        voiceBtn.classList.remove('btn-outline-info');
+        voiceBtn.title = 'Reconnaissance vocale non disponible';
+    }
+    
+    // Add voice button event listener
+    voiceBtn.addEventListener('click', toggleVoiceRecognition);
+    
+    // Initialize speech synthesis with fallback support
+    try {
+        if ('speechSynthesis' in window) {
+            synthesis = window.speechSynthesis;
+        } else {
+            throw new Error('Speech Synthesis API not supported');
+        }
+    } catch (error) {
+        console.error('Failed to initialize speech synthesis:', error);
+        // Disable the speech toggle button
+        toggleSpeechBtn.disabled = true;
+        toggleSpeechBtn.classList.add('btn-secondary');
+        toggleSpeechBtn.classList.remove('btn-outline-info');
+        toggleSpeechBtn.title = 'Synthèse vocale non disponible';
+    }
+    
+    // Bootstrap toast object
+    const toast = new bootstrap.Toast(errorToast);
+    
+    // Load chat history when page loads
+    loadChatHistory();
+    
+    // Event listeners
+    messageForm.addEventListener('submit', sendMessage);
+    clearBtn.addEventListener('click', clearHistory);
+    
+    // Theme toggle functionality
+    themeToggle.addEventListener('click', toggleTheme);
+    
+    // Toggle speech synthesis
+    toggleSpeechBtn.addEventListener('click', toggleSpeech);
+    
+    // Initialize speech toggle button state
+    updateSpeechToggleButton();
+    
+    // Initialize theme based on localStorage or system preference
+    initializeTheme();
+    
+    function initializeTheme() {
+        // Check if theme is saved in localStorage
+        const savedTheme = localStorage.getItem('theme');
+        
+        if (savedTheme) {
+            // Apply saved theme
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+            updateThemeIcons(savedTheme);
+        } else {
+            // Check for system preference
+            const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const initialTheme = prefersDarkMode ? 'dark' : 'light';
+            
+            document.documentElement.setAttribute('data-bs-theme', initialTheme);
+            updateThemeIcons(initialTheme);
+            localStorage.setItem('theme', initialTheme);
+        }
+    }
+    
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        // Apply new theme
+        document.documentElement.setAttribute('data-bs-theme', newTheme);
+        
+        // Update localStorage
+        localStorage.setItem('theme', newTheme);
+        
+        // Update icons
+        updateThemeIcons(newTheme);
+    }
+    
+    function updateThemeIcons(theme) {
+        if (theme === 'dark') {
+            darkIcon.classList.add('d-none');
+            lightIcon.classList.remove('d-none');
+        } else {
+            darkIcon.classList.remove('d-none');
+            lightIcon.classList.add('d-none');
+        }
+    }
+    
+    // Function to load chat history
+    async function loadChatHistory() {
+        try {
+            const response = await fetch('/history');
+            const history = await response.json();
+            
+            if (history && history.length > 0) {
+                emptyState.classList.add('d-none');
+                
+                history.forEach(message => {
+                    const messageElement = createMessageElement(
+                        message.role === 'user' ? 'user' : 'assistant',
+                        message.content
+                    );
+                    chatContainer.appendChild(messageElement);
+                });
+                
+                // Scroll to bottom of chat
+                scrollToBottom();
+            } else {
+                emptyState.classList.remove('d-none');
+            }
+        } catch (error) {
+            console.error('Error loading chat history:', error);
+            showError('Impossible de charger l\'historique de conversation. Veuillez rafraîchir la page.');
+        }
+    }
+    
+    // Function to send a message
+    async function sendMessage(event) {
+        event.preventDefault();
+        
+        const message = userMessageInput.value.trim();
+        if (!message) return;
+        
+        // Hide empty state if visible
+        emptyState.classList.add('d-none');
+        
+        // Add user message to chat
+        const userMessageElement = createMessageElement('user', message);
+        chatContainer.appendChild(userMessageElement);
+        
+        // Clear input
+        userMessageInput.value = '';
+        
+        // Scroll to bottom
+        scrollToBottom();
+        
+        // Show typing indicator
+        typingIndicator.classList.remove('d-none');
+        
+        // Disable send button
+        sendBtn.disabled = true;
+        
+        try {
+            // Send message to server
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message })
+            });
+            
+            const data = await response.json();
+            
+            // Hide typing indicator
+            typingIndicator.classList.add('d-none');
+            
+            // Re-enable send button
+            sendBtn.disabled = false;
+            
+            if (response.ok) {
+                // Add assistant's response to chat
+                const assistantMessageElement = createMessageElement('assistant', data.response);
+                chatContainer.appendChild(assistantMessageElement);
+                
+                // Scroll to bottom
+                scrollToBottom();
+            } else {
+                // Show error message
+                showError(data.error || 'Impossible d\'obtenir une réponse de Benji.');
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+            showError('Erreur réseau. Veuillez vérifier votre connexion et réessayer.');
+            
+            // Hide typing indicator
+            typingIndicator.classList.add('d-none');
+            
+            // Re-enable send button
+            sendBtn.disabled = false;
+        }
+    }
+    
+    // Function to create a message element
+    function createMessageElement(role, content) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${role}-message mb-3`;
+        
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        
+        const icon = document.createElement('i');
+        if (role === 'user') {
+            icon.className = 'fas fa-user';
+        } else {
+            icon.className = 'fas fa-robot';
+        }
+        
+        avatar.appendChild(icon);
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'content';
+        
+        // Add prefix for assistant messages
+        let displayContent = content;
+        if (role === 'assistant') {
+            displayContent = 'Benji : ' + content;
+        }
+        
+        // Process message content - Convert newlines to <br>
+        const formattedContent = displayContent.replace(/\n/g, '<br>');
+        contentDiv.innerHTML = formattedContent;
+        
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(contentDiv);
+        
+        return messageDiv;
+    }
+    
+    // Function to clear chat history
+    async function clearHistory() {
+        try {
+            const response = await fetch('/clear', {
+                method: 'POST'
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Clear chat container
+                chatContainer.innerHTML = '';
+                
+                // Show empty state
+                emptyState.classList.remove('d-none');
+                chatContainer.appendChild(emptyState);
+                
+                // If there's a reset message, display it as an assistant message
+                if (data.message) {
+                    // Hide empty state
+                    emptyState.classList.add('d-none');
+                    
+                    // Add assistant message with the reset confirmation
+                    const resetMessageElement = createMessageElement('assistant', data.message);
+                    chatContainer.appendChild(resetMessageElement);
+                }
+            } else {
+                showError('Impossible d\'effacer l\'historique. Veuillez réessayer.');
+            }
+        } catch (error) {
+            console.error('Error clearing history:', error);
+            showError('Erreur réseau. Veuillez vérifier votre connexion et réessayer.');
+        }
+    }
+    
+    // Function to scroll to bottom of chat
+    function scrollToBottom() {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    
+    // Function to show error toast
+    function showError(message) {
+        errorToastBody.textContent = message;
+        toast.show();
+    }
+    
+    // Toggle voice recognition
+    function toggleVoiceRecognition() {
+        // Show feedback UI
+        voiceFeedback.classList.remove('d-none');
+        voiceBtn.classList.add('active');
+        voiceFeedback.classList.add('voice-active');
+        
+        if (recognition && !usingAnnyang) {
+            // Use native Web Speech API
+            try {
+                if (voiceBtn.classList.contains('active')) {
+                    // Stop recognition if it's already active
+                    recognition.stop();
+                } else {
+                    // Start recognition
+                    recognition.start();
+                }
+            } catch (error) {
+                console.error('Speech recognition error:', error);
+                voiceBtn.classList.remove('active');
+                voiceFeedback.classList.add('d-none');
+                showError('Problème avec la reconnaissance vocale. Veuillez réessayer.');
+            }
+        } else if (usingAnnyang && annyang) {
+            // Use Annyang as fallback
+            try {
+                if (annyangActive) {
+                    // Stop recognition if it's already active
+                    annyang.abort();
+                    annyangActive = false;
+                    voiceBtn.classList.remove('active');
+                    voiceFeedback.classList.remove('voice-active');
+                    voiceFeedback.classList.add('d-none');
+                } else {
+                    // Start recognition
+                    voiceStatus.textContent = 'Parlez maintenant...';
+                    annyang.start({ autoRestart: false, continuous: false });
+                    annyangActive = true;
+                }
+            } catch (error) {
+                console.error('Annyang error:', error);
+                annyangActive = false;
+                voiceBtn.classList.remove('active');
+                voiceFeedback.classList.add('d-none');
+                showError('Problème avec la reconnaissance vocale. Veuillez réessayer.');
+            }
+        } else {
+            // No speech recognition available
+            voiceBtn.classList.remove('active');
+            voiceFeedback.classList.add('d-none');
+            showError('La reconnaissance vocale n\'est pas disponible sur votre navigateur.');
+        }
+    }
+    
+    // Function to toggle speech synthesis
+    function toggleSpeech() {
+        speechEnabled = !speechEnabled;
+        localStorage.setItem('speechEnabled', speechEnabled);
+        updateSpeechToggleButton();
+        
+        // Provide feedback
+        if (speechEnabled) {
+            speakText("La lecture vocale est maintenant activée.");
+        } else {
+            // Cancel any ongoing speech
+            if (synthesis) {
+                synthesis.cancel();
+            }
+        }
+    }
+    
+    // Function to update speech toggle button appearance
+    function updateSpeechToggleButton() {
+        if (speechEnabled) {
+            toggleSpeechBtn.classList.remove('btn-outline-info');
+            toggleSpeechBtn.classList.add('btn-info');
+            toggleSpeechBtn.title = 'Désactiver la lecture vocale des réponses';
+        } else {
+            toggleSpeechBtn.classList.remove('btn-info');
+            toggleSpeechBtn.classList.add('btn-outline-info');
+            toggleSpeechBtn.title = 'Activer la lecture vocale des réponses';
+        }
+    }
+    
+    // Function to speak text (text-to-speech)
+    function speakText(text) {
+        if (synthesis && speechEnabled) {
+            // Cancel any ongoing speech
+            synthesis.cancel();
+            
+            // Create utterance
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'fr-FR';
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            
+            // Speak
+            synthesis.speak(utterance);
+        }
+    }
+    
+    // Modify the sendMessage function to add text-to-speech response
+    const originalSendMessage = sendMessage;
+    sendMessage = async function(event) {
+        // Call the original sendMessage function
+        await originalSendMessage(event);
+        
+        // Get the last assistant message for speech
+        const assistantMessages = document.querySelectorAll('.assistant-message .content');
+        if (assistantMessages.length > 0 && speechEnabled) {
+            const lastMessage = assistantMessages[assistantMessages.length - 1];
+            
+            // Extract text content (removing the "Benji : " prefix)
+            let text = lastMessage.textContent;
+            if (text.startsWith('Benji : ')) {
+                text = text.substring(8);
+            }
+            
+            // Speak the response
+            speakText(text);
+        }
+    };
+    
+    // Focus on input field
+    userMessageInput.focus();
+});

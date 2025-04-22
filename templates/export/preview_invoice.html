@@ -1,0 +1,200 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ _('Aperçu Facture') }} {{ document.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- En-tête de la page -->
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-2">{{ _('Aperçu de la facture') }}</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('export.export_home') }}">{{ _('Exportation') }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('export.list_documents', doc_type='invoices') }}">{{ _('Factures') }}</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ _('Aperçu') }}</li>
+                    </ol>
+                </nav>
+            </div>
+            <div>
+                <a href="{{ url_for('export.list_documents', doc_type='invoices') }}" class="btn btn-outline-primary me-2">
+                    <i class="bi bi-arrow-left me-1"></i> {{ _('Retour') }}
+                </a>
+                <div class="dropdown d-inline-block">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-download me-1"></i> {{ _('Exporter') }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+                        {% for format_id, format in formats.items() %}
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('export.generate_export', doc_type='invoices', doc_id=document.id, format_type=format_id) }}">
+                                <i class="bi {{ format.icon }} me-2" style="color: {{ format.color }}"></i>
+                                {{ _('Exporter en') }} {{ format.name }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aperçu de la facture -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">{{ _('Facture') }} #{{ document.invoice_number }}</h5>
+            <span class="badge bg-primary">{{ document.status }}</span>
+        </div>
+        <div class="card-body">
+            <!-- Informations de la facture -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-2">{{ _('De') }}</h6>
+                    <p class="mb-0 fw-bold">{{ document.user.company_name or document.user.username }}</p>
+                    <p class="mb-0">{{ document.user.address or '' }}</p>
+                    <p class="mb-0">{{ document.user.email }}</p>
+                    {% if document.user.phone %}
+                    <p class="mb-0">{{ document.user.phone }}</p>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <h6 class="text-muted mb-2">{{ _('Pour') }}</h6>
+                    {% if document.customer %}
+                    <p class="mb-0 fw-bold">{{ document.customer.name }}</p>
+                    <p class="mb-0">{{ document.customer.address or '' }}</p>
+                    <p class="mb-0">{{ document.customer.email }}</p>
+                    {% if document.customer.phone %}
+                    <p class="mb-0">{{ document.customer.phone }}</p>
+                    {% endif %}
+                    {% else %}
+                    <p class="mb-0 fw-bold">{{ _('Client sans détails') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Dates et numéro de facture -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="mb-2">
+                        <span class="text-muted">{{ _('Date d\'émission') }}:</span>
+                        <span class="ms-2">{{ document.created_at.strftime('%d/%m/%Y') }}</span>
+                    </div>
+                    <div>
+                        <span class="text-muted">{{ _('Date d\'échéance') }}:</span>
+                        <span class="ms-2">{{ document.due_date.strftime('%d/%m/%Y') if document.due_date else _('Non spécifiée') }}</span>
+                    </div>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="mb-2">
+                        <span class="text-muted">{{ _('Numéro de facture') }}:</span>
+                        <span class="ms-2 fw-bold">{{ document.invoice_number }}</span>
+                    </div>
+                    {% if document.reference %}
+                    <div>
+                        <span class="text-muted">{{ _('Référence') }}:</span>
+                        <span class="ms-2">{{ document.reference }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tableau des éléments -->
+            <div class="table-responsive mb-4">
+                <table class="table table-striped">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">{{ _('Description') }}</th>
+                            <th scope="col" class="text-center">{{ _('Quantité') }}</th>
+                            <th scope="col" class="text-end">{{ _('Prix unitaire') }}</th>
+                            <th scope="col" class="text-center">{{ _('TVA') }}</th>
+                            <th scope="col" class="text-end">{{ _('Total HT') }}</th>
+                            <th scope="col" class="text-end">{{ _('Total TTC') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in document.items %}
+                        <tr>
+                            <td>{{ item.description }}</td>
+                            <td class="text-center">{{ item.quantity }}</td>
+                            <td class="text-end">{{ "%.2f"|format(item.unit_price) }} €</td>
+                            <td class="text-center">{{ item.tax_rate }}%</td>
+                            <td class="text-end">{{ "%.2f"|format(item.subtotal) }} €</td>
+                            <td class="text-end">{{ "%.2f"|format(item.total) }} €</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Totaux -->
+            <div class="row">
+                <div class="col-md-6"></div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>{{ _('Total HT') }}:</span>
+                                <span>{{ "%.2f"|format(document.subtotal) }} €</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>{{ _('Total TVA') }}:</span>
+                                <span>{{ "%.2f"|format(document.tax_amount) }} €</span>
+                            </div>
+                            <div class="d-flex justify-content-between fw-bold">
+                                <span>{{ _('Total TTC') }}:</span>
+                                <span>{{ "%.2f"|format(document.total) }} €</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            {% if document.notes %}
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h6 class="mb-2">{{ _('Notes') }}</h6>
+                    <p class="mb-0">{{ document.notes }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Options d'exportation -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h5 class="mb-3">{{ _('Options d\'exportation') }}</h5>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                {% for format_id, format in formats.items() %}
+                <div class="col">
+                    <div class="card h-100 border-1 {% if format_id == 'pdf' %}border-danger{% elif format_id == 'excel' %}border-success{% elif format_id == 'csv' %}border-primary{% elif format_id == 'json' %}border-warning{% endif %}">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi {{ format.icon }} me-2 fs-4" style="color: {{ format.color }}"></i>
+                                <h5 class="card-title mb-0">{{ format.name }}</h5>
+                            </div>
+                            <p class="card-text small">
+                                {% if format_id == 'pdf' %}
+                                    {{ _('Document PDF formaté pour l\'impression et le partage professionnel.') }}
+                                {% elif format_id == 'excel' %}
+                                    {{ _('Feuille de calcul Excel avec formules pour une analyse détaillée.') }}
+                                {% elif format_id == 'csv' %}
+                                    {{ _('Format CSV universel compatible avec tous les tableurs.') }}
+                                {% elif format_id == 'json' %}
+                                    {{ _('Format JSON pour l\'intégration avec des applications web.') }}
+                                {% endif %}
+                            </p>
+                            <a href="{{ url_for('export.generate_export', doc_type='invoices', doc_id=document.id, format_type=format_id) }}" class="btn btn-sm btn-outline-primary w-100">
+                                {{ _('Télécharger') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

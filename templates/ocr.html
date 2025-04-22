@@ -1,0 +1,276 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ language.get_text('ocr.title') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 mb-3">{{ language.get_text('ocr.heading') }}</h1>
+            <p class="lead">{{ language.get_text('ocr.subtitle') }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <ul class="nav nav-pills" id="inputMethodTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="camera-tab" data-bs-toggle="tab" data-bs-target="#camera-content" type="button" role="tab" aria-controls="camera-content" aria-selected="true">
+                                <i class="fas fa-camera me-2"></i> {{ language.get_text('ocr.camera') }}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-content" type="button" role="tab" aria-controls="upload-content" aria-selected="false">
+                                <i class="fas fa-upload me-2"></i> {{ language.get_text('ocr.upload_image') }}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="document-tab" data-bs-toggle="tab" data-bs-target="#document-content" type="button" role="tab" aria-controls="document-content" aria-selected="false">
+                                <i class="fas fa-file-alt me-2"></i> {{ language.get_text('ocr.document') }}
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="card-body">
+                    <div class="tab-content" id="inputMethodTabsContent">
+                        <!-- Camera Tab -->
+                        <div class="tab-pane fade show active" id="camera-content" role="tabpanel" aria-labelledby="camera-tab">
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <!-- Camera Feed with Modern UI -->
+                                    <div class="camera-container mb-3 position-relative">
+                                        <div class="bg-light rounded p-2 mb-3 d-flex justify-content-center align-items-center" style="min-height: 360px;">
+                                            <video id="cameraFeed" class="rounded shadow-sm" style="max-width: 100%; max-height: 340px; margin: 0 auto; display: block;" autoplay playsinline></video>
+                                            <div id="cameraPlaceholder" class="text-center" style="display: none;">
+                                                <i class="fas fa-camera fa-4x text-secondary mb-3"></i>
+                                                <p class="text-muted">Camera activating...</p>
+                                            </div>
+                                        </div>
+                                        <canvas id="canvas" style="display: none;"></canvas>
+                                        
+                                        <!-- Camera Controls -->
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <button id="captureBtn" class="btn btn-primary btn-lg">
+                                                <i class="fas fa-camera me-2"></i> {{ language.get_text('ocr.capture') }}
+                                            </button>
+                                            <button id="switchCameraBtn" class="btn btn-outline-secondary">
+                                                <i class="fas fa-sync-alt me-2"></i> {{ language.get_text('ocr.switch_camera') }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-5">
+                                    <!-- Captured Image Display with Modern UI -->
+                                    <div class="capture-preview bg-light rounded p-2 h-100 d-flex justify-content-center align-items-center" style="min-height: 360px;">
+                                        <div id="capturedImagePlaceholder" class="text-center">
+                                            <i class="fas fa-image fa-4x text-secondary mb-3"></i>
+                                            <p class="text-muted">{{ language.get_text('ocr.capture') }}</p>
+                                        </div>
+                                        <img id="capturedImage" class="img-fluid rounded shadow-sm" style="max-height: 340px; display: none;" alt="Captured image">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Upload Image Tab -->
+                        <div class="tab-pane fade" id="upload-content" role="tabpanel" aria-labelledby="upload-tab">
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <!-- Upload Area with Modern UI -->
+                                    <div class="upload-area mb-3">
+                                        <div class="bg-light rounded p-4 text-center mb-3">
+                                            <label for="imageUpload" class="form-label">
+                                                <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                                                <h5>{{ language.get_text('ocr.select_image') }}</h5>
+                                                <p class="text-muted small">{{ language.get_text('ocr.supported_formats') }}</p>
+                                                <div class="btn btn-outline-primary">
+                                                    <i class="fas fa-folder-open me-2"></i> Browse Files
+                                                </div>
+                                            </label>
+                                            <input class="d-none" type="file" id="imageUpload" accept="image/*">
+                                        </div>
+                                    </div>
+                                    
+                                    <button id="processUploadBtn" class="btn btn-primary btn-lg" disabled>
+                                        <i class="fas fa-magic me-2"></i> {{ language.get_text('ocr.extract_text') }}
+                                    </button>
+                                </div>
+                                
+                                <div class="col-md-5">
+                                    <!-- Uploaded Image Preview -->
+                                    <div class="upload-preview bg-light rounded p-2 h-100 d-flex justify-content-center align-items-center" style="min-height: 360px;">
+                                        <div id="uploadedImagePlaceholder" class="text-center">
+                                            <i class="fas fa-file-image fa-4x text-secondary mb-3"></i>
+                                            <p class="text-muted">{{ language.get_text('ocr.upload_image') }}</p>
+                                        </div>
+                                        <img id="uploadedImage" class="img-fluid rounded shadow-sm" style="max-height: 340px; display: none;" alt="Uploaded image">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Document Tab -->
+                        <div class="tab-pane fade" id="document-content" role="tabpanel" aria-labelledby="document-tab">
+                            <div class="row">
+                                <div class="col-12">
+                                    <!-- Document Upload with Modern UI -->
+                                    <div class="document-upload mb-4">
+                                        <div class="bg-light rounded p-4 text-center mb-3">
+                                            <label for="documentUpload" class="form-label">
+                                                <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
+                                                <h5>{{ language.get_text('ocr.select_document') }}</h5>
+                                                <p class="text-muted small">{{ language.get_text('ocr.supported_doc_formats') }}</p>
+                                                <div class="btn btn-outline-primary">
+                                                    <i class="fas fa-folder-open me-2"></i> Browse Files
+                                                </div>
+                                            </label>
+                                            <form id="documentForm" enctype="multipart/form-data">
+                                                <input class="d-none" type="file" id="documentUpload" name="document" accept=".pdf,.docx">
+                                            </form>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Document Preview Card -->
+                                    <div id="documentPreview" class="mb-4" style="display: none;">
+                                        <div class="card shadow-sm border-0">
+                                            <div class="card-body">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="doc-icon me-3 rounded-circle bg-light p-3 text-center">
+                                                        <i id="documentTypeIcon" class="fas fa-file-pdf fa-2x text-danger"></i>
+                                                    </div>
+                                                    <div class="doc-info flex-grow-1">
+                                                        <h5 id="documentName" class="mb-1">{{ language.get_text('ocr.doc_name') }}</h5>
+                                                        <p id="documentDetails" class="text-muted mb-0">{{ language.get_text('ocr.doc_details') }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex mb-3">
+                                        <button id="processDocumentBtn" class="btn btn-primary btn-lg me-2" disabled>
+                                            <i class="fas fa-file-alt me-2"></i> {{ language.get_text('ocr.extract_text') }}
+                                        </button>
+                                        <button id="clearDocumentBtn" class="btn btn-outline-secondary" style="display: none;">
+                                            <i class="fas fa-times me-2"></i> {{ language.get_text('ocr.clear') }}
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Document Metadata Card -->
+                                    <div id="documentMetadata" class="mt-4" style="display: none;">
+                                        <div class="card shadow-sm border-0">
+                                            <div class="card-header bg-transparent">
+                                                <h5 class="mb-0">{{ language.get_text('ocr.metadata') }}</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <table class="table table-sm">
+                                                    <tbody id="metadataTable">
+                                                        <!-- Metadata will be added here -->
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Processing Indicator -->
+                    <div id="processingIndicator" class="mt-4 mb-4 text-center p-4" style="display: none;">
+                        <div class="d-flex justify-content-center align-items-center">
+                            <div class="spinner-border text-primary me-3" role="status" style="width: 3rem; height: 3rem;">
+                                <span class="visually-hidden">{{ language.get_text('ocr.processing') }}</span>
+                            </div>
+                            <div class="text-start">
+                                <h5 class="mb-1">{{ language.get_text('ocr.processing') }}</h5>
+                                <p class="text-muted mb-0">This might take a few moments depending on the document complexity</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Extracted Text Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ language.get_text('ocr.extracted_text') }}</h5>
+                    <span id="confidenceIndicator" class="badge bg-info" style="display: none;">
+                        {{ language.get_text('ocr.confidence') }}: <span id="confidenceValue">0</span>%
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="form-floating mb-3">
+                        <input type="text" id="titleInput" class="form-control" placeholder="{{ language.get_text('ocr.title_placeholder') }}">
+                        <label for="titleInput">{{ language.get_text('ocr.title_placeholder') }}</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <textarea id="extractedText" class="form-control" style="height: 200px;" placeholder="{{ language.get_text('ocr.text_placeholder') }}"></textarea>
+                        <label for="extractedText">{{ language.get_text('ocr.text_placeholder') }}</label>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button id="saveTextBtn" class="btn btn-success" disabled>
+                            <i class="fas fa-save me-2"></i> {{ language.get_text('ocr.save') }}
+                        </button>
+                        <button id="sendToChatBtn" class="btn btn-info" disabled>
+                            <i class="fas fa-comment-dots me-2"></i> {{ language.get_text('ocr.send_to_chat') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Saved Texts Card -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">{{ language.get_text('ocr.saved_texts') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div id="savedTextsContainer">
+                        <p id="noSavedTexts" class="text-muted text-center py-4">
+                            <i class="fas fa-inbox fa-2x d-block mb-3"></i>
+                            {{ language.get_text('ocr.no_saved_texts') }}
+                        </p>
+                        <div id="savedTextsList" class="list-group list-group-flush"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">{{ language.get_text('ocr.confirm_delete') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                    <p>{{ language.get_text('ocr.delete_confirmation') }}</p>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    {{ language.get_text('ocr.cancel') }}
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash-alt me-2"></i> {{ language.get_text('ocr.delete') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
+<script src="/static/ocr.js"></script>
+{% endblock %}

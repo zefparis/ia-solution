@@ -1,0 +1,140 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ language.get_text('finance.transactions.title') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('finance.finance_dashboard') }}">{{ language.get_text('nav.finance') }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ language.get_text('finance.transactions.title') }}</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="display-5">{{ language.get_text('finance.transactions.my_transactions') }}</h1>
+                <div>
+                    <a href="{{ url_for('dashboard.dashboard_home') }}" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-tachometer-alt me-2"></i>{{ language.get_text('dashboard.title') or 'Tableau de bord' }}
+                    </a>
+                    <a href="{{ url_for('finance.add_transaction') }}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i>{{ language.get_text('finance.transactions.add_button') }}
+                    </a>
+                </div>
+            </div>
+            <p class="lead">{{ language.get_text('finance.transactions.description') }}</p>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5>{{ language.get_text('finance.transactions.list') }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if transactions.items %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{{ language.get_text('finance.transactions.date') }}</th>
+                                        <th>{{ language.get_text('finance.transactions.description') }}</th>
+                                        <th>{{ language.get_text('finance.transactions.category') }}</th>
+                                        <th>{{ language.get_text('finance.transactions.vendor') }}</th>
+                                        <th class="text-end">{{ language.get_text('finance.transactions.amount') }}</th>
+                                        <th class="text-end">{{ language.get_text('finance.transactions.tax') }}</th>
+                                        <th class="text-center">{{ language.get_text('finance.transactions.actions') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transaction in transactions.items %}
+                                        <tr>
+                                            <td>{{ transaction.transaction_date.strftime('%d/%m/%Y') }}</td>
+                                            <td>{{ transaction.description or language.get_text('finance.transactions.no_description') }}</td>
+                                            <td>
+                                                {% if transaction.category %}
+                                                    <span class="badge" style="background-color: {{ transaction.category.color }}">
+                                                        {{ transaction.category.name }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ language.get_text('finance.transactions.unclassified') }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if transaction.vendors.all()|length > 0 %}
+                                                    {{ transaction.vendors[0].name }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end {% if transaction.is_expense %}text-danger{% else %}text-success{% endif %}">
+                                                {{ transaction.is_expense and "-" or "+" }}{{ transaction.amount|round(2) }} €
+                                            </td>
+                                            <td class="text-end">
+                                                {% if transaction.tax_amount %}
+                                                    {{ transaction.tax_amount|round(2) }} €
+                                                    <small class="text-muted">({{ transaction.tax_rate }}%)</small>
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" title="{{ language.get_text('finance.transactions.view_details') }}">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" title="{{ language.get_text('finance.transactions.edit') }}">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" title="{{ language.get_text('finance.transactions.delete') }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        {% if transactions.pages > 1 %}
+                            <nav aria-label="Transaction pagination" class="mt-4">
+                                <ul class="pagination justify-content-center">
+                                    <li class="page-item {{ 'disabled' if transactions.page == 1 else '' }}">
+                                        <a class="page-link" href="{{ url_for('finance.view_transactions', page=transactions.page-1) if transactions.page > 1 else '#' }}" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                    
+                                    {% for page_num in range(1, transactions.pages + 1) %}
+                                        <li class="page-item {{ 'active' if page_num == transactions.page else '' }}">
+                                            <a class="page-link" href="{{ url_for('finance.view_transactions', page=page_num) }}">{{ page_num }}</a>
+                                        </li>
+                                    {% endfor %}
+                                    
+                                    <li class="page-item {{ 'disabled' if transactions.page == transactions.pages else '' }}">
+                                        <a class="page-link" href="{{ url_for('finance.view_transactions', page=transactions.page+1) if transactions.page < transactions.pages else '#' }}" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                            <p>{{ language.get_text('finance.transactions.no_transactions') }}</p>
+                            <a href="{{ url_for('finance.add_transaction') }}" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-2"></i>{{ language.get_text('finance.transactions.add_transaction') }}
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

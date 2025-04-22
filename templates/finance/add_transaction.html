@@ -1,0 +1,197 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ language.get_text('finance.add_transaction.title') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('finance.finance_dashboard') }}">{{ language.get_text('finance.breadcrumb.finance') }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('finance.view_transactions') }}">{{ language.get_text('finance.breadcrumb.transactions') }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ language.get_text('finance.breadcrumb.add') }}</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="display-5">{{ language.get_text('finance.add_transaction.title') }}</h1>
+                <a href="{{ url_for('dashboard.dashboard_home') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-tachometer-alt me-2"></i>{{ language.get_text('dashboard.title') or 'Tableau de bord' }}
+                </a>
+            </div>
+            <p class="lead">{{ language.get_text('finance.add_transaction.description') }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5>{{ language.get_text('finance.add_transaction.new_transaction') }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="amount" class="form-label">{{ language.get_text('finance.add_transaction.amount') }}</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="amount" name="amount" placeholder="0.00" required pattern="[0-9]+(\.[0-9]{1,2})?" autofocus>
+                                    <span class="input-group-text">€</span>
+                                </div>
+                                <div class="form-text">{{ language.get_text('finance.add_transaction.decimal_info') }}</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="transaction_date" class="form-label">{{ language.get_text('finance.add_transaction.transaction_date') }}</label>
+                                <input type="date" class="form-control" id="transaction_date" name="transaction_date" required>
+                            </div>
+                            
+                            <div class="col-md-12">
+                                <label for="description" class="form-label">{{ language.get_text('finance.add_transaction.description') }}</label>
+                                <input type="text" class="form-control" id="description" name="description" placeholder="{{ language.get_text('finance.add_transaction.description_placeholder') }}">
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="vendor_name" class="form-label">{{ language.get_text('finance.add_transaction.vendor') }}</label>
+                                <input type="text" class="form-control" id="vendor_name" name="vendor_name" list="vendors_list" placeholder="{{ language.get_text('finance.add_transaction.vendor_placeholder') }}">
+                                <datalist id="vendors_list">
+                                    {% for vendor in vendors %}
+                                        <option value="{{ vendor.name }}">
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="payment_method" class="form-label">{{ language.get_text('finance.add_transaction.payment_method') }}</label>
+                                <select class="form-select" id="payment_method" name="payment_method">
+                                    <option value="">{{ language.get_text('finance.add_transaction.select') }}</option>
+                                    <option value="carte">{{ language.get_text('finance.add_transaction.payment_methods.card') }}</option>
+                                    <option value="espèces">{{ language.get_text('finance.add_transaction.payment_methods.cash') }}</option>
+                                    <option value="virement">{{ language.get_text('finance.add_transaction.payment_methods.transfer') }}</option>
+                                    <option value="chèque">{{ language.get_text('finance.add_transaction.payment_methods.check') }}</option>
+                                    <option value="prélèvement">{{ language.get_text('finance.add_transaction.payment_methods.direct_debit') }}</option>
+                                    <option value="autre">{{ language.get_text('finance.add_transaction.payment_methods.other') }}</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="category_id" class="form-label">{{ language.get_text('finance.add_transaction.category') }}</label>
+                                <select class="form-select" id="category_id" name="category_id">
+                                    <option value="">{{ language.get_text('finance.add_transaction.select_category') }}</option>
+                                    <optgroup label="{{ language.get_text('finance.categories.expenses') }}">
+                                        {% for category in categories %}
+                                            {% if category.type == 'expense' %}
+                                                <option value="{{ category.id }}" data-type="expense">{{ category.name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </optgroup>
+                                    <optgroup label="{{ language.get_text('finance.categories.income') }}">
+                                        {% for category in categories %}
+                                            {% if category.type == 'income' %}
+                                                <option value="{{ category.id }}" data-type="income">{{ category.name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </optgroup>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">{{ language.get_text('finance.add_transaction.transaction_type') }}</label>
+                                <div class="d-flex">
+                                    <div class="form-check me-4">
+                                        <input class="form-check-input" type="radio" name="is_expense" id="is_expense_true" value="expense" checked>
+                                        <label class="form-check-label" for="is_expense_true">
+                                            {{ language.get_text('finance.add_transaction.expense') }}
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="is_expense" id="is_expense_false" value="income">
+                                        <label class="form-check-label" for="is_expense_false">
+                                            {{ language.get_text('finance.add_transaction.income') }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="tax_rate" class="form-label">{{ language.get_text('finance.add_transaction.tax_rate') }}</label>
+                                <input type="text" class="form-control" id="tax_rate" name="tax_rate" placeholder="{{ language.get_text('finance.add_transaction.tax_rate_placeholder') }}" pattern="[0-9]+(\.[0-9]{1,2})?">
+                                <div class="form-text">{{ language.get_text('finance.add_transaction.tax_rate_help') }}</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">{{ language.get_text('finance.add_transaction.calculated_tax') }}</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="calculated_tax" readonly disabled>
+                                    <span class="input-group-text">€</span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <hr>
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <a href="{{ url_for('finance.view_transactions') }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-2"></i>{{ language.get_text('common.cancel') }}
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>{{ language.get_text('common.save') }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser la date à aujourd'hui
+        const dateInput = document.getElementById('transaction_date');
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        dateInput.value = `${year}-${month}-${day}`;
+        
+        // Calculer automatiquement la TVA
+        const amountInput = document.getElementById('amount');
+        const taxRateInput = document.getElementById('tax_rate');
+        const calculatedTaxInput = document.getElementById('calculated_tax');
+        
+        function calculateTax() {
+            const amount = parseFloat(amountInput.value.replace(',', '.')) || 0;
+            const taxRate = parseFloat(taxRateInput.value.replace(',', '.')) || 0;
+            
+            if (amount && taxRate) {
+                const taxAmount = (amount * taxRate / 100).toFixed(2);
+                calculatedTaxInput.value = taxAmount;
+            } else {
+                calculatedTaxInput.value = '';
+            }
+        }
+        
+        amountInput.addEventListener('input', calculateTax);
+        taxRateInput.addEventListener('input', calculateTax);
+        
+        // Mettre à jour le type de transaction en fonction de la catégorie
+        const categorySelect = document.getElementById('category_id');
+        const expenseRadio = document.getElementById('is_expense_true');
+        const incomeRadio = document.getElementById('is_expense_false');
+        
+        categorySelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            
+            if (selectedOption.parentElement.label === '{{ language.get_text('finance.categories.income') }}') {
+                incomeRadio.checked = true;
+            } else if (selectedOption.parentElement.label === '{{ language.get_text('finance.categories.expenses') }}') {
+                expenseRadio.checked = true;
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,263 @@
+{% extends "layout.html" %}
+
+{% block title %}Informations Légales | IA-Solution{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4 border-bottom pb-3">Informations Légales</h1>
+    
+    <div class="row mb-3">
+        <div class="col-md-12 text-end">
+            <a href="{{ url_for('legal_info') }}" class="btn btn-sm btn-primary me-2">Français</a>
+            <a href="{{ url_for('legal_info_en') }}" class="btn btn-sm btn-outline-primary">English</a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-3 mb-4">
+            <div class="list-group" id="list-tab" role="tablist">
+                <a class="list-group-item list-group-item-action active" id="list-mentions-list" data-bs-toggle="list" href="#list-mentions" role="tab">Mentions Légales</a>
+                <a class="list-group-item list-group-item-action" id="list-privacy-list" data-bs-toggle="list" href="#list-privacy" role="tab">Politique de Confidentialité</a>
+                <a class="list-group-item list-group-item-action" id="list-terms-list" data-bs-toggle="list" href="#list-terms" role="tab">Conditions d'Utilisation</a>
+                <a class="list-group-item list-group-item-action" id="list-cookies-list" data-bs-toggle="list" href="#list-cookies" role="tab">Politique de Cookies</a>
+                <a class="list-group-item list-group-item-action" id="list-rgpd-list" data-bs-toggle="list" href="#list-rgpd" role="tab">Conformité RGPD</a>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="tab-content" id="nav-tabContent">
+                <div class="tab-pane fade show active" id="list-mentions" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="card-title mb-4">Mentions Légales</h2>
+                            
+                            <h4>Éditeur du site</h4>
+                            <p>Le site IA-Solution est édité par :</p>
+                            <p>IA-Solution SAS<br>
+                            123 Rue de l'Innovation<br>
+                            75001 Paris, France<br>
+                            Capital social : 50 000 €<br>
+                            SIRET : 123 456 789 00012<br>
+                            Email : info@ia-solution.eu</p>
+                            
+                            <h4 class="mt-4">Directeur de la publication</h4>
+                            <p>Benjamin Barrere, Président de IA-Solution SAS</p>
+                            
+                            <h4 class="mt-4">Hébergement</h4>
+                            <p>Ce site est hébergé par :<br>
+                            Replit Inc.<br>
+                            251 Little Falls Drive<br>
+                            Wilmington, Delaware 19808<br>
+                            États-Unis</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-pane fade" id="list-privacy" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="card-title mb-4">Politique de Confidentialité</h2>
+                            
+                            <p>Dernière mise à jour : {{ today }}</p>
+                            
+                            <h4>1. Collecte des données personnelles</h4>
+                            <p>Dans le cadre de son activité, IA-Solution est amenée à collecter des données personnelles vous concernant. Ces données sont traitées conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi Informatique et Libertés.</p>
+                            
+                            <p>Nous collectons les types de données suivants :</p>
+                            <ul>
+                                <li>Informations de contact (nom, prénom, adresse email, numéro de téléphone)</li>
+                                <li>Informations de connexion et d'utilisation de nos services</li>
+                                <li>Documents et données financières que vous nous soumettez pour analyse</li>
+                                <li>Préférences de communication et de personnalisation</li>
+                            </ul>
+                            
+                            <h4 class="mt-4">2. Utilisation des données</h4>
+                            <p>Vos données personnelles sont collectées et traitées pour les finalités suivantes :</p>
+                            <ul>
+                                <li>Fournir nos services d'analyse financière et de consultation business</li>
+                                <li>Personnaliser votre expérience et améliorer nos services</li>
+                                <li>Communiquer avec vous concernant votre compte et nos services</li>
+                                <li>Répondre à vos demandes et questions</li>
+                                <li>Se conformer aux obligations légales et réglementaires</li>
+                            </ul>
+                            
+                            <h4 class="mt-4">3. Conservation des données</h4>
+                            <p>Nous conservons vos données personnelles aussi longtemps que nécessaire pour atteindre les finalités pour lesquelles elles ont été collectées, sauf si une période de conservation plus longue est requise ou autorisée par la loi.</p>
+                            
+                            <h4 class="mt-4">4. Partage des données</h4>
+                            <p>Nous ne vendons pas vos données personnelles à des tiers. Nous pouvons partager vos données avec :</p>
+                            <ul>
+                                <li>Nos sous-traitants et prestataires de services qui nous aident à opérer notre plateforme</li>
+                                <li>Nos partenaires, avec votre consentement</li>
+                                <li>Les autorités publiques lorsque la loi nous y oblige</li>
+                            </ul>
+                            
+                            <h4 class="mt-4">5. Vos droits</h4>
+                            <p>Conformément à la réglementation applicable, vous disposez des droits suivants :</p>
+                            <ul>
+                                <li>Droit d'accès à vos données</li>
+                                <li>Droit de rectification de vos données</li>
+                                <li>Droit à l'effacement de vos données</li>
+                                <li>Droit à la limitation du traitement</li>
+                                <li>Droit à la portabilité de vos données</li>
+                                <li>Droit d'opposition au traitement</li>
+                                <li>Droit de définir des directives relatives au sort de vos données après votre décès</li>
+                            </ul>
+                            
+                            <h4 class="mt-4">6. Contact</h4>
+                            <p>Pour exercer vos droits ou pour toute question concernant le traitement de vos données personnelles, vous pouvez nous contacter à l'adresse suivante : rgpd@ia-solution.fr</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-pane fade" id="list-terms" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="card-title mb-4">Conditions d'Utilisation</h2>
+                            
+                            <p>Dernière mise à jour : {{ today }}</p>
+                            
+                            <h4>1. Acceptation des conditions</h4>
+                            <p>En accédant à notre site web et en utilisant nos services, vous acceptez d'être lié par les présentes conditions d'utilisation. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser notre site ou nos services.</p>
+                            
+                            <h4 class="mt-4">2. Description des services</h4>
+                            <p>IA-Solution propose une plateforme d'assistance intelligente pour la gestion financière et la consultation business. Nos services incluent :</p>
+                            <ul>
+                                <li>Analyse de documents financiers</li>
+                                <li>Classification automatique des dépenses et revenus</li>
+                                <li>Génération de rapports financiers</li>
+                                <li>Consultation business personnalisée</li>
+                                <li>Stockage sécurisé de documents</li>
+                            </ul>
+                            
+                            <h4 class="mt-4">3. Compte utilisateur</h4>
+                            <p>Pour accéder à certaines fonctionnalités, vous devez créer un compte. Vous êtes responsable de maintenir la confidentialité de vos identifiants et de toutes les activités qui se produisent sous votre compte.</p>
+                            
+                            <h4 class="mt-4">4. Abonnements et paiements</h4>
+                            <p>Certains de nos services sont disponibles sur abonnement payant. Les modalités de paiement, de renouvellement et d'annulation sont détaillées lors de la souscription.</p>
+                            <p>Tout abonnement souscrit est dû dans son intégralité et les paiements effectués ne sont pas remboursables, sauf disposition légale contraire.</p>
+                            
+                            <h4 class="mt-4">5. Propriété intellectuelle</h4>
+                            <p>Tout le contenu présent sur notre site (textes, images, logos, etc.) est protégé par les droits de propriété intellectuelle. Toute reproduction ou utilisation non autorisée est interdite.</p>
+                            
+                            <h4 class="mt-4">6. Limitation de responsabilité</h4>
+                            <p>Nos services sont fournis "tels quels" sans garantie d'aucune sorte. IA-Solution ne pourra être tenue responsable des dommages directs ou indirects résultant de l'utilisation ou de l'impossibilité d'utiliser nos services.</p>
+                            <p>Les analyses et recommandations fournies par notre plateforme sont à titre informatif et ne constituent pas un conseil professionnel. Nous vous recommandons de consulter un professionnel qualifié avant de prendre des décisions financières ou business importantes.</p>
+                            
+                            <h4 class="mt-4">7. Modification des conditions</h4>
+                            <p>Nous nous réservons le droit de modifier ces conditions à tout moment. Les modifications prennent effet dès leur publication sur notre site.</p>
+                            
+                            <h4 class="mt-4">8. Loi applicable</h4>
+                            <p>Les présentes conditions sont régies par le droit français. Tout litige relatif à leur interprétation ou leur exécution relève des tribunaux français.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-pane fade" id="list-cookies" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="card-title mb-4">Politique de Cookies</h2>
+                            
+                            <p>Dernière mise à jour : {{ today }}</p>
+                            
+                            <h4>1. Qu'est-ce qu'un cookie ?</h4>
+                            <p>Un cookie est un petit fichier texte déposé sur votre terminal (ordinateur, tablette ou mobile) lors de votre visite sur notre site. Il nous permet de stocker des informations relatives à votre navigation et de vous proposer des services adaptés à vos préférences.</p>
+                            
+                            <h4 class="mt-4">2. Types de cookies utilisés</h4>
+                            <p>Notre site utilise différents types de cookies :</p>
+                            <ul>
+                                <li><strong>Cookies essentiels</strong> : nécessaires au fonctionnement du site</li>
+                                <li><strong>Cookies fonctionnels</strong> : permettent de mémoriser vos préférences et choix</li>
+                                <li><strong>Cookies analytiques</strong> : permettent d'analyser l'utilisation du site pour l'améliorer</li>
+                                <li><strong>Cookies de performance</strong> : mesurent les performances du site</li>
+                                <li><strong>Cookies publicitaires</strong> : permettent d'afficher des publicités pertinentes</li>
+                            </ul>
+                            
+                            <h4 class="mt-4">3. Durée de conservation des cookies</h4>
+                            <p>La durée de vie des cookies varie selon leur type :</p>
+                            <ul>
+                                <li>Les cookies de session sont temporaires et expirent lorsque vous fermez votre navigateur</li>
+                                <li>Les cookies persistants restent sur votre terminal jusqu'à leur expiration ou jusqu'à ce que vous les supprimiez</li>
+                            </ul>
+                            
+                            <h4 class="mt-4">4. Gestion des cookies</h4>
+                            <p>Vous pouvez à tout moment choisir de désactiver ces cookies. Votre navigateur peut également être paramétré pour vous signaler les cookies qui sont déposés dans votre terminal et vous demander de les accepter ou non.</p>
+                            
+                            <p>Pour gérer les cookies, vous pouvez configurer votre navigateur :</p>
+                            <ul>
+                                <li>Pour <strong>Chrome</strong> : <a href="https://support.google.com/chrome/answer/95647" target="_blank">https://support.google.com/chrome/answer/95647</a></li>
+                                <li>Pour <strong>Firefox</strong> : <a href="https://support.mozilla.org/fr/kb/cookies-informations-sites-enregistrent" target="_blank">https://support.mozilla.org/fr/kb/cookies-informations-sites-enregistrent</a></li>
+                                <li>Pour <strong>Safari</strong> : <a href="https://support.apple.com/fr-fr/guide/safari/sfri11471/mac" target="_blank">https://support.apple.com/fr-fr/guide/safari/sfri11471/mac</a></li>
+                                <li>Pour <strong>Edge</strong> : <a href="https://support.microsoft.com/fr-fr/microsoft-edge/supprimer-les-cookies-dans-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09" target="_blank">https://support.microsoft.com/fr-fr/microsoft-edge/</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-pane fade" id="list-rgpd" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="card-title mb-4">Conformité RGPD</h2>
+                            
+                            <p>IA-Solution accorde une grande importance à la protection de vos données personnelles et s'engage à respecter le Règlement Général sur la Protection des Données (RGPD).</p>
+                            
+                            <h4>1. Délégué à la Protection des Données</h4>
+                            <p>Nous avons désigné un Délégué à la Protection des Données (DPO) que vous pouvez contacter pour toute question relative à la protection de vos données personnelles :</p>
+                            <p>Email : dpo@ia-solution.fr<br>
+                            Adresse : IA-Solution - DPO, 123 Rue de l'Innovation, 75001 Paris, France</p>
+                            
+                            <h4 class="mt-4">2. Base légale des traitements</h4>
+                            <p>Nous traitons vos données sur les bases légales suivantes :</p>
+                            <ul>
+                                <li>L'exécution du contrat qui nous lie</li>
+                                <li>Votre consentement explicite</li>
+                                <li>Notre intérêt légitime à développer et améliorer nos services</li>
+                                <li>Le respect de nos obligations légales</li>
+                            </ul>
+                            
+                            <h4 class="mt-4">3. Mesures de sécurité</h4>
+                            <p>Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos données personnelles, notamment :</p>
+                            <ul>
+                                <li>Chiffrement des données sensibles</li>
+                                <li>Authentification à deux facteurs</li>
+                                <li>Contrôles d'accès stricts</li>
+                                <li>Audits de sécurité réguliers</li>
+                                <li>Formation de notre personnel aux bonnes pratiques en matière de protection des données</li>
+                            </ul>
+                            
+                            <h4 class="mt-4">4. Transferts internationaux de données</h4>
+                            <p>Si nous transférons vos données en dehors de l'Union européenne, nous nous assurons qu'un niveau de protection adéquat est garanti, soit par une décision d'adéquation de la Commission européenne, soit par des garanties appropriées comme les clauses contractuelles types.</p>
+                            
+                            <h4 class="mt-4">5. Analyse d'impact</h4>
+                            <p>Pour les traitements susceptibles d'engendrer un risque élevé pour vos droits et libertés, nous effectuons une analyse d'impact relative à la protection des données (AIPD).</p>
+                            
+                            <h4 class="mt-4">6. Notification des violations</h4>
+                            <p>En cas de violation de données susceptible d'engendrer un risque pour vos droits et libertés, nous nous engageons à en notifier la CNIL dans les 72 heures et à vous en informer dans les meilleurs délais.</p>
+                            
+                            <h4 class="mt-4">7. Exercice de vos droits</h4>
+                            <p>Pour exercer vos droits (accès, rectification, effacement, limitation, portabilité, opposition), vous pouvez nous adresser une demande à rgpd@ia-solution.fr ou par courrier à l'adresse suivante : IA-Solution - Service RGPD, 123 Rue de l'Innovation, 75001 Paris, France.</p>
+                            <p>Nous nous engageons à vous répondre dans un délai d'un mois à compter de la réception de votre demande.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Activer les onglets Bootstrap
+    document.addEventListener('DOMContentLoaded', function() {
+        const triggerTabList = document.querySelectorAll('#list-tab a');
+        triggerTabList.forEach(function(triggerEl) {
+            const tabTrigger = new bootstrap.Tab(triggerEl);
+            triggerEl.addEventListener('click', function(event) {
+                event.preventDefault();
+                tabTrigger.show();
+            });
+        });
+    });
+</script>
+{% endblock %}

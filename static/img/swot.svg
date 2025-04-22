@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- SWOT Analysis Grid -->
+  <rect x="40" y="40" width="110" height="110" fill="#4CAF50" opacity="0.8"/>
+  <rect x="150" y="40" width="110" height="110" fill="#F44336" opacity="0.8"/>
+  <rect x="40" y="150" width="110" height="110" fill="#2196F3" opacity="0.8"/>
+  <rect x="150" y="150" width="110" height="110" fill="#FFC107" opacity="0.8"/>
+  
+  <!-- Labels -->
+  <text x="75" y="65" font-family="Arial" font-weight="bold" font-size="14" fill="#FFFFFF" text-anchor="middle">FORCES</text>
+  <text x="205" y="65" font-family="Arial" font-weight="bold" font-size="14" fill="#FFFFFF" text-anchor="middle">FAIBLESSES</text>
+  <text x="75" y="175" font-family="Arial" font-weight="bold" font-size="14" fill="#FFFFFF" text-anchor="middle">OPPORTUNITÉS</text>
+  <text x="205" y="175" font-family="Arial" font-weight="bold" font-size="14" fill="#FFFFFF" text-anchor="middle">MENACES</text>
+  
+  <!-- Strength Items -->
+  <circle cx="60" cy="85" r="4" fill="#FFFFFF"/>
+  <text x="70" y="90" font-family="Arial" font-size="10" fill="#FFFFFF">Expertise technique</text>
+  
+  <circle cx="60" cy="105" r="4" fill="#FFFFFF"/>
+  <text x="70" y="110" font-family="Arial" font-size="10" fill="#FFFFFF">Équipe qualifiée</text>
+  
+  <circle cx="60" cy="125" r="4" fill="#FFFFFF"/>
+  <text x="70" y="130" font-family="Arial" font-size="10" fill="#FFFFFF">Bonne réputation</text>
+  
+  <!-- Weakness Items -->
+  <circle cx="170" cy="85" r="4" fill="#FFFFFF"/>
+  <text x="180" y="90" font-family="Arial" font-size="10" fill="#FFFFFF">Ressources limitées</text>
+  
+  <circle cx="170" cy="105" r="4" fill="#FFFFFF"/>
+  <text x="180" y="110" font-family="Arial" font-size="10" fill="#FFFFFF">Notoriété faible</text>
+  
+  <circle cx="170" cy="125" r="4" fill="#FFFFFF"/>
+  <text x="180" y="130" font-family="Arial" font-size="10" fill="#FFFFFF">Processus manuel</text>
+  
+  <!-- Opportunity Items -->
+  <circle cx="60" cy="195" r="4" fill="#FFFFFF"/>
+  <text x="70" y="200" font-family="Arial" font-size="10" fill="#FFFFFF">Marché en croissance</text>
+  
+  <circle cx="60" cy="215" r="4" fill="#FFFFFF"/>
+  <text x="70" y="220" font-family="Arial" font-size="10" fill="#FFFFFF">Besoin non satisfait</text>
+  
+  <circle cx="60" cy="235" r="4" fill="#FFFFFF"/>
+  <text x="70" y="240" font-family="Arial" font-size="10" fill="#FFFFFF">Nouveaux canaux</text>
+  
+  <!-- Threat Items -->
+  <circle cx="170" cy="195" r="4" fill="#FFFFFF"/>
+  <text x="180" y="200" font-family="Arial" font-size="10" fill="#FFFFFF">Concurrence accrue</text>
+  
+  <circle cx="170" cy="215" r="4" fill="#FFFFFF"/>
+  <text x="180" y="220" font-family="Arial" font-size="10" fill="#FFFFFF">Évolution rapide</text>
+  
+  <circle cx="170" cy="235" r="4" fill="#FFFFFF"/>
+  <text x="180" y="240" font-family="Arial" font-size="10" fill="#FFFFFF">Contraintes légales</text>
+  
+  <!-- Decorative Elements -->
+  <circle cx="150" cy="150" r="15" fill="#3F51B5" opacity="0.9"/>
+  <text x="150" y="155" font-family="Arial" font-weight="bold" font-size="16" fill="#FFFFFF" text-anchor="middle">IA</text>
+</svg>
