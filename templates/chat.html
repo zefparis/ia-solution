@@ -1,0 +1,408 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ language.get_text('chat.title') or 'Conversation' }} - IA-Solution{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Styles pour les cartes avec effet de survol */
+    .hover-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .hover-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    /* Styles pour l'icône de la fonction */
+    .feature-icon-bg {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+    }
+    
+    /* Styles améliorés pour la zone de chat */
+    .chat-container {
+        min-height: 60vh;
+        max-height: 60vh;
+        overflow-y: auto;
+        padding: 1.5rem;
+        scroll-behavior: smooth;
+        background-color: var(--bs-body-bg);
+    }
+    
+    /* Améliorations visuelles pour les messages */
+    .message {
+        margin-bottom: 1.5rem;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .message .content {
+        padding: 12px 16px;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        line-height: 1.5;
+    }
+    
+    /* Animation d'apparition des messages */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Styles pour l'indicateur de frappe amélioré */
+    .typing-indicator {
+        padding: 8px 12px;
+        border-radius: 18px;
+        background-color: rgba(var(--bs-primary-rgb), 0.1);
+        width: fit-content;
+    }
+    
+    .typing-indicator .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--bs-primary);
+        margin-right: 3px;
+        animation: dot-pulse 1.5s infinite ease-in-out;
+    }
+    
+    .typing-indicator .dot:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .typing-indicator .dot:nth-child(3) {
+        animation-delay: 0.4s;
+        margin-right: 0;
+    }
+    
+    @keyframes dot-pulse {
+        0%, 100% { transform: scale(1); opacity: 0.6; }
+        50% { transform: scale(1.2); opacity: 1; }
+    }
+    
+    /* Styles pour l'animation de l'indicateur vocal */
+    .voice-feedback {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 18px;
+        background-color: rgba(var(--bs-success-rgb), 0.1);
+        width: fit-content;
+    }
+    
+    .voice-indicator {
+        display: flex;
+        align-items: center;
+        height: 20px;
+    }
+    
+    .voice-wave {
+        width: 3px;
+        height: 100%;
+        margin-right: 2px;
+        background-color: var(--bs-success);
+        animation: wave 1s infinite ease-in-out;
+        transform-origin: bottom;
+    }
+    
+    .voice-wave:nth-child(2) { animation-delay: 0.2s; }
+    .voice-wave:nth-child(3) { animation-delay: 0.4s; }
+    .voice-wave:nth-child(4) { animation-delay: 0.6s; }
+    .voice-wave:nth-child(5) { animation-delay: 0.8s; }
+    
+    @keyframes wave {
+        0%, 100% { transform: scaleY(0.3); }
+        50% { transform: scaleY(1); }
+    }
+    
+    /* Styles pour le curseur de streaming */
+    .streaming-cursor {
+        display: inline-block;
+        width: 6px;
+        height: 15px;
+        background-color: var(--bs-primary);
+        animation: blink 1s steps(2) infinite;
+        vertical-align: text-bottom;
+    }
+    
+    @keyframes blink {
+        0% { opacity: 1; }
+        100% { opacity: 0; }
+    }
+    
+    /* Styles pour l'état vide */
+    #emptyState {
+        padding: 3rem 0;
+    }
+    
+    #emptyState i {
+        color: var(--bs-primary);
+        opacity: 0.7;
+    }
+    
+    /* Styles spécifiques à la page de chat pour mobile */
+    @media (max-width: 576px) {
+        /* Plus d'espace vertical pour le chat sur mobile */
+        .chat-page .container {
+            padding: 0.5rem;
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        /* Message form et bouton plus adaptés au mobile */
+        #messageForm .btn {
+            padding: 0.4rem 0.75rem;
+        }
+        
+        /* Réduire les marges pour avoir plus d'espace de contenu */
+        .chat-page .card {
+            margin-bottom: 0;
+            border-radius: 0;
+        }
+        
+        /* Ajustements pour la zone de saisie de message */
+        #userMessage {
+            font-size: 0.95rem;
+        }
+        
+        /* Ajuster la taille de la zone de chat sur mobile */
+        .chat-container {
+            min-height: 70vh;
+            max-height: 70vh;
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 chat-page">
+    {% if request.args.get('topic') == 'business' %}
+    <!-- Le bouton retour est déjà présent dans le layout.html, n'en ajoutons pas un second ici -->
+    {% endif %}
+    <h1 class="mb-4">{{ language.get_text('chat.header') or 'Discutez avec Benji' }}</h1>
+    
+    <div class="row mb-4">
+        <div class="col-12 col-md-6 offset-md-3">
+            <div class="card border-0 shadow-sm hover-card">
+                <div class="card-body py-3 px-4 position-relative">
+                    <div class="feature-icon-bg bg-primary-subtle rounded-circle p-2 mb-2">
+                        <i class="bi bi-graph-up text-primary fs-4"></i>
+                    </div>
+                    <h5 class="card-title mb-2">{{ language.get_text('chat.business_consultation') or 'Consultation Business' }}</h5>
+                    <p class="text-muted mb-3">{{ language.get_text('chat.business_description') or 'Obtenez une analyse SWOT et des recommandations stratégiques personnalisées pour votre entreprise.' }}</p>
+                    
+                    <div class="mb-3">
+                        <select class="form-select form-select-sm" id="businessType">
+                            <option value="general">{{ language.get_text('chat.business_type_general') or 'Tout type d\'entreprise' }}</option>
+                            <option value="tech">{{ language.get_text('chat.business_type_tech') or 'Entreprise technologique' }}</option>
+                            <option value="retail">{{ language.get_text('chat.business_type_retail') or 'Commerce de détail' }}</option>
+                            <option value="service">{{ language.get_text('chat.business_type_service') or 'Entreprise de services' }}</option>
+                            <option value="manufacturing">{{ language.get_text('chat.business_type_manufacturing') or 'Industrie/Production' }}</option>
+                        </select>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button class="btn btn-primary btn-sm" id="businessPromptBtn">
+                            <i class="bi bi-lightbulb-fill me-2"></i>{{ language.get_text('chat.start_analysis') or 'Démarrer l\'analyse' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ language.get_text('chat.assistant_name') or 'Assistant Intelligent' }}</h5>
+                    <div class="d-flex">
+                        <button id="toggleSpeechBtn" class="btn btn-sm btn-outline-info me-2" title="Activer/désactiver la lecture vocale des réponses">
+                            <i class="fas fa-volume-up"></i>
+                        </button>
+                        <button id="voiceBtn" class="btn btn-sm btn-outline-success me-2" title="Parler à l'assistant">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <button id="clearBtn" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash-alt"></i>
+                            <span class="d-none d-md-inline ms-1">{{ language.get_text('chat.clear') or 'Effacer' }}</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body chat-container" id="chatContainer">
+                    <div class="text-center text-muted py-5" id="emptyState">
+                        <i class="fas fa-comments fa-3x mb-3"></i>
+                        <p>{{ initial_greeting }}</p>
+                    </div>
+                    <!-- Chat messages will be inserted here -->
+                </div>
+                <div class="card-footer">
+                    <form id="messageForm" class="d-flex">
+                        <input type="text" id="userMessage" class="form-control me-2" placeholder="{{ language.get_text('chat.placeholder') or 'Message à Benji...' }}" required>
+                        <button type="submit" class="btn btn-primary" id="sendBtn">
+                            <i class="fas fa-paper-plane"></i>
+                            <span class="ms-1 d-none d-sm-inline">{{ language.get_text('chat.send') or 'Envoyer' }}</span>
+                        </button>
+                    </form>
+                    
+                    <div class="text-muted small mt-2">
+                        <i class="fas fa-info-circle me-1"></i> {{ language.get_text('chat.voice_note') or 'Note: Vous pouvez activer la synthèse vocale pour les réponses et utiliser le microphone pour parler à l\'assistant.' }}
+                    </div>
+                    <div id="voiceFeedback" class="voice-feedback d-none mt-2">
+                        <div class="voice-indicator me-2">
+                            <div class="voice-wave"></div>
+                            <div class="voice-wave"></div>
+                            <div class="voice-wave"></div>
+                            <div class="voice-wave"></div>
+                            <div class="voice-wave"></div>
+                        </div>
+                        <small>{{ language.get_text('chat.listening') or 'En écoute...' }}</small>
+                    </div>
+                    <div class="typing-indicator d-none mt-2" id="typingIndicator">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <small class="ms-2">{{ language.get_text('chat.thinking') or 'Benji réfléchit...' }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Script pour la fonctionnalité de chat -->
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Référence aux éléments DOM
+        const voiceBtn = document.getElementById('voiceBtn');
+        const voiceFeedback = document.getElementById('voiceFeedback');
+        const userMessageInput = document.getElementById('userMessage');
+        const businessPromptBtn = document.getElementById('businessPromptBtn');
+        
+        // Ajouter un gestionnaire d'événements pour le bouton de consultation business
+        if (businessPromptBtn) {
+            businessPromptBtn.addEventListener('click', function() {
+                // Récupérer le type d'entreprise sélectionné
+                const businessType = document.getElementById('businessType').value;
+                
+                // Adapter le prompt en fonction du type d'entreprise et de la langue
+                let businessPrompt = "";
+                const currentLang = document.documentElement.lang || 'fr';
+                
+                // Définir les prompts en fonction de la langue et du type d'entreprise
+                const prompts = {
+                    fr: {
+                        tech: "J'aimerais une analyse SWOT et des recommandations stratégiques pour mon entreprise technologique. Pouvez-vous me guider pour faire une analyse ciblée pour ce secteur en tenant compte des enjeux liés à l'innovation, la concurrence et la propriété intellectuelle?",
+                        retail: "J'aimerais une analyse SWOT et des recommandations stratégiques pour mon commerce de détail. Pouvez-vous me guider pour faire une analyse ciblée tenant compte des aspects liés à l'emplacement, l'expérience client, la chaîne d'approvisionnement et la concurrence en ligne?",
+                        service: "J'aimerais une analyse SWOT et des recommandations stratégiques pour mon entreprise de services. Pouvez-vous me guider pour faire une analyse ciblée pour ce secteur en considérant la qualité de service, la fidélisation client et les modèles de tarification?",
+                        manufacturing: "J'aimerais une analyse SWOT et des recommandations stratégiques pour mon entreprise industrielle/de production. Pouvez-vous me guider pour faire une analyse ciblée tenant compte des chaînes d'approvisionnement, des coûts de production et de l'automatisation?",
+                        general: "J'aimerais une analyse SWOT et des recommandations stratégiques pour mon entreprise. Pouvez-vous me guider à travers les questions à répondre pour obtenir une consultation business complète et adaptée?"
+                    },
+                    en: {
+                        tech: "I would like a SWOT analysis and strategic recommendations for my technology company. Can you guide me to make a targeted analysis for this sector, taking into account issues related to innovation, competition, and intellectual property?",
+                        retail: "I would like a SWOT analysis and strategic recommendations for my retail business. Can you guide me to make a targeted analysis taking into account aspects related to location, customer experience, supply chain, and online competition?",
+                        service: "I would like a SWOT analysis and strategic recommendations for my service business. Can you guide me to make a targeted analysis for this sector, considering service quality, customer loyalty, and pricing models?",
+                        manufacturing: "I would like a SWOT analysis and strategic recommendations for my manufacturing/production company. Can you guide me to make a targeted analysis taking into account supply chains, production costs, and automation?",
+                        general: "I would like a SWOT analysis and strategic recommendations for my business. Can you guide me through the questions to answer to get a complete and tailored business consultation?"
+                    }
+                };
+                
+                // Déterminer la langue active (fr par défaut si non spécifiée)
+                const lang = (currentLang === 'en') ? 'en' : 'fr';
+                
+                // Récupérer le prompt correspondant
+                businessPrompt = prompts[lang][businessType] || prompts[lang]['general'];
+                
+                userMessageInput.value = businessPrompt;
+                document.getElementById('messageForm').dispatchEvent(new Event('submit'));
+            });
+        }
+        
+        // Variables
+        let isListening = false;
+        
+        // Vérifie si annyang est disponible
+        if (annyang) {
+            // Initialiser annyang avec la langue appropriée
+            const langForSpeech = (document.documentElement.lang === 'en') ? 'en-US' : 'fr-FR';
+            annyang.setLanguage(langForSpeech);
+            
+            // Ajouter une commande pour tout capturer
+            annyang.addCallback('result', function(phrases) {
+                if (phrases.length > 0) {
+                    const transcript = phrases[0]; // Prendre la première reconnaissance
+                    userMessageInput.value = transcript;
+                    stopVoiceRecognition();
+                    
+                    // Petite attente pour montrer à l'utilisateur ce qui a été capturé
+                    setTimeout(() => {
+                        document.getElementById('messageForm').dispatchEvent(new Event('submit'));
+                    }, 500);
+                }
+            });
+            
+            // Ajouter des callbacks pour gérer les états
+            annyang.addCallback('start', function() {
+                isListening = true;
+                voiceFeedback.classList.remove('d-none');
+                voiceFeedback.classList.add('voice-active');
+                voiceBtn.classList.add('active');
+            });
+            
+            annyang.addCallback('end', function() {
+                isListening = false;
+                voiceFeedback.classList.add('d-none');
+                voiceFeedback.classList.remove('voice-active');
+                voiceBtn.classList.remove('active');
+            });
+            
+            annyang.addCallback('error', function(err) {
+                console.error('Erreur de reconnaissance vocale:', err);
+                stopVoiceRecognition();
+            });
+            
+            // Ajouter un gestionnaire d'événements pour le bouton vocal
+            voiceBtn.addEventListener('click', toggleVoiceRecognition);
+            
+            // Rendre le bouton cliquable
+            voiceBtn.disabled = false;
+        } else {
+            // Si annyang n'est pas disponible, désactiver le bouton
+            voiceBtn.disabled = true;
+            voiceBtn.title = 'Reconnaissance vocale non disponible sur ce navigateur';
+            voiceBtn.classList.add('btn-secondary');
+            voiceBtn.classList.remove('btn-outline-success');
+        }
+        
+        // Fonction pour basculer la reconnaissance vocale
+        function toggleVoiceRecognition() {
+            if (isListening) {
+                stopVoiceRecognition();
+            } else {
+                startVoiceRecognition();
+            }
+        }
+        
+        // Fonction pour démarrer la reconnaissance vocale
+        function startVoiceRecognition() {
+            annyang.start({ autoRestart: false, continuous: false });
+        }
+        
+        // Fonction pour arrêter la reconnaissance vocale
+        function stopVoiceRecognition() {
+            annyang.abort();
+        }
+    });
+</script>
+{% endblock %}

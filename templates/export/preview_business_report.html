@@ -1,0 +1,200 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ _('Aperçu Analyse Business') }} {{ document.id }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- En-tête de la page -->
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-2">{{ _('Aperçu de l\'analyse business') }}</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('export.export_home') }}">{{ _('Exportation') }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('export.list_documents', doc_type='business_reports') }}">{{ _('Analyses business') }}</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ _('Aperçu') }}</li>
+                    </ol>
+                </nav>
+            </div>
+            <div>
+                <a href="{{ url_for('export.list_documents', doc_type='business_reports') }}" class="btn btn-outline-primary me-2">
+                    <i class="bi bi-arrow-left me-1"></i> {{ _('Retour') }}
+                </a>
+                <div class="dropdown d-inline-block">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-download me-1"></i> {{ _('Exporter') }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+                        {% for format_id, format in formats.items() %}
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('export.generate_export', doc_type='business_reports', doc_id=document.id, format_type=format_id) }}">
+                                <i class="bi {{ format.icon }} me-2" style="color: {{ format.color }}"></i>
+                                {{ _('Exporter en') }} {{ format.name }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aperçu du rapport -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">{{ _('Analyse Business') }} - {{ document.company_name }}</h5>
+            <span class="badge bg-success">{{ document.created_at.strftime('%d/%m/%Y') }}</span>
+        </div>
+        <div class="card-body">
+            <!-- Informations générales -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-3">{{ _('Informations de l\'entreprise') }}</h6>
+                    <div class="mb-2">
+                        <span class="fw-bold">{{ _('Entreprise') }}:</span>
+                        <span class="ms-2">{{ document.company_name }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="fw-bold">{{ _('Secteur') }}:</span>
+                        <span class="ms-2">{{ document.industry }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="fw-bold">{{ _('Contact') }}:</span>
+                        <span class="ms-2">{{ document.contact_email }}</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-3">{{ _('Détails du rapport') }}</h6>
+                    <div class="mb-2">
+                        <span class="fw-bold">{{ _('Date de création') }}:</span>
+                        <span class="ms-2">{{ document.created_at.strftime('%d/%m/%Y') }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="fw-bold">{{ _('Référence') }}:</span>
+                        <span class="ms-2">BSRPT-{{ document.id }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="fw-bold">{{ _('Auteur') }}:</span>
+                        <span class="ms-2">{{ document.user.username }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aperçu du contenu -->
+            <div class="mt-4">
+                <h5 class="border-bottom pb-2 mb-3">{{ _('Résumé exécutif') }}</h5>
+                <p>{{ document.summary|safe }}</p>
+            </div>
+            
+            <!-- Analyse SWOT -->
+            <div class="mt-4">
+                <h5 class="border-bottom pb-2 mb-3">{{ _('Analyse SWOT') }}</h5>
+                
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <div class="card border-success h-100">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0">{{ _('Forces') }}</h6>
+                            </div>
+                            <div class="card-body">
+                                {{ document.strengths|safe }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-danger h-100">
+                            <div class="card-header bg-danger text-white">
+                                <h6 class="mb-0">{{ _('Faiblesses') }}</h6>
+                            </div>
+                            <div class="card-body">
+                                {{ document.weaknesses|safe }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card border-primary h-100">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0">{{ _('Opportunités') }}</h6>
+                            </div>
+                            <div class="card-body">
+                                {{ document.opportunities|safe }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-warning h-100">
+                            <div class="card-header bg-warning">
+                                <h6 class="mb-0">{{ _('Menaces') }}</h6>
+                            </div>
+                            <div class="card-body">
+                                {{ document.threats|safe }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recommandations -->
+            <div class="mt-4">
+                <h5 class="border-bottom pb-2 mb-3">{{ _('Recommandations') }}</h5>
+                <div class="card">
+                    <div class="card-body">
+                        {{ document.recommendations|safe }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notes additionnelles -->
+            {% if document.additional_notes %}
+            <div class="mt-4">
+                <h5 class="border-bottom pb-2 mb-3">{{ _('Notes additionnelles') }}</h5>
+                <div class="card bg-light">
+                    <div class="card-body">
+                        {{ document.additional_notes|safe }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Options d'exportation -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h5 class="mb-3">{{ _('Options d\'exportation') }}</h5>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                {% for format_id, format in formats.items() %}
+                <div class="col">
+                    <div class="card h-100 border-1 {% if format_id == 'pdf' %}border-danger{% elif format_id == 'excel' %}border-success{% elif format_id == 'csv' %}border-primary{% elif format_id == 'json' %}border-warning{% endif %}">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi {{ format.icon }} me-2 fs-4" style="color: {{ format.color }}"></i>
+                                <h5 class="card-title mb-0">{{ format.name }}</h5>
+                            </div>
+                            <p class="card-text small">
+                                {% if format_id == 'pdf' %}
+                                    {{ _('Document PDF formaté pour l\'impression et le partage professionnel.') }}
+                                {% elif format_id == 'excel' %}
+                                    {{ _('Feuille de calcul Excel structurée par sections.') }}
+                                {% elif format_id == 'csv' %}
+                                    {{ _('Format CSV pour l\'importation dans d\'autres outils.') }}
+                                {% elif format_id == 'json' %}
+                                    {{ _('Format JSON pour l\'intégration avec des applications web.') }}
+                                {% endif %}
+                            </p>
+                            <a href="{{ url_for('export.generate_export', doc_type='business_reports', doc_id=document.id, format_type=format_id) }}" class="btn btn-sm btn-outline-primary w-100">
+                                {{ _('Télécharger') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

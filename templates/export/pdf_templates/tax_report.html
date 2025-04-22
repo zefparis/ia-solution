@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport Fiscal {{ document.id }}</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            margin-bottom: 30px;
+        }
+        .company-info {
+            float: left;
+            width: 50%;
+        }
+        .document-info {
+            float: right;
+            width: 45%;
+            text-align: right;
+        }
+        .document-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .clear {
+            clear: both;
+        }
+        .section {
+            margin: 20px 0;
+            clear: both;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        .label {
+            font-weight: bold;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background-color: #2c3e50;
+            color: white;
+            font-weight: normal;
+            padding: 8px;
+            text-align: left;
+        }
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .amount-column {
+            text-align: right;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .summary-box {
+            float: left;
+            width: 22%;
+            margin-right: 3%;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        .summary-box:last-child {
+            margin-right: 0;
+        }
+        .summary-title {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .summary-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .vat-box {
+            float: left;
+            width: 31%;
+            margin-right: 3%;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .vat-box:last-child {
+            margin-right: 0;
+        }
+        .vat-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        .vat-row {
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .vat-total {
+            margin-top: 10px;
+            padding-top: 5px;
+            border-top: 1px solid #ddd;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+        }
+        .footer {
+            margin-top: 50px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 10px;
+            color: #999;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            background-color: #27ae60;
+            color: white;
+            font-size: 12px;
+        }
+        .positive {
+            color: #27ae60;
+        }
+        .negative {
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-info">
+            <div class="document-title">RAPPORT FISCAL</div>
+            <div style="font-weight: bold;">{{ document.user.company_name or document.user.username }}</div>
+            {% if document.user.address %}
+            <div>{{ document.user.address }}</div>
+            {% endif %}
+            {% if document.user.phone %}
+            <div>Tél: {{ document.user.phone }}</div>
+            {% endif %}
+            <div>Email: {{ document.user.email }}</div>
+        </div>
+        <div class="document-info">
+            <div style="margin-bottom: 15px;">
+                <span class="status">{{ document.status or 'Finalisé' }}</span>
+            </div>
+            <div><span class="label">Référence:</span> TAX-{{ document.id }}</div>
+            <div><span class="label">Type:</span> {{ document.report_type }}</div>
+            <div><span class="label">Période:</span> {{ document.period_start.strftime('%d/%m/%Y') }} - {{ document.period_end.strftime('%d/%m/%Y') }}</div>
+            <div><span class="label">Date de création:</span> {{ document.created_at.strftime('%d/%m/%Y') }}</div>
+        </div>
+    </div>
+    
+    <div class="clear"></div>
+    
+    <div class="section">
+        <div class="section-title">Résumé financier</div>
+        
+        <div class="summary-box">
+            <div class="summary-title">Chiffre d'affaires</div>
+            <div class="summary-value">{{ "%.2f"|format(document.revenue) }} €</div>
+        </div>
+        
+        <div class="summary-box">
+            <div class="summary-title">Dépenses</div>
+            <div class="summary-value">{{ "%.2f"|format(document.expenses) }} €</div>
+        </div>
+        
+        <div class="summary-box">
+            <div class="summary-title">Bénéfice brut</div>
+            <div class="summary-value">{{ "%.2f"|format(document.profit) }} €</div>
+        </div>
+        
+        <div class="summary-box">
+            <div class="summary-title">TVA collectée</div>
+            <div class="summary-value">{{ "%.2f"|format(document.vat_collected) }} €</div>
+        </div>
+    </div>
+    
+    <div class="clear"></div>
+    
+    <div class="section">
+        <div class="section-title">Détails de la TVA</div>
+        
+        <div class="vat-box">
+            <div class="vat-title">TVA collectée</div>
+            <div class="vat-row">
+                <span>TVA sur ventes:</span>
+                <span>{{ "%.2f"|format(document.vat_collected) }} €</span>
+            </div>
+            <div class="vat-row">
+                <span>Taux moyen:</span>
+                <span>{{ "%.1f"|format(document.avg_vat_rate) }}%</span>
+            </div>
+            <div class="vat-total">
+                <span>Total collecté:</span>
+                <span>{{ "%.2f"|format(document.vat_collected) }} €</span>
+            </div>
+        </div>
+        
+        <div class="vat-box">
+            <div class="vat-title">TVA déductible</div>
+            <div class="vat-row">
+                <span>TVA sur achats:</span>
+                <span>{{ "%.2f"|format(document.vat_deductible) }} €</span>
+            </div>
+            <div class="vat-row">
+                <span>TVA sur frais généraux:</span>
+                <span>{{ "%.2f"|format(document.vat_deductible_expenses) }} €</span>
+            </div>
+            <div class="vat-total">
+                <span>Total déductible:</span>
+                <span>{{ "%.2f"|format(document.vat_deductible + document.vat_deductible_expenses) }} €</span>
+            </div>
+        </div>
+        
+        <div class="vat-box">
+            <div class="vat-title">Solde TVA</div>
+            <div class="vat-row">
+                <span>TVA collectée:</span>
+                <span>{{ "%.2f"|format(document.vat_collected) }} €</span>
+            </div>
+            <div class="vat-row">
+                <span>TVA déductible:</span>
+                <span>-{{ "%.2f"|format(document.vat_deductible + document.vat_deductible_expenses) }} €</span>
+            </div>
+            <div class="vat-total">
+                <span>Solde à payer:</span>
+                <span class="{% if document.vat_collected - document.vat_deductible - document.vat_deductible_expenses > 0 %}negative{% else %}positive{% endif %}">
+                    {{ "%.2f"|format(document.vat_collected - document.vat_deductible - document.vat_deductible_expenses) }} €
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="clear"></div>
+    
+    <div class="section">
+        <div class="section-title">Répartition des revenus et dépenses</div>
+        
+        <div style="float: left; width: 48%;">
+            <table>
+                <thead>
+                    <tr>
+                        <th colspan="3">Revenus par catégorie</th>
+                    </tr>
+                    <tr>
+                        <th>Catégorie</th>
+                        <th class="amount-column">Montant</th>
+                        <th class="amount-column">Pourcentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category in document.income_categories|default([]) %}
+                    <tr>
+                        <td>{{ category.name }}</td>
+                        <td class="amount-column">{{ "%.2f"|format(category.amount) }} €</td>
+                        <td class="amount-column">{{ "%.1f"|format(category.percentage) }}%</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align: center;">Aucune donnée disponible</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="float: right; width: 48%;">
+            <table>
+                <thead>
+                    <tr>
+                        <th colspan="3">Dépenses par catégorie</th>
+                    </tr>
+                    <tr>
+                        <th>Catégorie</th>
+                        <th class="amount-column">Montant</th>
+                        <th class="amount-column">Pourcentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category in document.expense_categories|default([]) %}
+                    <tr>
+                        <td>{{ category.name }}</td>
+                        <td class="amount-column">{{ "%.2f"|format(category.amount) }} €</td>
+                        <td class="amount-column">{{ "%.1f"|format(category.percentage) }}%</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align: center;">Aucune donnée disponible</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="clear"></div>
+    
+    {% if document.notes %}
+    <div class="section">
+        <div class="section-title">Notes et observations</div>
+        <p>{{ document.notes|safe }}</p>
+    </div>
+    {% endif %}
+    
+    <div class="footer">
+        <p>Document généré le {{ document.created_at.strftime('%d/%m/%Y à %H:%M') }} via IA-Solution.</p>
+    </div>
+</body>
+</html>

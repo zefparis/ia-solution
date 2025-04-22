@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="150" cy="150" r="120" fill="#E3F2FD"/>
+  
+  <!-- Robot Head -->
+  <rect x="100" y="80" width="100" height="120" rx="20" ry="20" fill="#1E88E5"/>
+  
+  <!-- Eyes -->
+  <circle cx="130" cy="120" r="12" fill="#FFFFFF"/>
+  <circle cx="170" cy="120" r="12" fill="#FFFFFF"/>
+  <circle cx="130" cy="120" r="6" fill="#7E57C2"/>
+  <circle cx="170" cy="120" r="6" fill="#7E57C2"/>
+  
+  <!-- Mouth -->
+  <rect x="120" y="150" width="60" height="10" rx="5" ry="5" fill="#FFFFFF"/>
+  
+  <!-- Antennas -->
+  <line x1="125" y1="80" x2="125" y2="50" stroke="#1E88E5" stroke-width="4"/>
+  <circle cx="125" cy="45" r="8" fill="#7E57C2"/>
+  
+  <line x1="175" y1="80" x2="175" y2="50" stroke="#1E88E5" stroke-width="4"/>
+  <circle cx="175" cy="45" r="8" fill="#7E57C2"/>
+  
+  <!-- Chat Bubbles -->
+  <path d="M50,180 Q40,180 40,170 L40,130 Q40,120 50,120 L80,120 L95,100 L95,120 L120,120 Q130,120 130,130 L130,170 Q130,180 120,180 Z" fill="#BBDEFB"/>
+  <path d="M250,180 Q260,180 260,170 L260,130 Q260,120 250,120 L220,120 L205,100 L205,120 L180,120 Q170,120 170,130 L170,170 Q170,180 180,180 Z" fill="#D1C4E9"/>
+  
+  <!-- Text -->
+  <text x="60" y="160" font-family="Arial" font-size="14" fill="#1A237E">Bonjour!</text>
+  <text x="190" y="160" font-family="Arial" font-size="14" fill="#1A237E">Hello!</text>
+</svg>

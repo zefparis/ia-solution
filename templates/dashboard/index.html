@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord - IA Solution</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    
+    <!-- Pour les animations -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        .icon-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body data-bs-theme="dark">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">IA-Solution</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/"><i class="fas fa-home me-1"></i>Accueil</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/chat"><i class="fas fa-comments me-1"></i>Assistant</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ocr"><i class="fas fa-camera me-1"></i>OCR Comptabilité</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/dashboard"><i class="fas fa-chart-line me-1"></i>Tableau de Bord</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/business/consultation"><i class="fas fa-briefcase me-1"></i>Consultation Business</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('invoicing.index') }}"><i class="fas fa-file-invoice me-1"></i>Facturation</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/subscription"><i class="fas fa-crown me-1"></i>Abonnement</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt me-1"></i>Déconnexion</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <main class="py-4">
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="mb-0">Tableau de Bord Financier</h1>
+                <div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-plus me-2"></i>Actions
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('finance.add_transaction') }}"><i class="fas fa-plus-circle me-2"></i>Nouvelle transaction</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('finance.manage_categories') }}"><i class="fas fa-tags me-2"></i>Gérer les catégories</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('finance.financial_reports') }}"><i class="fas fa-file-invoice me-2"></i>Générer un rapport</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cartes de résumé -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="card-title mb-0">Solde</h5>
+                        <div class="icon-circle bg-primary text-white">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                    </div>
+                    <div class="h3 mb-0 fw-bold">{{ "%.2f"|format(stats.balance) }} €</div>
+                    <div class="text-muted small mt-2">Revenus - Dépenses totaux</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="card-title mb-0">Mois en cours</h5>
+                        <div class="icon-circle bg-success text-white">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                    </div>
+                    <div class="h3 mb-0 fw-bold">{{ "%.2f"|format(stats.current_month_income - stats.current_month_expense) }} €</div>
+                    <div class="text-{% if stats.current_month_income > stats.current_month_expense %}success{% else %}danger{% endif %} mt-2">
+                        <i class="fas fa-{% if stats.current_month_income > stats.current_month_expense %}arrow-up{% else %}arrow-down{% endif %} me-1"></i> 
+                        Revenus: {{ "%.2f"|format(stats.current_month_income) }} € | Dépenses: {{ "%.2f"|format(stats.current_month_expense) }} €
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="card-title mb-0">Transactions</h5>
+                        <div class="icon-circle bg-info text-white">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                    </div>
+                    <div class="h3 mb-0 fw-bold">{{ stats.transactions_count }}</div>
+                    <div class="text-muted small mt-2">{{ stats.categories_count }} catégories</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="card-title mb-0">Tendance</h5>
+                        <div class="icon-circle bg-warning text-white">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                    <div class="h3 mb-0 fw-bold">
+                        {% set current_vs_last = ((stats.current_month_income - stats.current_month_expense) - (stats.last_month_income - stats.last_month_expense)) %}
+                        {% if current_vs_last > 0 %}
+                            <span class="text-success">+{{ "%.2f"|format(current_vs_last) }} €</span>
+                        {% else %}
+                            <span class="text-danger">{{ "%.2f"|format(current_vs_last) }} €</span>
+                        {% endif %}
+                    </div>
+                    <div class="text-muted small mt-2">Par rapport au mois précédent</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-4 mb-lg-0">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Revenus vs Dépenses (6 derniers mois)</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-link text-muted" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" id="toggleMonthlyBalance">Afficher/Masquer le solde</a></li>
+                            <li><a class="dropdown-item" href="#" id="downloadMonthlySummary">Télécharger les données</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlySummaryChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Répartition des dépenses</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-link text-muted" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" id="toggleExpenseIncome">Voir les revenus</a></li>
+                            <li><a class="dropdown-item" href="#" id="downloadCategoryBreakdown">Télécharger les données</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <canvas id="categoryBreakdownChart" height="260"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prévisions et transactions récentes -->
+    <div class="row">
+        <div class="col-lg-8 mb-4 mb-lg-0">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Prévisions de trésorerie (6 prochains mois)</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-link text-muted" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" id="extendPrediction">Étendre à 12 mois</a></li>
+                            <li><a class="dropdown-item" href="#" id="downloadPrediction">Télécharger les données</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info d-flex align-items-center mb-3">
+                        <i class="fas fa-info-circle me-3 fa-lg"></i>
+                        <div>
+                            Les prévisions sont basées sur vos tendances de dépenses et revenus des 12 derniers mois.
+                        </div>
+                    </div>
+                    <canvas id="cashflowPredictionChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Transactions récentes</h5>
+                    <a href="{{ url_for('finance.view_transactions') }}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for transaction in stats.recent_transactions %}
+                        <div class="list-group-item px-4 py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ transaction.description }}</h6>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-light text-dark me-2">{{ transaction.category }}</span>
+                                        <small class="text-muted">{{ transaction.date }}</small>
+                                    </div>
+                                </div>
+                                <span class="fw-bold text-{% if transaction.type == 'income' %}success{% else %}danger{% endif %}">
+                                    {% if transaction.type == 'income' %}+{% else %}-{% endif %}{{ "%.2f"|format(transaction.amount) }} €
+                                </span>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="list-group-item px-4 py-3 text-center">
+                            <p class="mb-0 text-muted">Aucune transaction récente</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rapports métier récents -->
+    {% if business_reports %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Rapports d'analyse business récents</h5>
+                    <a href="#" class="btn btn-sm btn-outline-primary">Voir tous les rapports</a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for report in business_reports %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-0 bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ report.company_name }}</h6>
+                                    <div class="badge bg-info mb-2">{{ report.industry }}</div>
+                                    <p class="card-text small">{{ report.summary[:100] }}{% if report.summary|length > 100 %}...{% endif %}</p>
+                                    {% if report.strengths %}
+                                    <div class="mt-3">
+                                        <h6 class="card-subtitle text-muted small">Points forts:</h6>
+                                        <ul class="list-unstyled small mt-1">
+                                            {% for strength in report.strengths %}
+                                            <li><i class="fas fa-check-circle text-success me-1"></i> {{ strength }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer bg-transparent border-0 text-end">
+                                    <a href="{{ url_for('business.business_report', report_id=report.id) }}" class="btn btn-sm btn-outline-primary">
+                                        Voir le rapport complet
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal de paramètres avec fonctionnalité limitée -->
+<div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="settingsModalLabel">Paramètres du tableau de bord</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-center">Cette fonctionnalité sera disponible prochainement.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+</main>
+
+<footer class="bg-dark text-light py-4 mt-5">
+    <div class="container text-center">
+        <p>IA-Solution &copy; 2025. Tous droits réservés.</p>
+    </div>
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Configuration des couleurs
+        const colors = {
+            primary: '#0d6efd',
+            success: '#198754',
+            danger: '#dc3545',
+            warning: '#ffc107',
+            info: '#0dcaf0',
+            dark: '#212529',
+            light: '#f8f9fa',
+            primaryLight: '#cfe2ff',
+            successLight: '#d1e7dd',
+            dangerLight: '#f8d7da'
+        };
+        
+        // Récupérer le contexte pour les graphiques
+        const monthlySummaryCtx = document.getElementById('monthlySummaryChart').getContext('2d');
+        const categoryBreakdownCtx = document.getElementById('categoryBreakdownChart').getContext('2d');
+        const cashflowPredictionCtx = document.getElementById('cashflowPredictionChart').getContext('2d');
+        
+        // Données des graphiques
+        const monthlySummaryData = {{ chart_data.monthly_summary|tojson }};
+        const categoryBreakdownData = {{ chart_data.category_breakdown|tojson }};
+        const incomeVsExpenseData = {{ chart_data.income_vs_expense|tojson }};
+        
+        // Graphique mensuel
+        const monthlySummaryChart = new Chart(monthlySummaryCtx, {
+            type: 'bar',
+            data: {
+                labels: monthlySummaryData.labels,
+                datasets: [
+                    {
+                        label: 'Revenus',
+                        data: monthlySummaryData.income,
+                        backgroundColor: colors.successLight,
+                        borderColor: colors.success,
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Dépenses',
+                        data: monthlySummaryData.expense,
+                        backgroundColor: colors.dangerLight,
+                        borderColor: colors.danger,
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(context.raw);
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Graphique de répartition des catégories
+        const categoryColors = [
+            '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+            '#5a5c69', '#6610f2', '#6f42c1', '#e83e8c', '#fd7e14'
+        ];
+        
+        const categoryBreakdownChart = new Chart(categoryBreakdownCtx, {
+            type: 'doughnut',
+            data: {
+                labels: categoryBreakdownData.labels,
+                datasets: [{
+                    data: categoryBreakdownData.values,
+                    backgroundColor: categoryColors.slice(0, categoryBreakdownData.labels.length),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                let value = context.raw;
+                                let sum = context.dataset.data.reduce((a, b) => a + b, 0);
+                                let percentage = Math.round((value / sum) * 100);
+                                
+                                return `${label}: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value)} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Fetch prédictions et créer le graphique
+        fetch('/dashboard/data/cashflow-prediction?months=6')
+            .then(response => response.json())
+            .then(data => {
+                const cashflowPredictionChart = new Chart(cashflowPredictionCtx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: [
+                            {
+                                label: 'Revenus (prévision)',
+                                data: data.income,
+                                borderColor: colors.success,
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                pointBackgroundColor: colors.success
+                            },
+                            {
+                                label: 'Dépenses (prévision)',
+                                data: data.expense,
+                                borderColor: colors.danger,
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                pointBackgroundColor: colors.danger
+                            },
+                            {
+                                label: 'Solde (prévision)',
+                                data: data.balance,
+                                borderColor: colors.primary,
+                                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                pointBackgroundColor: colors.primary
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        label += new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(context.raw);
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Étendre les prédictions à 12 mois
+                document.getElementById('extendPrediction').addEventListener('click', function() {
+                    fetch('/dashboard/data/cashflow-prediction?months=12')
+                        .then(response => response.json())
+                        .then(newData => {
+                            cashflowPredictionChart.data.labels = newData.labels;
+                            cashflowPredictionChart.data.datasets[0].data = newData.income;
+                            cashflowPredictionChart.data.datasets[1].data = newData.expense;
+                            cashflowPredictionChart.data.datasets[2].data = newData.balance;
+                            cashflowPredictionChart.update();
+                        });
+                });
+            });
+        
+        // Événement pour basculer entre dépenses et revenus
+        document.getElementById('toggleExpenseIncome').addEventListener('click', function() {
+            const currentChartType = this.textContent === 'Voir les revenus' ? 'expense' : 'income';
+            const newChartType = currentChartType === 'expense' ? 'income' : 'expense';
+            
+            this.textContent = newChartType === 'expense' ? 'Voir les revenus' : 'Voir les dépenses';
+            
+            fetch(`/dashboard/data/category-breakdown?type=${newChartType}`)
+                .then(response => response.json())
+                .then(data => {
+                    categoryBreakdownChart.data.labels = data.labels;
+                    categoryBreakdownChart.data.datasets[0].data = data.values;
+                    categoryBreakdownChart.data.datasets[0].backgroundColor = categoryColors.slice(0, data.labels.length);
+                    categoryBreakdownChart.update();
+                });
+        });
+        
+        // Événement pour afficher/masquer le solde mensuel
+        document.getElementById('toggleMonthlyBalance').addEventListener('click', function() {
+            // Vérifier si le dataset pour le solde existe déjà
+            const balanceDatasetIndex = monthlySummaryChart.data.datasets.findIndex(dataset => dataset.label === 'Solde');
+            
+            if (balanceDatasetIndex === -1) {
+                // Ajouter le dataset pour le solde
+                const incomeData = monthlySummaryChart.data.datasets[0].data;
+                const expenseData = monthlySummaryChart.data.datasets[1].data;
+                const balanceData = incomeData.map((income, index) => income - expenseData[index]);
+                
+                monthlySummaryChart.data.datasets.push({
+                    label: 'Solde',
+                    data: balanceData,
+                    type: 'line',
+                    backgroundColor: 'transparent',
+                    borderColor: colors.primary,
+                    borderWidth: 2,
+                    pointBackgroundColor: colors.primary
+                });
+            } else {
+                // Supprimer le dataset pour le solde
+                monthlySummaryChart.data.datasets.splice(balanceDatasetIndex, 1);
+            }
+            
+            monthlySummaryChart.update();
+        });
+        
+        // Personnalisation du tableau de bord
+        document.getElementById('saveSettings').addEventListener('click', function() {
+            const settings = {
+                showBalance: document.getElementById('showBalance').checked,
+                showMonthly: document.getElementById('showMonthly').checked,
+                showTransactions: document.getElementById('showTransactions').checked,
+                showTrend: document.getElementById('showTrend').checked,
+                showMonthlyChart: document.getElementById('showMonthlyChart').checked,
+                showCategoryChart: document.getElementById('showCategoryChart').checked,
+                showPredictions: document.getElementById('showPredictions').checked,
+                showRecentTransactions: document.getElementById('showRecentTransactions').checked,
+                showBusinessReports: document.getElementById('showBusinessReports').checked,
+                periodSelect: document.getElementById('periodSelect').value,
+                predictionPeriod: document.getElementById('predictionPeriod').value
+            };
+            
+            // Sauvegarder les préférences (localStorage pour la démo)
+            localStorage.setItem('dashboardSettings', JSON.stringify(settings));
+            
+            // Appliquer les changements visuels
+            applySettings(settings);
+            
+            // Fermer le modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('settingsModal'));
+            modal.hide();
+        });
+        
+        // Fonction pour appliquer les paramètres
+        function applySettings(settings) {
+            // Application des paramètres visuels (pour la démo)
+            const cards = document.querySelectorAll('.row:first-of-type .col-xl-3');
+            cards[0].style.display = settings.showBalance ? 'block' : 'none';
+            cards[1].style.display = settings.showMonthly ? 'block' : 'none';
+            cards[2].style.display = settings.showTransactions ? 'block' : 'none';
+            cards[3].style.display = settings.showTrend ? 'block' : 'none';
+            
+            const chartRows = document.querySelectorAll('.row:not(:first-of-type)');
+            chartRows[0].style.display = (settings.showMonthlyChart || settings.showCategoryChart) ? 'flex' : 'none';
+            chartRows[1].style.display = (settings.showPredictions || settings.showRecentTransactions) ? 'flex' : 'none';
+            
+            if (chartRows.length > 2) {
+                chartRows[2].style.display = settings.showBusinessReports ? 'flex' : 'none';
+            }
+            
+            // Mettre à jour les graphiques avec la nouvelle période
+            updateChartsPeriod(settings.periodSelect, settings.predictionPeriod);
+        }
+        
+        // Fonction pour mettre à jour la période des graphiques
+        function updateChartsPeriod(monthsPeriod, predictionMonths) {
+            // Pour une démo complète, ici on devrait faire des appels API pour récupérer
+            // les données avec les nouvelles périodes
+            console.log(`Mise à jour des graphiques : ${monthsPeriod} mois d'historique, ${predictionMonths} mois de prévision`);
+        }
+        
+        // Charger les paramètres sauvegardés
+        const savedSettings = localStorage.getItem('dashboardSettings');
+        if (savedSettings) {
+            const settings = JSON.parse(savedSettings);
+            
+            // Remplir le formulaire avec les valeurs sauvegardées
+            document.getElementById('showBalance').checked = settings.showBalance;
+            document.getElementById('showMonthly').checked = settings.showMonthly;
+            document.getElementById('showTransactions').checked = settings.showTransactions;
+            document.getElementById('showTrend').checked = settings.showTrend;
+            document.getElementById('showMonthlyChart').checked = settings.showMonthlyChart;
+            document.getElementById('showCategoryChart').checked = settings.showCategoryChart;
+            document.getElementById('showPredictions').checked = settings.showPredictions;
+            document.getElementById('showRecentTransactions').checked = settings.showRecentTransactions;
+            document.getElementById('showBusinessReports').checked = settings.showBusinessReports;
+            document.getElementById('periodSelect').value = settings.periodSelect;
+            document.getElementById('predictionPeriod').value = settings.predictionPeriod;
+            
+            // Appliquer les paramètres
+            applySettings(settings);
+        }
+    });
+</script>
+</body>
+</html>

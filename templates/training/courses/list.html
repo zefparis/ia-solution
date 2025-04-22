@@ -1,0 +1,157 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('training_courses_list_title', 'Catalogue de formations') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5">{{ _('training_courses_list_title', 'Catalogue de formations') }}</h1>
+            <p class="lead">{{ _('training_courses_list_subtitle', 'Découvrez nos formations pour développer vos compétences') }}</p>
+        </div>
+    </div>
+
+    <!-- Filtres et recherche -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form action="{{ url_for('training.list_courses') }}" method="get" class="row g-3">
+                        <!-- Recherche -->
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="q" placeholder="{{ _('training_search_placeholder', 'Rechercher...') }}" value="{{ search_query or '' }}">
+                                <button class="btn btn-outline-primary" type="submit">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Catégorie -->
+                        <div class="col-md-4">
+                            <select class="form-select" name="category" onchange="this.form.submit()">
+                                <option value="">{{ _('training_all_categories', 'Toutes les catégories') }}</option>
+                                {% for category in categories %}
+                                    <option value="{{ category }}" {% if current_category == category %}selected{% endif %}>{{ category }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Niveau de difficulté -->
+                        <div class="col-md-4">
+                            <select class="form-select" name="difficulty" onchange="this.form.submit()">
+                                <option value="">{{ _('training_all_levels', 'Tous les niveaux') }}</option>
+                                {% for level in difficulty_levels %}
+                                    <option value="{{ level.value }}" {% if current_difficulty == level.value %}selected{% endif %}>{{ level.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        {% if search_query or current_category or current_difficulty %}
+                        <div class="col-12 text-center mt-3">
+                            <a href="{{ url_for('training.list_courses') }}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> {{ _('training_clear_filters', 'Effacer les filtres') }}
+                            </a>
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des cours -->
+    <div class="row mb-5">
+        {% if courses %}
+            {% for course in courses %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        {% if course.cover_image %}
+                            <img src="{{ course.cover_image }}" class="card-img-top" alt="{{ course.title }}" style="height: 160px; object-fit: cover;">
+                        {% else %}
+                            <div class="bg-light text-center py-5">
+                                <i class="bi bi-book" style="font-size: 3rem;"></i>
+                            </div>
+                        {% endif %}
+                        <div class="card-body d-flex flex-column">
+                            <div class="mb-2">
+                                {% if course.is_certified %}
+                                    <span class="badge bg-success me-1">{{ _('training_certified', 'Certifié') }}</span>
+                                {% endif %}
+                                <span class="badge bg-{{ course.difficulty_level == 'beginner' and 'info' or (course.difficulty_level == 'intermediate' and 'warning' or 'danger') }}">
+                                    {% if course.difficulty_level == 'beginner' %}
+                                        {{ _('training_difficulty_beginner', 'Débutant') }}
+                                    {% elif course.difficulty_level == 'intermediate' %}
+                                        {{ _('training_difficulty_intermediate', 'Intermédiaire') }}
+                                    {% else %}
+                                        {{ _('training_difficulty_advanced', 'Avancé') }}
+                                    {% endif %}
+                                </span>
+                                {% if course.category %}
+                                    <span class="badge bg-secondary">{{ course.category }}</span>
+                                {% endif %}
+                            </div>
+                            <h5 class="card-title">{{ course.title }}</h5>
+                            <p class="card-text text-muted small flex-grow-1">{{ course.description|truncate(120) }}</p>
+                            
+                            <div class="mt-3">
+                                {% if is_authenticated and course.id in enrollments_map %}
+                                    {% set enrollment = enrollments_map[course.id] %}
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                            <div class="progress-bar" role="progressbar" style="width: {{ enrollment.completion_percentage }}%;" 
+                                                aria-valuenow="{{ enrollment.completion_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <span class="small text-muted">{{ enrollment.completion_percentage }}%</span>
+                                    </div>
+                                    <div class="d-grid mt-2">
+                                        <a href="{{ url_for('training.view_course', course_id=course.id) }}" class="btn btn-primary">
+                                            {{ _('training_continue_course', 'Continuer') }}
+                                        </a>
+                                    </div>
+                                {% else %}
+                                    <div class="d-grid">
+                                        <a href="{{ url_for('training.view_course', course_id=course.id) }}" class="btn btn-outline-primary">
+                                            {{ _('training_view_details', 'Voir détails') }}
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if course.duration_minutes %}
+                        <div class="card-footer bg-transparent">
+                            <small class="text-muted">
+                                <i class="bi bi-clock"></i> 
+                                {% if course.duration_minutes < 60 %}
+                                    {{ course.duration_minutes }} {{ _('training_minutes', 'minutes') }}
+                                {% else %}
+                                    {{ (course.duration_minutes / 60)|round(1) }} {{ _('training_hours', 'heures') }}
+                                {% endif %}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-search" style="font-size: 3rem;"></i>
+                </div>
+                <h3>{{ _('training_no_courses_found', 'Aucune formation trouvée') }}</h3>
+                <p class="text-muted">{{ _('training_try_different_filters', 'Essayez de modifier vos critères de recherche') }}</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Scripts pour la liste des cours
+    document.addEventListener('DOMContentLoaded', function() {
+        // Vous pouvez ajouter ici des fonctionnalités interactives
+    });
+</script>
+{% endblock %}

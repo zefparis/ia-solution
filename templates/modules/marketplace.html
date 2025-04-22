@@ -1,0 +1,287 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('Marché de Modules') }} - IA-Solution{% endblock %}
+
+{% block styles %}
+<style>
+    .module-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+    }
+    .module-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+    .module-rating {
+        color: #ffc107;
+    }
+    .category-filter {
+        overflow-y: auto;
+        max-height: 300px;
+    }
+    .category-filter .list-group-item {
+        border-radius: 0;
+        cursor: pointer;
+    }
+    .category-filter .list-group-item.active {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+    .filter-badge {
+        font-size: 0.8rem;
+        padding: 0.2rem 0.5rem;
+        margin-left: 0.5rem;
+    }
+    .filter-section {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 0.25rem;
+        margin-bottom: 1.5rem;
+    }
+    .installed-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background-color: #28a745;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.8rem;
+    }
+    .official-badge {
+        position: absolute;
+        bottom: 1rem;
+        left: 1rem;
+        background-color: #17a2b8;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h1>{{ _('Marché de Modules') }}</h1>
+        <a href="{{ url_for('modules.modules_home') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left mr-1"></i> {{ _('Retour') }}
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Filtres et options -->
+        <div class="col-lg-3 mb-4">
+            <div class="filter-section">
+                <h5 class="mb-3">{{ _('Filtres') }}</h5>
+                
+                <!-- Recherche -->
+                <div class="mb-4">
+                    <form action="{{ url_for('modules.modules_marketplace') }}" method="get">
+                        <div class="input-group">
+                            <input type="text" name="search" class="form-control" placeholder="{{ _('Rechercher...') }}" value="{{ request.args.get('search', '') }}">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Catégories -->
+                <div class="mb-4">
+                    <h6 class="mb-2">{{ _('Catégories') }}</h6>
+                    <div class="category-filter">
+                        <div class="list-group">
+                            <a href="{{ url_for('modules.modules_marketplace', sort=sort_by, free=is_free, official=is_official) }}" 
+                               class="list-group-item list-group-item-action {{ 'active' if not current_category else '' }}">
+                                {{ _('Toutes les catégories') }}
+                            </a>
+                            {% for category in categories %}
+                            <a href="{{ url_for('modules.modules_marketplace', category=category.id, sort=sort_by, free=is_free, official=is_official) }}" 
+                               class="list-group-item list-group-item-action {{ 'active' if category.id == current_category else '' }}">
+                                {% if category.icon %}
+                                <i class="fas {{ category.icon }} mr-2" style="color: {{ category.color or '#007bff' }};"></i>
+                                {% endif %}
+                                {{ category.name }}
+                                <span class="badge badge-pill badge-secondary float-right">{{ category.modules.count() }}</span>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Options de filtrage supplémentaires -->
+                <div class="mb-4">
+                    <h6 class="mb-2">{{ _('Options') }}</h6>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="freeModules" 
+                               onchange="window.location.href='{{ url_for('modules.modules_marketplace', category=current_category, sort=sort_by, official=is_official) }}' + (this.checked ? '&free=1' : '')"
+                               {{ 'checked' if is_free == '1' else '' }}>
+                        <label class="form-check-label" for="freeModules">
+                            {{ _('Modules gratuits uniquement') }}
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="officialModules" 
+                               onchange="window.location.href='{{ url_for('modules.modules_marketplace', category=current_category, sort=sort_by, free=is_free) }}' + (this.checked ? '&official=1' : '')"
+                               {{ 'checked' if is_official == '1' else '' }}>
+                        <label class="form-check-label" for="officialModules">
+                            {{ _('Modules officiels uniquement') }}
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Tri -->
+                <div>
+                    <h6 class="mb-2">{{ _('Trier par') }}</h6>
+                    <select class="form-control" id="sortOrder" onchange="window.location.href='{{ url_for('modules.modules_marketplace', category=current_category, free=is_free, official=is_official) }}&sort=' + this.value">
+                        <option value="popular" {{ 'selected' if sort_by == 'popular' or not sort_by else '' }}>{{ _('Popularité') }}</option>
+                        <option value="newest" {{ 'selected' if sort_by == 'newest' else '' }}>{{ _('Plus récents') }}</option>
+                        <option value="top_rated" {{ 'selected' if sort_by == 'top_rated' else '' }}>{{ _('Mieux notés') }}</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Liste des modules -->
+        <div class="col-lg-9">
+            <!-- Affichage des filtres actifs -->
+            <div class="d-flex flex-wrap align-items-center mb-4">
+                <span class="mr-2">{{ _('Filtres actifs:') }}</span>
+                {% if not current_category and is_free != '1' and is_official != '1' %}
+                <span class="badge badge-secondary filter-badge">{{ _('Aucun') }}</span>
+                {% else %}
+                {% if current_category %}
+                {% for category in categories %}
+                {% if category.id == current_category %}
+                <a href="{{ url_for('modules.modules_marketplace', sort=sort_by, free=is_free, official=is_official) }}" class="badge badge-primary filter-badge">
+                    {{ category.name }} <i class="fas fa-times-circle ml-1"></i>
+                </a>
+                {% endif %}
+                {% endfor %}
+                {% endif %}
+                
+                {% if is_free == '1' %}
+                <a href="{{ url_for('modules.modules_marketplace', category=current_category, sort=sort_by, official=is_official) }}" class="badge badge-success filter-badge">
+                    {{ _('Gratuit') }} <i class="fas fa-times-circle ml-1"></i>
+                </a>
+                {% endif %}
+                
+                {% if is_official == '1' %}
+                <a href="{{ url_for('modules.modules_marketplace', category=current_category, sort=sort_by, free=is_free) }}" class="badge badge-info filter-badge">
+                    {{ _('Officiel') }} <i class="fas fa-times-circle ml-1"></i>
+                </a>
+                {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- Résultats -->
+            {% if modules %}
+            <div class="row">
+                {% for module in modules %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 module-card">
+                        {% if module.is_official %}
+                        <span class="official-badge">
+                            <i class="fas fa-check-circle"></i> {{ _('Officiel') }}
+                        </span>
+                        {% endif %}
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                {% if module.icon %}
+                                {% if 'http' in module.icon %}
+                                <img src="{{ module.icon }}" alt="{{ module.name }}" class="mr-3" style="width: 48px; height: 48px; object-fit: contain;">
+                                {% else %}
+                                <i class="fas {{ module.icon }} fa-2x mr-3" style="color: {{ module.category.color or '#007bff' if module.category else '#007bff' }};"></i>
+                                {% endif %}
+                                {% else %}
+                                <i class="fas fa-cube fa-2x mr-3" style="color: #007bff;"></i>
+                                {% endif %}
+                                <h5 class="card-title mb-0">{{ module.name }}</h5>
+                            </div>
+                            <p class="card-text">{{ module.short_description }}</p>
+                            <div class="module-rating mb-2">
+                                {% set avg_rating = module.average_rating|round|int %}
+                                {% for i in range(5) %}
+                                    {% if i < avg_rating %}
+                                    <i class="fas fa-star"></i>
+                                    {% else %}
+                                    <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <small class="text-muted ml-1">{{ module.review_count }} {{ _('avis') }}</small>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                {% if module.price %}
+                                <span class="font-weight-bold">{{ module.price }}{{ '€' if module.currency == 'EUR' else '$' }}</span>
+                                {% else %}
+                                <span class="text-success font-weight-bold">{{ _('Gratuit') }}</span>
+                                {% endif %}
+                                <a href="{{ url_for('modules.module_details', module_id=module.id) }}" class="btn btn-sm btn-primary">{{ _('Détails') }}</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            <div class="d-flex justify-content-center mt-4">
+                <nav aria-label="Navigation des pages">
+                    <ul class="pagination">
+                        {% if has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('modules.modules_marketplace', category=current_category, sort=sort_by, free=is_free, official=is_official, page=page-1) }}">
+                                {{ _('Précédent') }}
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">{{ _('Précédent') }}</span>
+                        </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">{{ page }}</span>
+                        </li>
+                        
+                        {% if has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('modules.modules_marketplace', category=current_category, sort=sort_by, free=is_free, official=is_official, page=page+1) }}">
+                                {{ _('Suivant') }}
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">{{ _('Suivant') }}</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% else %}
+            <div class="alert alert-info text-center py-5">
+                <i class="fas fa-info-circle fa-3x mb-3"></i>
+                <h4>{{ _('Aucun module trouvé') }}</h4>
+                <p class="mb-0">{{ _('Aucun module ne correspond à vos critères de recherche. Essayez de modifier vos filtres.') }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Animations sur le survol des cartes
+    $('.module-card').hover(
+        function() { $(this).addClass('shadow'); },
+        function() { $(this).removeClass('shadow'); }
+    );
+});
+</script>
+{% endblock %}

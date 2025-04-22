@@ -1,0 +1,211 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('marketplace_automation_templates', 'Templates d\'automatisation') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3">{{ _('marketplace_automation_templates', 'Templates d\'automatisation') }}</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('marketplace.marketplace_home') }}">{{ _('marketplace_title', 'API Marketplace') }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ _('marketplace_automation_templates', 'Templates d\'automatisation') }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Filtres -->
+        <div class="col-md-3 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="h6 mb-0">{{ _('marketplace_filters', 'Filtres') }}</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('marketplace.list_automation_templates') }}" method="get">
+                        <div class="mb-3">
+                            <label for="search" class="form-label">{{ _('action.search', 'Rechercher') }}</label>
+                            <input type="text" class="form-control" id="search" name="search" placeholder="{{ _('marketplace_search_templates', 'Rechercher des templates...') }}" value="{{ current_search }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="category" class="form-label">{{ _('marketplace_category', 'Catégorie') }}</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="">{{ _('marketplace_all_categories', 'Toutes les catégories') }}</option>
+                                {% for cat in categories %}
+                                    <option value="{{ cat }}" {% if cat == current_category %}selected{% endif %}>{{ cat|capitalize }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="difficulty" class="form-label">{{ _('marketplace_difficulty', 'Difficulté') }}</label>
+                            <select class="form-select" id="difficulty" name="difficulty">
+                                <option value="">{{ _('marketplace_all_difficulties', 'Toutes les difficultés') }}</option>
+                                {% for level in difficulties %}
+                                    <option value="{{ level }}" {% if level == current_difficulty %}selected{% endif %}>
+                                        {% if level == 'beginner' %}
+                                            {{ _('marketplace_difficulty_beginner', 'Débutant') }}
+                                        {% elif level == 'intermediate' %}
+                                            {{ _('marketplace_difficulty_intermediate', 'Intermédiaire') }}
+                                        {% elif level == 'advanced' %}
+                                            {{ _('marketplace_difficulty_advanced', 'Avancé') }}
+                                        {% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">{{ _('marketplace_apply_filters', 'Appliquer les filtres') }}</button>
+                            <a href="{{ url_for('marketplace.list_automation_templates') }}" class="btn btn-outline-secondary">{{ _('marketplace_clear_filters', 'Effacer les filtres') }}</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Mes instances -->
+            {% if is_authenticated %}
+                <div class="card shadow-sm mt-4">
+                    <div class="card-header bg-transparent">
+                        <h5 class="h6 mb-0">{{ _('marketplace_my_instances', 'Mes automatisations') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="small">{{ _('marketplace_instances_desc', 'Accédez à vos instances d\'automatisation personnalisées.') }}</p>
+                        <div class="d-grid">
+                            <a href="{{ url_for('marketplace.list_automation_instances') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-cogs me-1"></i>{{ _('marketplace_view_instances', 'Voir mes automatisations') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Liste des templates -->
+        <div class="col-md-9">
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="h6 mb-0">
+                            {% if current_category %}
+                                {{ current_category|capitalize }}
+                            {% elif current_difficulty %}
+                                {% if current_difficulty == 'beginner' %}
+                                    {{ _('marketplace_difficulty_beginner', 'Débutant') }}
+                                {% elif current_difficulty == 'intermediate' %}
+                                    {{ _('marketplace_difficulty_intermediate', 'Intermédiaire') }}
+                                {% elif current_difficulty == 'advanced' %}
+                                    {{ _('marketplace_difficulty_advanced', 'Avancé') }}
+                                {% endif %}
+                            {% elif current_search %}
+                                {{ _('marketplace_search_results', 'Résultats de recherche') }}: "{{ current_search }}"
+                            {% else %}
+                                {{ _('marketplace_all_templates', 'Tous les templates d\'automatisation') }}
+                            {% endif %}
+                        </h5>
+                        <span class="text-muted small">{{ templates|length }} {{ _('results', 'résultats') }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if templates %}
+                        <div class="row">
+                            {% for template in templates %}
+                                <div class="col-md-6 mb-4">
+                                    <div class="card h-100 shadow-sm">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h5 class="card-title">{{ template.name }}</h5>
+                                                <span class="badge {% if template.difficulty_level == 'beginner' %}bg-success{% elif template.difficulty_level == 'intermediate' %}bg-warning{% else %}bg-danger{% endif %}">
+                                                    {% if template.difficulty_level == 'beginner' %}
+                                                        {{ _('marketplace_difficulty_beginner', 'Débutant') }}
+                                                    {% elif template.difficulty_level == 'intermediate' %}
+                                                        {{ _('marketplace_difficulty_intermediate', 'Intermédiaire') }}
+                                                    {% else %}
+                                                        {{ _('marketplace_difficulty_advanced', 'Avancé') }}
+                                                    {% endif %}
+                                                </span>
+                                            </div>
+                                            <p class="card-text text-muted small mb-3">{{ template.description }}</p>
+                                            
+                                            <div class="d-flex mb-3">
+                                                <div class="me-3">
+                                                    <i class="fas fa-tag text-muted me-1"></i>
+                                                    <span class="small">{{ template.category|capitalize }}</span>
+                                                </div>
+                                                {% if template.estimated_time_minutes %}
+                                                    <div>
+                                                        <i class="fas fa-clock text-muted me-1"></i>
+                                                        <span class="small">
+                                                            {% if template.estimated_time_minutes < 60 %}
+                                                                {{ template.estimated_time_minutes }} {{ _('marketplace_minutes', 'minutes') }}
+                                                            {% else %}
+                                                                {{ (template.estimated_time_minutes / 60)|int }} {{ _('marketplace_hours', 'heures') }}
+                                                            {% endif %}
+                                                        </span>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-2">
+                                                    <img src="{{ template.extension.icon_url or url_for('static', filename='img/default_icon.png') }}" alt="{{ template.extension.name }}" class="me-1" style="width: 24px; height: 24px; object-fit: cover;">
+                                                </div>
+                                                <div class="small text-muted">{{ _('marketplace_by', 'Par') }} {{ template.extension.name }}</div>
+                                            </div>
+                                            <div class="mt-3">
+                                                <a href="{{ url_for('marketplace.view_automation_template', template_id=template.id) }}" class="btn btn-outline-primary w-100">{{ _('marketplace_view_details', 'Voir les détails') }}</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-robot fa-3x text-muted mb-3"></i>
+                            <h5>{{ _('marketplace_no_templates', 'Aucun template d\'automatisation trouvé.') }}</h5>
+                            <p class="text-muted">{{ _('marketplace_try_different_filters', 'Essayez de modifier vos filtres de recherche.') }}</p>
+                            <a href="{{ url_for('marketplace.list_automation_templates') }}" class="btn btn-outline-primary mt-2">{{ _('marketplace_view_all_templates', 'Voir tous les templates') }}</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section d'aide -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="h6 mb-0">{{ _('marketplace_automation_help', 'Comment fonctionnent les templates d\'automatisation ?') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-4 mb-md-0">
+                            <div class="mb-3">
+                                <i class="fas fa-file-alt fa-3x text-primary"></i>
+                            </div>
+                            <h6>1. {{ _('marketplace_automation_step1', 'Choisissez un template') }}</h6>
+                            <p class="small text-muted">{{ _('marketplace_automation_step1_desc', 'Parcourez notre bibliothèque de templates d\'automatisation prêts à l\'emploi.') }}</p>
+                        </div>
+                        <div class="col-md-4 text-center mb-4 mb-md-0">
+                            <div class="mb-3">
+                                <i class="fas fa-wrench fa-3x text-primary"></i>
+                            </div>
+                            <h6>2. {{ _('marketplace_automation_step2', 'Personnalisez') }}</h6>
+                            <p class="small text-muted">{{ _('marketplace_automation_step2_desc', 'Configurez le template selon vos besoins spécifiques et créez une instance.') }}</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-magic fa-3x text-primary"></i>
+                            </div>
+                            <h6>3. {{ _('marketplace_automation_step3', 'Automatisez') }}</h6>
+                            <p class="small text-muted">{{ _('marketplace_automation_step3_desc', 'Laissez l\'automatisation faire le travail pour vous. Suivez les résultats dans votre tableau de bord.') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

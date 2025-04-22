@@ -1,0 +1,324 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ predictive_translations['new_prediction'][lang] }}{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        border-radius: 10px;
+        background-color: #f8f9fa;
+    }
+    
+    .form-section-title {
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .scenario-card {
+        transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    }
+    
+    .scenario-card.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+    
+    .scenario-header {
+        border-bottom: none;
+    }
+    
+    .custom-control-input:checked ~ .custom-control-label::before {
+        border-color: #007bff;
+        background-color: #007bff;
+    }
+    
+    .probability-slider {
+        width: 100%;
+    }
+    
+    .flatpickr-input {
+        background-color: #fff !important;
+    }
+    
+    .form-check-input:checked {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+    
+    .scenario-optimistic {
+        border-left: 4px solid #28a745;
+    }
+    
+    .scenario-realistic {
+        border-left: 4px solid #007bff;
+    }
+    
+    .scenario-pessimistic {
+        border-left: 4px solid #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ predictive_translations['new_prediction'][lang] }}</h1>
+        <a href="{{ url_for('predictive.sales_predictions') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i> {{ predictive_translations['back'][lang] }}
+        </a>
+    </div>
+    
+    <form method="post" action="{{ url_for('predictive.new_prediction') }}">
+        <!-- Basic Information Section -->
+        <div class="form-section shadow-sm">
+            <h3 class="form-section-title">
+                <i class="bi bi-info-circle text-primary me-2"></i>
+                {{ lang == 'fr' and 'Informations de base' or 'Basic Information' }}
+            </h3>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="name" class="form-label">{{ predictive_translations['prediction_name'][lang] }} <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="description" class="form-label">{{ predictive_translations['prediction_description'][lang] }}</label>
+                    <input type="text" class="form-control" id="description" name="description">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="start_date" class="form-label">{{ predictive_translations['start_date'][lang] }} <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control datepicker" id="start_date" name="start_date" value="{{ default_start }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="end_date" class="form-label">{{ predictive_translations['end_date'][lang] }} <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control datepicker" id="end_date" name="end_date" value="{{ default_end }}" required>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Prediction Settings Section -->
+        <div class="form-section shadow-sm">
+            <h3 class="form-section-title">
+                <i class="bi bi-sliders text-primary me-2"></i>
+                {{ predictive_translations['prediction_settings'][lang] }}
+            </h3>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label for="data_source" class="form-label">{{ predictive_translations['data_source'][lang] }}</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="data_source" id="existing_data" value="existing" checked>
+                        <label class="form-check-label" for="existing_data">
+                            {{ predictive_translations['use_existing_data'][lang] }}
+                        </label>
+                        <small class="form-text text-muted d-block">
+                            {{ lang == 'fr' and "Utiliser les données de ventes disponibles dans le système" or "Use sales data already available in the system" }}
+                        </small>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="radio" name="data_source" id="upload_file" value="upload" disabled>
+                        <label class="form-check-label" for="upload_file">
+                            {{ predictive_translations['upload_file'][lang] }}
+                        </label>
+                        <small class="form-text text-muted d-block">
+                            {{ lang == 'fr' and "Importer des données depuis un fichier CSV ou Excel (bientôt disponible)" or "Import data from a CSV or Excel file (coming soon)" }}
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="granularity" class="form-label">{{ predictive_translations['granularity'][lang] }}</label>
+                    <select class="form-select" id="granularity" name="granularity">
+                        <option value="daily">{{ predictive_translations['daily'][lang] }}</option>
+                        <option value="weekly">{{ predictive_translations['weekly'][lang] }}</option>
+                        <option value="monthly" selected>{{ predictive_translations['monthly'][lang] }}</option>
+                        <option value="quarterly">{{ predictive_translations['quarterly'][lang] }}</option>
+                        <option value="yearly">{{ predictive_translations['yearly'][lang] }}</option>
+                    </select>
+                    <small class="form-text text-muted d-block">
+                        {{ lang == 'fr' and "La fréquence à laquelle les prévisions seront générées" or "The frequency at which predictions will be generated" }}
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Scenario Settings Section -->
+        <div class="form-section shadow-sm">
+            <h3 class="form-section-title">
+                <i class="bi bi-diagram-3 text-primary me-2"></i>
+                {{ predictive_translations['scenario_settings'][lang] }}
+            </h3>
+            
+            <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
+                <!-- Optimistic Scenario -->
+                <div class="col">
+                    <div class="card h-100 scenario-card scenario-optimistic">
+                        <div class="card-header scenario-header bg-transparent">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="include_optimistic" name="include_optimistic" checked>
+                                <label class="form-check-label fw-bold" for="include_optimistic">
+                                    {{ predictive_translations['optimistic'][lang] }}
+                                </label>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text text-muted small">
+                                {{ lang == 'fr' and "Scénario favorable supposant une forte croissance et des conditions de marché idéales." or "Favorable scenario assuming strong growth and ideal market conditions." }}
+                            </p>
+                            <div class="mt-3">
+                                <label for="optimistic_probability" class="form-label">
+                                    {{ predictive_translations['probability'][lang] }}: <span id="optimistic_probability_value">25%</span>
+                                </label>
+                                <input type="range" class="form-range probability-slider" id="optimistic_probability" name="optimistic_probability" value="0.25" min="0.05" max="1" step="0.05">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Realistic Scenario -->
+                <div class="col">
+                    <div class="card h-100 scenario-card scenario-realistic">
+                        <div class="card-header scenario-header bg-transparent">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="include_realistic" name="include_realistic" checked>
+                                <label class="form-check-label fw-bold" for="include_realistic">
+                                    {{ predictive_translations['realistic'][lang] }}
+                                </label>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text text-muted small">
+                                {{ lang == 'fr' and "Scénario équilibré basé sur les tendances actuelles et les performances historiques." or "Balanced scenario based on current trends and historical performance." }}
+                            </p>
+                            <div class="mt-3">
+                                <label for="realistic_probability" class="form-label">
+                                    {{ predictive_translations['probability'][lang] }}: <span id="realistic_probability_value">50%</span>
+                                </label>
+                                <input type="range" class="form-range probability-slider" id="realistic_probability" name="realistic_probability" value="0.5" min="0.05" max="1" step="0.05">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pessimistic Scenario -->
+                <div class="col">
+                    <div class="card h-100 scenario-card scenario-pessimistic">
+                        <div class="card-header scenario-header bg-transparent">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="include_pessimistic" name="include_pessimistic" checked>
+                                <label class="form-check-label fw-bold" for="include_pessimistic">
+                                    {{ predictive_translations['pessimistic'][lang] }}
+                                </label>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text text-muted small">
+                                {{ lang == 'fr' and "Scénario défavorable prenant en compte les risques potentiels et les obstacles." or "Unfavorable scenario accounting for potential risks and obstacles." }}
+                            </p>
+                            <div class="mt-3">
+                                <label for="pessimistic_probability" class="form-label">
+                                    {{ predictive_translations['probability'][lang] }}: <span id="pessimistic_probability_value">25%</span>
+                                </label>
+                                <input type="range" class="form-range probability-slider" id="pessimistic_probability" name="pessimistic_probability" value="0.25" min="0.05" max="1" step="0.05">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                {{ lang == 'fr' and "Les probabilités des scénarios actifs devraient idéalement totaliser 100%." or "Probabilities of active scenarios should ideally add up to 100%." }}
+                <span id="total-probability" class="fw-bold">Total: 100%</span>
+            </div>
+        </div>
+        
+        <!-- Submit Buttons -->
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{{ url_for('predictive.sales_predictions') }}" class="btn btn-outline-secondary">
+                {{ predictive_translations['cancel'][lang] }}
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-lightning me-2"></i> {{ predictive_translations['create'][lang] }}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize date pickers
+        flatpickr(".datepicker", {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "{{ lang == 'fr' and 'd/m/Y' or 'm/d/Y' }}",
+            allowInput: true
+        });
+        
+        // Handle scenario checkboxes
+        const scenarioCheckboxes = document.querySelectorAll('input[type="checkbox"][id^="include_"]');
+        scenarioCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const scenarioCard = this.closest('.scenario-card');
+                if (this.checked) {
+                    scenarioCard.classList.remove('disabled');
+                } else {
+                    scenarioCard.classList.add('disabled');
+                }
+                updateTotalProbability();
+            });
+        });
+        
+        // Handle probability sliders
+        const probabilitySliders = document.querySelectorAll('.probability-slider');
+        probabilitySliders.forEach(slider => {
+            slider.addEventListener('input', function() {
+                const valueId = this.id + '_value';
+                document.getElementById(valueId).textContent = (this.value * 100) + '%';
+                updateTotalProbability();
+            });
+        });
+        
+        // Calculate and update total probability
+        function updateTotalProbability() {
+            let total = 0;
+            
+            if (document.getElementById('include_optimistic').checked) {
+                total += parseFloat(document.getElementById('optimistic_probability').value);
+            }
+            
+            if (document.getElementById('include_realistic').checked) {
+                total += parseFloat(document.getElementById('realistic_probability').value);
+            }
+            
+            if (document.getElementById('include_pessimistic').checked) {
+                total += parseFloat(document.getElementById('pessimistic_probability').value);
+            }
+            
+            const totalElement = document.getElementById('total-probability');
+            totalElement.textContent = "{{ lang == 'fr' and 'Total: ' or 'Total: ' }}" + (total * 100).toFixed(0) + '%';
+            
+            if (Math.abs(total - 1.0) < 0.05) {
+                totalElement.classList.remove('text-danger');
+                totalElement.classList.add('text-success');
+            } else {
+                totalElement.classList.remove('text-success');
+                totalElement.classList.add('text-danger');
+            }
+        }
+        
+        // Initial calculation
+        updateTotalProbability();
+    });
+</script>
+{% endblock %}

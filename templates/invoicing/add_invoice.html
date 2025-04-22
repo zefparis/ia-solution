@@ -1,0 +1,294 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ language.get_text('invoicing.create_invoice') }} - IA Solution{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ language.get_text('invoicing.create_invoice') }}</h1>
+        <a href="{{ url_for('invoicing.invoices') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>{{ language.get_text('invoicing.back_to_invoices') }}
+        </a>
+    </div>
+
+    {% for message in get_flashed_messages(with_categories=true) %}
+    <div class="alert alert-{{ message[0] }}" role="alert">
+        {{ message[1] }}
+    </div>
+    {% endfor %}
+
+    <form method="post" action="{{ url_for('invoicing.add_invoice') }}">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ language.get_text('invoicing.general_info') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="customer_id" class="form-label">{{ language.get_text('invoicing.clients') }} <span class="text-danger">*</span></label>
+                                <select class="form-select" id="customer_id" name="customer_id" required>
+                                    <option value="">{{ language.get_text('invoicing.select_client') }}</option>
+                                    {% for customer in customers %}
+                                    <option value="{{ customer.id }}" {% if selected_customer_id and selected_customer_id|int == customer.id %}selected{% endif %}>
+                                        {{ customer.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="issue_date" class="form-label">{{ language.get_text('invoicing.issue_date') }} <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="issue_date" name="issue_date" value="{{ today.strftime('%Y-%m-%d') }}" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="due_date" class="form-label">{{ language.get_text('invoicing.due_date') }}</label>
+                                <input type="date" class="form-control" id="due_date" name="due_date" value="{{ due_date.strftime('%Y-%m-%d') }}">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="payment_info" class="form-label">{{ language.get_text('invoicing.payment_info') }}</label>
+                                <textarea class="form-control" id="payment_info" name="payment_info" rows="3">{{ default_payment_info }}</textarea>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="terms" class="form-label">{{ language.get_text('invoicing.terms') }}</label>
+                                <textarea class="form-control" id="terms" name="terms" rows="3">{{ default_terms }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">{{ language.get_text('invoicing.invoice_items') }}</h5>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="add-item">
+                            <i class="fas fa-plus-circle me-2"></i>{{ language.get_text('invoicing.add_line') }}
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table mb-0" id="items-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40%;">{{ language.get_text('invoicing.description') }}</th>
+                                        <th style="width: 15%;">{{ language.get_text('invoicing.quantity') }}</th>
+                                        <th style="width: 15%;">{{ language.get_text('invoicing.unit_price') }}</th>
+                                        <th style="width: 15%;">{{ language.get_text('invoicing.tax') }}</th>
+                                        <th style="width: 15%;">{{ language.get_text('invoicing.amount') }}</th>
+                                        <th style="width: 5%;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="items-container">
+                                    <tr class="item-row">
+                                        <td>
+                                            <textarea class="form-control" name="item_description[]" rows="2" required></textarea>
+                                        </td>
+                                        <td>
+                                            <input type="text" inputmode="decimal" class="form-control quantity" name="item_quantity[]" value="1" required>
+                                        </td>
+                                        <td>
+                                            <div class="input-group">
+                                                <input type="text" inputmode="decimal" class="form-control unit-price" name="item_unit_price[]" value="0" required>
+                                                <span class="input-group-text">€</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="input-group">
+                                                <input type="text" inputmode="decimal" class="form-control tax-rate" name="item_tax_rate[]" value="20" required>
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control item-total" value="0.00" readonly>
+                                                <span class="input-group-text">€</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-outline-danger remove-item" disabled>
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="4" class="text-end"><strong>{{ language.get_text('invoicing.subtotal') }} :</strong></td>
+                                        <td colspan="2">
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="subtotal" value="0.00" readonly>
+                                                <span class="input-group-text">€</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="text-end"><strong>{{ language.get_text('invoicing.tax_amount') }} :</strong></td>
+                                        <td colspan="2">
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="tax-total" value="0.00" readonly>
+                                                <span class="input-group-text">€</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="text-end"><strong>{{ language.get_text('invoicing.total') }} :</strong></td>
+                                        <td colspan="2">
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="grand-total" value="0.00" readonly>
+                                                <span class="input-group-text">€</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ language.get_text('invoicing.notes') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">{{ language.get_text('invoicing.notes') }}</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="8"></textarea>
+                            <div class="form-text">{{ language.get_text('invoicing.notes') }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <button type="button" id="calculate-button" class="btn btn-primary btn-lg w-100 mb-3">
+                            <i class="fas fa-calculator me-2"></i>CALCULER TOUS LES TOTAUX
+                        </button>
+                        <button type="submit" class="btn btn-success w-100 mb-3">
+                            <i class="fas fa-save me-2"></i>{{ language.get_text('invoicing.create_invoice_submit') }}
+                        </button>
+                        <a href="{{ url_for('invoicing.invoices') }}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-times me-2"></i>{{ language.get_text('action.cancel') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Version extrêmement minimaliste et robuste
+    console.log("Initialisation en mode ultra-simple");
+    
+    // Récupérer le bouton de calcul qui est maintenant dans le HTML
+    var calculateButton = document.getElementById('calculate-button');
+    
+    // Fonction de calcul ultra-simplifiée
+    calculateButton.addEventListener('click', function() {
+        try {
+            // Forcer l'activation de tous les champs
+            document.querySelectorAll('input, textarea').forEach(function(input) {
+                if (input.classList.contains('item-total')) {
+                    input.readOnly = true;
+                } else {
+                    input.removeAttribute('disabled');
+                    input.removeAttribute('readonly');
+                }
+            });
+            
+            // Variables pour les totaux
+            var subtotal = 0;
+            var taxTotal = 0;
+            
+            // Récupérer toutes les lignes
+            var rows = document.querySelectorAll('.item-row');
+            
+            // Pour chaque ligne
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                
+                // Récupérer les valeurs (avec remplacement de virgule par point)
+                var qtyStr = row.querySelector('.quantity').value.replace(',', '.');
+                var priceStr = row.querySelector('.unit-price').value.replace(',', '.');
+                var taxStr = row.querySelector('.tax-rate').value.replace(',', '.');
+                
+                // Convertir en nombres
+                var qty = parseFloat(qtyStr) || 0;
+                var price = parseFloat(priceStr) || 0;
+                var taxRate = parseFloat(taxStr) || 0;
+                
+                console.log('Ligne ' + (i+1) + ': ' + qty + ' x ' + price + ' (' + taxRate + '%)');
+                
+                // Calculer les montants
+                var lineTotal = qty * price;
+                var lineTax = lineTotal * taxRate / 100;
+                var lineTotalWithTax = lineTotal + lineTax;
+                
+                // Mettre à jour la ligne
+                row.querySelector('.item-total').value = lineTotalWithTax.toFixed(2);
+                
+                // Ajouter aux totaux
+                subtotal += lineTotal;
+                taxTotal += lineTax;
+            }
+            
+            // Mettre à jour les totaux
+            var grandTotal = subtotal + taxTotal;
+            document.getElementById('subtotal').value = subtotal.toFixed(2);
+            document.getElementById('tax-total').value = taxTotal.toFixed(2);
+            document.getElementById('grand-total').value = grandTotal.toFixed(2);
+            
+            console.log('Calcul terminé: ' + subtotal.toFixed(2) + ' + ' + taxTotal.toFixed(2) + ' = ' + grandTotal.toFixed(2));
+            alert('Calcul terminé! Sous-total: ' + subtotal.toFixed(2) + '€, TVA: ' + taxTotal.toFixed(2) + '€, Total: ' + grandTotal.toFixed(2) + '€');
+        } catch (e) {
+            console.error('Erreur lors du calcul:', e);
+            alert('Erreur lors du calcul: ' + e.message);
+        }
+    });
+    
+    // Bouton pour ajouter une ligne
+    var addButton = document.getElementById('add-item');
+    addButton.addEventListener('click', function() {
+        try {
+            // Cloner la première ligne
+            var firstRow = document.querySelector('.item-row');
+            var newRow = firstRow.cloneNode(true);
+            
+            // Réinitialiser les valeurs
+            newRow.querySelector('textarea').value = '';
+            newRow.querySelector('.quantity').value = '1';
+            newRow.querySelector('.unit-price').value = '0';
+            newRow.querySelector('.tax-rate').value = '20';
+            newRow.querySelector('.item-total').value = '0.00';
+            
+            // Activer le bouton de suppression
+            var removeButton = newRow.querySelector('.remove-item');
+            removeButton.disabled = false;
+            
+            // Ajouter un nouvel écouteur pour le bouton de suppression
+            removeButton.addEventListener('click', function() {
+                newRow.remove();
+            });
+            
+            // Ajouter la ligne au tableau
+            document.getElementById('items-container').appendChild(newRow);
+            
+            console.log('Nouvelle ligne ajoutée');
+        } catch (e) {
+            console.error('Erreur lors de l\'ajout d\'une ligne:', e);
+            alert('Erreur lors de l\'ajout d\'une ligne: ' + e.message);
+        }
+    });
+    
+    console.log("Initialisation terminée");
+});
+</script>
+{% endblock %}

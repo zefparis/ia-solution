@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="fr" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IA-Solution – Powered by Benji</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Dark Theme CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='dark-theme.css') }}">
+    <!-- Animation CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+</head>
+<body>
+    <!-- Barre de navigation principale -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('home') }}">
+                <i class="fas fa-robot me-2"></i>IA-Solution
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('home') }}">
+                            <i class="fas fa-home me-1"></i>{{ language.get_text('nav.home') }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('home') }}">
+                            <i class="fas fa-tv me-1"></i>{{ language.get_text('nav.demo', 'Démo') }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('ocr') }}">
+                            <i class="fas fa-camera me-1"></i>{{ language.get_text('ocr.scan', 'Scanner') }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('business.business_consultation') }}">
+                            <i class="fas fa-briefcase me-1"></i>{{ language.get_text('nav.business', 'Consultation') }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('chat_page') }}">
+                            <i class="fas fa-robot me-1"></i>{{ language.get_text('nav.chat', 'Assistant IA') }}
+                        </a>
+                    </li>
+                    
+                    {% if session.get('access_token') %}
+                    <!-- Menu Finance -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="financeDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-chart-line me-1"></i>{{ language.get_text('nav.finance_management', 'Finance') }}
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="financeDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('finance.finance_dashboard') }}">
+                                    <i class="fas fa-chart-bar me-1"></i>{{ language.get_text('nav.finance', 'Finance') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('invoicing.index') }}">
+                                    <i class="fas fa-file-invoice me-1"></i>{{ language.get_text('nav.invoicing', 'Facturation') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('finance.finance_dashboard') }}">
+                                    <i class="fas fa-file-export me-1"></i>{{ language.get_text('nav.export', 'Export') }}
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('legal_info') }}">
+                            <i class="fas fa-gavel me-1"></i>{{ language.get_text('nav.legal', 'Mentions légales') }}
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <!-- Sélecteur de langue -->
+                    <li class="nav-item dropdown me-2">
+                        <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            {% if lang == 'fr' %}
+                            <i class="fas fa-language me-1"></i> FR
+                            {% else %}
+                            <i class="fas fa-language me-1"></i> EN
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="langDropdown">
+                            <li>
+                                <a class="dropdown-item {% if lang == 'fr' %}active{% endif %}" 
+                                   href="{{ url_for('home', lang='fr') }}">
+                                   <img src="{{ url_for('static', filename='img/flag-fr.svg') }}" alt="Français" width="20" class="me-2">Français
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item {% if lang == 'en' %}active{% endif %}" 
+                                   href="{{ url_for('home', lang='en') }}">
+                                   <img src="{{ url_for('static', filename='img/flag-en.svg') }}" alt="English" width="20" class="me-2">English
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Bouton de changement de thème -->
+                    <li class="nav-item">
+                        <button class="btn btn-sm btn-outline-light me-2 theme-toggle">
+                            <i class="fas fa-moon theme-icon-dark"></i>
+                            <i class="fas fa-sun d-none theme-icon-light"></i>
+                        </button>
+                    </li>
+                    
+                    <!-- Boutons Connexion/Inscription ou Menu utilisateur -->
+                    {% if session.get('access_token') %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user me-1"></i>{{ session.get('display_name', session.get('username', 'Profil')) }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('profile') }}">
+                                <i class="fas fa-id-card me-2"></i>{{ language.get_text('account.profile', 'Mon profil') }}
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>{{ language.get_text('nav.logout', 'Déconnexion') }}
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-outline-primary me-2" href="{{ url_for('login') }}">
+                            <i class="fas fa-sign-in-alt me-1"></i>{{ language.get_text('nav.login', 'Connexion') }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-primary" href="{{ url_for('register') }}">
+                            <i class="fas fa-user-plus me-1"></i>{{ language.get_text('nav.register', 'Inscription') }}
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- En-tête principal avec gradient moderne -->
+    <header class="text-white py-5 position-relative overflow-hidden" style="background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);">
+        <!-- Éléments décoratifs d'arrière-plan -->
+        <div class="position-absolute" style="top: -100px; right: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(0,212,255,0.1) 0%, rgba(9,9,121,0.05) 100%); border-radius: 50%; transform: rotate(15deg);"></div>
+        <div class="position-absolute" style="bottom: -50px; left: -50px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(0,212,255,0.08) 0%, rgba(9,9,121,0.03) 100%); border-radius: 50%; transform: rotate(-10deg);"></div>
+        
+        <div class="container py-4 position-relative" style="z-index: 5;">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="mb-4">
+                        <span class="badge bg-danger px-3 py-2 mb-3 animate__animated animate__fadeInDown">{{ language.get_text('home.new_cloud_files', 'Nouvelle génération IA') }}</span>
+                        <h1 class="display-3 fw-bold mb-3 animate__animated animate__fadeInLeft">{{ language.get_text('home.platform_title', 'IA-Solution, votre plateforme intelligente') }}</h1>
+                        <p class="lead mb-4 opacity-90 animate__animated animate__fadeIn">{{ language.get_text('home.platform_description', 'Solution IA complète pour la gestion, l\'analyse financière et le conseil personnalisé pour votre entreprise.') }}</p>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3 feature-item animate__animated animate__fadeInUp">
+                                <div class="feature-icon bg-primary bg-gradient rounded-circle p-3 me-3 shadow-sm">
+                                    <i class="fas fa-file-invoice text-white"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold">{{ language.get_text('home.feature1', 'Scan de documents') }}</h6>
+                                    <small class="text-info">OCR & IA avancée</small>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex align-items-center mb-3 feature-item animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
+                                <div class="feature-icon bg-success bg-gradient rounded-circle p-3 me-3 shadow-sm">
+                                    <i class="fas fa-chart-line text-white"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold">{{ language.get_text('home.feature2', 'Analyse financière') }}</h6>
+                                    <small class="text-info">Catégorisation automatique</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3 feature-item animate__animated animate__fadeInUp" style="animation-delay: 0.4s;">
+                                <div class="feature-icon bg-warning bg-gradient rounded-circle p-3 me-3 shadow-sm">
+                                    <i class="fas fa-file-invoice-dollar text-white"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold">{{ language.get_text('home.feature3', 'Facturation intelligente') }}</h6>
+                                    <small class="text-info">Rapports et factures</small>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex align-items-center mb-3 feature-item animate__animated animate__fadeInUp" style="animation-delay: 0.6s;">
+                                <div class="feature-icon bg-info bg-gradient rounded-circle p-3 me-3 shadow-sm">
+                                    <i class="fas fa-cloud text-white"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold">{{ language.get_text('home.feature4', 'Stockage sécurisé') }}</h6>
+                                    <small class="text-info">AWS S3 sécurisé</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        {% if not session.get('access_token') %}
+                        <div class="d-grid gap-2 d-sm-flex justify-content-sm-start animate__animated animate__fadeInUp" style="animation-delay: 0.7s;">
+                            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-4 me-sm-3 shadow-lg">
+                                <i class="fas fa-rocket me-2"></i>{{ language.get_text('home.start_free', 'Commencer gratuitement') }}
+                            </a>
+                            <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg px-4 shadow-sm">
+                                <i class="fas fa-sign-in-alt me-2"></i>{{ language.get_text('nav.login', 'Connexion') }}
+                            </a>
+                        </div>
+                        {% else %}
+                        <div class="d-grid gap-2 d-sm-flex justify-content-sm-start animate__animated animate__fadeInUp" style="animation-delay: 0.7s;">
+                            <a href="{{ url_for('finance.finance_dashboard') }}" class="btn btn-primary btn-lg px-4 me-sm-3 shadow-lg">
+                                <i class="fas fa-tachometer-alt me-2"></i>{{ language.get_text('home.dashboard', 'Tableau de bord') }}
+                            </a>
+                            <a href="{{ url_for('subscription.plans') }}" class="btn btn-outline-light btn-lg px-4 shadow-sm">
+                                <i class="fas fa-credit-card me-2"></i>{{ language.get_text('nav.subscription', 'Abonnement') }}
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-lg-6 d-none d-lg-block position-relative">
+                    <div class="position-relative ms-lg-5 mt-4 mt-lg-0 animate__animated animate__fadeInRight">
+                        <!-- Cercle décoratif derrière le robot -->
+                        <div class="position-absolute top-50 start-50 translate-middle" style="width: 300px; height: 300px; background: radial-gradient(circle, rgba(13, 110, 253, 0.2) 0%, rgba(13, 110, 253, 0.1) 50%, rgba(13, 110, 253, 0.05) 100%); border-radius: 50%; z-index: -1;"></div>
+                        
+                        <!-- Robot avec effet de lumière -->
+                        <div class="text-center position-relative" style="z-index: 2;">
+                            <i class="fas fa-robot fa-10x text-info glow-effect"></i>
+                            <div class="position-absolute top-0 end-0 mt-2 me-2">
+                                <span class="badge bg-primary p-2 animate__animated animate__pulse animate__infinite">IA Avancée</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Fonctionnalités additionnelles flottantes -->
+                        <div class="position-absolute" style="top: -20px; right: 30px; transform: rotate(5deg); z-index: 3;">
+                            <div class="badge bg-danger p-2 shadow animate__animated animate__fadeInDown" style="animation-delay: 0.5s;">
+                                <i class="fas fa-language me-1"></i> Multilingue
+                            </div>
+                        </div>
+                        <div class="position-absolute" style="bottom: 20px; left: 0; transform: rotate(-5deg); z-index: 3;">
+                            <div class="badge bg-success p-2 shadow animate__animated animate__fadeInUp" style="animation-delay: 0.7s;">
+                                <i class="fas fa-comments me-1"></i> Assistant Vocal
+                            </div>
+                        </div>
+                        <div class="position-absolute" style="bottom: -10px; right: 50px; transform: rotate(3deg); z-index: 3;">
+                            <div class="badge bg-warning text-dark p-2 shadow animate__animated animate__fadeInUp" style="animation-delay: 0.9s;">
+                                <i class="fas fa-mobile-alt me-1"></i> Compatible Mobile
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Style pour l'effet de lueur et les animations -->
+    <style>
+        .glow-effect {
+            animation: glow 3s infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px rgba(0, 123, 255, 0.3),
+                             0 0 20px rgba(0, 123, 255, 0.3),
+                             0 0 30px rgba(0, 123, 255, 0.3);
+            }
+            to {
+                text-shadow: 0 0 20px rgba(0, 123, 255, 0.6),
+                             0 0 30px rgba(0, 123, 255, 0.6),
+                             0 0 40px rgba(0, 123, 255, 0.6);
+            }
+        }
+        
+        .feature-item {
+            transition: all 0.3s ease;
+        }
+        
+        .feature-item:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-item:hover .feature-icon {
+            transform: scale(1.1);
+        }
+    </style>
+    
+    <!-- Section fonctionnalités principales -->
+    <section class="py-5" style="background: #0f0c29; background: linear-gradient(to right, #24243e, #302b63, #0f0c29);">
+        <div class="container">
+            <div class="text-center mb-5 animate__animated animate__fadeInUp">
+                <h2 class="display-4 fw-bold text-white">{{ language.get_text('home.main_features_title', 'Fonctionnalités principales') }}</h2>
+                <p class="lead text-light">{{ language.get_text('home.main_features_subtitle', 'Découvrez tous les outils qui transformeront votre gestion d\'entreprise') }}</p>
+            </div>
+
+            <!-- Navigation par onglets pour les catégories -->
+            <ul class="nav nav-pills mb-4 justify-content-center animate__animated animate__fadeInUp" id="featuresTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="all-tab" data-bs-toggle="pill" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true">
+                        <i class="fas fa-th me-1"></i> {{ language.get_text('home.all_features', 'Toutes') }}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="finance-tab" data-bs-toggle="pill" data-bs-target="#finance" type="button" role="tab" aria-controls="finance" aria-selected="false">
+                        <i class="fas fa-chart-line me-1"></i> {{ language.get_text('home.finance_category', 'Finance') }}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="business-tab" data-bs-toggle="pill" data-bs-target="#business" type="button" role="tab" aria-controls="business" aria-selected="false">
+                        <i class="fas fa-briefcase me-1"></i> {{ language.get_text('home.business_category', 'Business') }}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="modules-tab" data-bs-toggle="pill" data-bs-target="#modules" type="button" role="tab" aria-controls="modules" aria-selected="false">
+                        <i class="fas fa-cubes me-1"></i> {{ language.get_text('home.modules_category', 'Modules') }}
+                    </button>
+                </li>
+            </ul>
+            
+            <!-- Contenu des onglets -->
+            <div class="tab-content" id="featuresTabContent">
+                <!-- Toutes les fonctionnalités -->
+                <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
+                    <div class="row g-4">
+                        <!-- Assistant IA -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp" style="animation-delay: 0.1s;">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-primary text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-robot fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.ai_assistant_title', 'Assistant IA') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.ai_assistant_description', 'Communiquez avec notre IA pour obtenir des informations, des conseils et de l\'aide.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('chat_page') }}" class="btn btn-primary" style="border-radius: 2rem;">
+                                            <i class="fas fa-comments me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Scanner de Documents -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-success text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-file-invoice fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.document_scan_title', 'Scanner OCR') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.document_scan_description', 'Numérisez et extrayez automatiquement les données de vos documents financiers.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('ocr') }}" class="btn btn-success" style="border-radius: 2rem;">
+                                            <i class="fas fa-camera me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tableau de bord Financier -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp" style="animation-delay: 0.3s;">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-info text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-chart-pie fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.finance_dashboard_title', 'Tableau Financier') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.finance_dashboard_description', 'Visualisez et analysez vos données financières avec des graphiques interactifs.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('finance.finance_dashboard') }}" class="btn btn-info" style="border-radius: 2rem;">
+                                            <i class="fas fa-tachometer-alt me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Facturation -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp" style="animation-delay: 0.4s;">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-warning text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-file-invoice-dollar fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.invoicing_title', 'Facturation') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.invoicing_description', 'Créez des factures et des devis professionnels en quelques clics avec calculs automatiques.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('invoicing.index') }}" class="btn btn-warning" style="border-radius: 2rem;">
+                                            <i class="fas fa-file-signature me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Consultation Business -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp" style="animation-delay: 0.5s;">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-danger text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-lightbulb fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.business_consultation_title', 'Consultation Business') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.business_consultation_description', 'Obtenez une analyse SWOT et des recommandations stratégiques personnalisées pour votre entreprise.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('business.business_consultation') }}" class="btn btn-danger" style="border-radius: 2rem;">
+                                            <i class="fas fa-briefcase me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Marketing IA -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp" style="animation-delay: 0.6s;">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-primary text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-bullhorn fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.marketing_title', 'Marketing IA') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.marketing_description', 'Générez des contenus marketing, planifiez vos campagnes et créez un calendrier éditorial.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('marketing.marketing_dashboard') }}" class="btn btn-primary" style="border-radius: 2rem;">
+                                            <i class="fas fa-ad me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Analyse de Processus -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp" style="animation-delay: 0.7s;">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-success text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-project-diagram fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.process_analysis_title', 'Analyse de Processus') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.process_analysis_description', 'Optimisez vos processus métier avec une analyse détaillée et des recommandations personnalisées.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('process_analysis.index') }}" class="btn btn-success" style="border-radius: 2rem;">
+                                            <i class="fas fa-sitemap me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Intelligence Prédictive -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp" style="animation-delay: 0.8s;">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-info text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-brain fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.predictive_title', 'Intelligence Prédictive') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.predictive_description', 'Prévoyez vos ventes, analysez le potentiel client et optimisez votre catalogue avec l\'IA.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('predictive.index') }}" class="btn btn-info" style="border-radius: 2rem;">
+                                            <i class="fas fa-chart-line me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Formation -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp" style="animation-delay: 0.9s;">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-warning text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-graduation-cap fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.training_title', 'Formation Interactive') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.training_description', 'Suivez des formations personnalisées, avec parcours adaptatifs et certification.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('training.training_dashboard') }}" class="btn btn-warning" style="border-radius: 2rem;">
+                                            <i class="fas fa-book me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Marketplace API -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp" style="animation-delay: 1.0s;">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-danger text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-store fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.marketplace_title', 'Marketplace API') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.marketplace_description', 'Accédez à des extensions, connecteurs et modèles d\'automatisation pour votre entreprise.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('modules.modules_marketplace') }}" class="btn btn-danger" style="border-radius: 2rem;">
+                                            <i class="fas fa-puzzle-piece me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Système de Modules -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp" style="animation-delay: 1.1s;">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-primary text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-cubes fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.modules_system_title', 'Système de Modules') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.modules_system_description', 'Installez des modules métier à la volée avec notes, avis et gestion des versions.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('modules.my_modules') }}" class="btn btn-primary" style="border-radius: 2rem;">
+                                            <i class="fas fa-th-large me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Export Multi-formats -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp" style="animation-delay: 1.2s;">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-success text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-file-export fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.export_title', 'Export Multi-formats') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.export_description', 'Exportez vos données dans différents formats (PDF, Excel, CSV, JSON) avec aperçu intégré.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('export.export_home') }}" class="btn btn-success" style="border-radius: 2rem;">
+                                            <i class="fas fa-download me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Finance -->
+                <div class="tab-pane fade" id="finance" role="tabpanel" aria-labelledby="finance-tab">
+                    <div class="row g-4">
+                        <!-- Tableau de bord Financier -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-info text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-chart-pie fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.finance_dashboard_title', 'Tableau Financier') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.finance_dashboard_description', 'Visualisez et analysez vos données financières avec des graphiques interactifs.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('finance.finance_dashboard') }}" class="btn btn-info" style="border-radius: 2rem;">
+                                            <i class="fas fa-tachometer-alt me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Facturation -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-warning text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-file-invoice-dollar fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.invoicing_title', 'Facturation') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.invoicing_description', 'Créez des factures et des devis professionnels en quelques clics avec calculs automatiques.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('invoicing.index') }}" class="btn btn-warning" style="border-radius: 2rem;">
+                                            <i class="fas fa-file-signature me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Scanner OCR -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-success text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-file-invoice fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.document_scan_title', 'Scanner OCR') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.document_scan_description', 'Numérisez et extrayez automatiquement les données de vos documents financiers.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('ocr') }}" class="btn btn-success" style="border-radius: 2rem;">
+                                            <i class="fas fa-camera me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Intelligence Prédictive -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-info text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-brain fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.predictive_title', 'Intelligence Prédictive') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.predictive_description', 'Prévoyez vos ventes, analysez le potentiel client et optimisez votre catalogue avec l\'IA.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('predictive.index') }}" class="btn btn-info" style="border-radius: 2rem;">
+                                            <i class="fas fa-chart-line me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Business -->
+                <div class="tab-pane fade" id="business" role="tabpanel" aria-labelledby="business-tab">
+                    <div class="row g-4">
+                        <!-- Consultation Business -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-danger text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-lightbulb fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.business_consultation_title', 'Consultation Business') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.business_consultation_description', 'Obtenez une analyse SWOT et des recommandations stratégiques personnalisées pour votre entreprise.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('business.business_consultation') }}" class="btn btn-danger" style="border-radius: 2rem;">
+                                            <i class="fas fa-briefcase me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Marketing IA -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-primary text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-bullhorn fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.marketing_title', 'Marketing IA') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.marketing_description', 'Générez des contenus marketing, planifiez vos campagnes et créez un calendrier éditorial.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('marketing.marketing_dashboard') }}" class="btn btn-primary" style="border-radius: 2rem;">
+                                            <i class="fas fa-ad me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Analyse de Processus -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-success text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-project-diagram fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.process_analysis_title', 'Analyse de Processus') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.process_analysis_description', 'Optimisez vos processus métier avec une analyse détaillée et des recommandations personnalisées.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('process_analysis.index') }}" class="btn btn-success" style="border-radius: 2rem;">
+                                            <i class="fas fa-sitemap me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modules et Formation -->
+                <div class="tab-pane fade" id="modules" role="tabpanel" aria-labelledby="modules-tab">
+                    <div class="row g-4">
+                        <!-- Marketplace API -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-danger text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-store fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.marketplace_title', 'Marketplace API') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.marketplace_description', 'Accédez à des extensions, connecteurs et modèles d\'automatisation pour votre entreprise.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('modules.modules_marketplace') }}" class="btn btn-danger" style="border-radius: 2rem;">
+                                            <i class="fas fa-puzzle-piece me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Système de Modules -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-primary text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-cubes fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.modules_system_title', 'Système de Modules') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.modules_system_description', 'Installez des modules métier à la volée avec notes, avis et gestion des versions.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('modules.my_modules') }}" class="btn btn-primary" style="border-radius: 2rem;">
+                                            <i class="fas fa-th-large me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Formation -->
+                        <div class="col-lg-4 col-md-6 animate__animated animate__fadeInUp">
+                            <div class="card h-100 border-0 shadow-lg hover-card bg-dark">
+                                <div class="card-header p-3 bg-warning text-white text-center" style="border-radius: 0.5rem 0.5rem 0 0;">
+                                    <i class="fas fa-graduation-cap fa-2x mb-2"></i>
+                                    <h3 class="card-title h4 mb-0">{{ language.get_text('home.training_title', 'Formation Interactive') }}</h3>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="card-text text-muted">{{ language.get_text('home.training_description', 'Suivez des formations personnalisées, avec parcours adaptatifs et certification.') }}</p>
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('training.training_dashboard') }}" class="btn btn-warning" style="border-radius: 2rem;">
+                                            <i class="fas fa-book me-2"></i>{{ language.get_text('home.try_now', 'Essayer maintenant') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer moderne -->
+    <footer class="py-5 bg-dark">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4 mb-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-robot text-primary fa-2x me-2"></i>
+                        <h5 class="m-0 text-white">IA-Solution</h5>
+                    </div>
+                    <p class="text-muted">{{ language.get_text('footer.description', 'IA-Solution est une plateforme qui combine l\'intelligence artificielle avancée avec des outils de gestion d\'entreprise pour optimiser vos performances.') }}</p>
+                    <div class="d-flex mt-4">
+                        <a href="#" class="text-white-50 me-3"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-white-50 me-3"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-white-50 me-3"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" class="text-white-50"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5 class="text-white mb-3">{{ language.get_text('footer.quick_links', 'Liens rapides') }}</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="{{ url_for('home') }}" class="text-white-50 text-decoration-none"><i class="fas fa-angle-right me-2 small"></i>{{ language.get_text('nav.home', 'Accueil') }}</a></li>
+                        <li class="mb-2"><a href="{{ url_for('legal_info') }}" class="text-white-50 text-decoration-none"><i class="fas fa-angle-right me-2 small"></i>{{ language.get_text('nav.legal', 'Mentions légales') }}</a></li>
+                        <li class="mb-2"><a href="{{ url_for('chat_page') }}" class="text-white-50 text-decoration-none"><i class="fas fa-angle-right me-2 small"></i>{{ language.get_text('nav.chat', 'Assistant IA') }}</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5 class="text-white mb-3">{{ language.get_text('footer.features', 'Fonctionnalités') }}</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="{{ url_for('ocr') }}" class="text-white-50 text-decoration-none"><i class="fas fa-angle-right me-2 small"></i>{{ language.get_text('footer.ocr', 'Scanner OCR') }}</a></li>
+                        <li class="mb-2"><a href="{{ url_for('business.business_consultation') }}" class="text-white-50 text-decoration-none"><i class="fas fa-angle-right me-2 small"></i>{{ language.get_text('footer.consulting', 'Consultation') }}</a></li>
+                        <li class="mb-2"><a href="{{ url_for('finance.finance_dashboard') }}" class="text-white-50 text-decoration-none"><i class="fas fa-angle-right me-2 small"></i>{{ language.get_text('footer.finance', 'Finance') }}</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-4 col-md-12">
+                    <h5 class="text-white mb-3">{{ language.get_text('footer.newsletter', 'Newsletter') }}</h5>
+                    <p class="text-muted">{{ language.get_text('footer.newsletter_description', 'Inscrivez-vous pour recevoir nos actualités et mises à jour.') }}</p>
+                    <form class="mt-3">
+                        <div class="input-group mb-3">
+                            <input type="email" class="form-control" placeholder="{{ language.get_text('footer.email_placeholder', 'Votre adresse email') }}">
+                            <button class="btn btn-primary" type="button">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <hr class="my-4 border-secondary">
+            
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="text-muted mb-md-0">{{ language.get_text('footer.copyright', '© 2025 IA-Solution. Tous droits réservés.') }}</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <a href="#" class="text-white-50 text-decoration-none me-3">{{ language.get_text('footer.privacy', 'Confidentialité') }}</a>
+                    <a href="#" class="text-white-50 text-decoration-none me-3">{{ language.get_text('footer.terms', 'Conditions') }}</a>
+                    <a href="#" class="text-white-50 text-decoration-none">{{ language.get_text('footer.cookies', 'Cookies') }}</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Code pour le toggle du thème clair/sombre
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.querySelector('.theme-toggle');
+            const lightIcon = document.querySelector('.theme-icon-light');
+            const darkIcon = document.querySelector('.theme-icon-dark');
+            const htmlElement = document.documentElement;
+            
+            // Vérifie le thème stocké
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme === 'light') {
+                htmlElement.setAttribute('data-bs-theme', 'light');
+                darkIcon.classList.add('d-none');
+                lightIcon.classList.remove('d-none');
+            }
+            
+            // Toggle du thème au clic
+            themeToggle.addEventListener('click', function() {
+                if (htmlElement.getAttribute('data-bs-theme') === 'dark') {
+                    htmlElement.setAttribute('data-bs-theme', 'light');
+                    darkIcon.classList.add('d-none');
+                    lightIcon.classList.remove('d-none');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    htmlElement.setAttribute('data-bs-theme', 'dark');
+                    lightIcon.classList.add('d-none');
+                    darkIcon.classList.remove('d-none');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,460 @@
+{% extends "layout.html" %}
+
+{% block title %}Tableau de bord unifié{% endblock %}
+
+{% block extra_css %}
+<style>
+    .action-card {
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .action-icon-container {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+    }
+    
+    .action-icon {
+        font-size: 28px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Tableau de bord IA-Solution</h1>
+            <p class="text-muted">Bienvenue {{ username }}. Voici votre vision globale professionnelle.</p>
+        </div>
+    </div>
+
+    <!-- Cartes de statistiques principales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Balance</h5>
+                    <h2 class="mb-2">{{ "%.2f"|format(balance) }} €</h2>
+                    <p class="card-text text-muted">Solde actuel</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-success">Revenus</h5>
+                    <h2 class="mb-2">{{ "%.2f"|format(total_income) }} €</h2>
+                    <p class="card-text text-muted">Total des revenus</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">Dépenses</h5>
+                    <h2 class="mb-2">{{ "%.2f"|format(total_expenses) }} €</h2>
+                    <p class="card-text text-muted">Total des dépenses</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-info">Facturation</h5>
+                    <h2 class="mb-2">{{ "%.2f"|format(total_invoiced) }} €</h2>
+                    <p class="card-text text-muted">Montant facturé cette année</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphiques et statistiques avancées -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">Évolution mensuelle</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">Répartition par catégorie</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Transactions récentes</h5>
+                    <a href="{{ url_for('finance.view_transactions') }}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Catégorie</th>
+                                    <th>Montant</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tx in transactions %}
+                                <tr>
+                                    <td>{{ tx.date }}</td>
+                                    <td>{{ tx.description }}</td>
+                                    <td>{{ tx.category }}</td>
+                                    <td class="{% if tx.type == 'income' %}text-success{% else %}text-danger{% endif %}">
+                                        {% if tx.type == 'income' %}+{% else %}-{% endif %}{{ "%.2f"|format(tx.amount) }} €
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Factures récentes</h5>
+                    <a href="{{ url_for('invoicing.invoices') }}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>N° Facture</th>
+                                    <th>Client</th>
+                                    <th>Date</th>
+                                    <th>Montant</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invoice in latest_invoices %}
+                                <tr>
+                                    <td>{{ invoice.invoice_number }}</td>
+                                    <td>{{ invoice.customer.name if invoice.customer else 'N/A' }}</td>
+                                    <td>{{ invoice.issue_date.strftime('%d/%m/%Y') }}</td>
+                                    <td>{{ "%.2f"|format(invoice.total) }} €</td>
+                                    <td>
+                                        {% if invoice.status == 'paid' %}
+                                            <span class="badge bg-success">Payée</span>
+                                        {% elif invoice.status == 'sent' %}
+                                            <span class="badge bg-primary">Envoyée</span>
+                                        {% elif invoice.status == 'overdue' %}
+                                            <span class="badge bg-danger">En retard</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Brouillon</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prévisions financières -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">Prévisions de trésorerie</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="predictionChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">Actions rapides</h5>
+                </div>
+                <div class="card-body bg-dark py-4">
+                    <div class="row g-4">
+                        <div class="col-md-2 col-sm-4 col-6">
+                            <a href="{{ url_for('finance.add_transaction') }}" class="text-decoration-none">
+                                <div class="card h-100 text-center action-card">
+                                    <div class="card-body d-flex flex-column align-items-center justify-content-center p-3">
+                                        <div class="action-icon-container mb-3 bg-primary bg-opacity-10 rounded-circle">
+                                            <i class="bi bi-plus-circle action-icon text-primary"></i>
+                                        </div>
+                                        <h6 class="card-title mb-0">Nouvelle transaction</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6">
+                            <a href="{{ url_for('invoicing.add_invoice') }}" class="text-decoration-none">
+                                <div class="card h-100 text-center action-card">
+                                    <div class="card-body d-flex flex-column align-items-center justify-content-center p-3">
+                                        <div class="action-icon-container mb-3 bg-success bg-opacity-10 rounded-circle">
+                                            <i class="bi bi-file-earmark-text action-icon text-success"></i>
+                                        </div>
+                                        <h6 class="card-title mb-0">Nouvelle facture</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6">
+                            <a href="{{ url_for('invoicing.add_quote') }}" class="text-decoration-none">
+                                <div class="card h-100 text-center action-card">
+                                    <div class="card-body d-flex flex-column align-items-center justify-content-center p-3">
+                                        <div class="action-icon-container mb-3 bg-info bg-opacity-10 rounded-circle">
+                                            <i class="bi bi-clipboard-check action-icon text-info"></i>
+                                        </div>
+                                        <h6 class="card-title mb-0">Nouveau devis</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6">
+                            <a href="{{ url_for('business.business_consultation') }}" class="text-decoration-none">
+                                <div class="card h-100 text-center action-card">
+                                    <div class="card-body d-flex flex-column align-items-center justify-content-center p-3">
+                                        <div class="action-icon-container mb-3 bg-warning bg-opacity-10 rounded-circle">
+                                            <i class="bi bi-graph-up action-icon text-warning"></i>
+                                        </div>
+                                        <h6 class="card-title mb-0">Consultation business</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6">
+                            <a href="{{ url_for('invoicing.customers') }}" class="text-decoration-none">
+                                <div class="card h-100 text-center action-card">
+                                    <div class="card-body d-flex flex-column align-items-center justify-content-center p-3">
+                                        <div class="action-icon-container mb-3 bg-secondary bg-opacity-10 rounded-circle">
+                                            <i class="bi bi-people action-icon text-secondary"></i>
+                                        </div>
+                                        <h6 class="card-title mb-0">Gérer clients</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6">
+                            <a href="{{ url_for('finance.financial_reports') }}" class="text-decoration-none">
+                                <div class="card h-100 text-center action-card">
+                                    <div class="card-body d-flex flex-column align-items-center justify-content-center p-3">
+                                        <div class="action-icon-container mb-3 bg-danger bg-opacity-10 rounded-circle">
+                                            <i class="bi bi-bar-chart action-icon text-danger"></i>
+                                        </div>
+                                        <h6 class="card-title mb-0">Rapports financiers</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Configuration des options communes pour les graphiques
+        Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--bs-body-color');
+        Chart.defaults.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--bs-border-color');
+        Chart.defaults.font.family = getComputedStyle(document.documentElement).getPropertyValue('--bs-body-font-family');
+
+        // Récupérer les données pour les graphiques
+        fetch('/unified-dashboard/data/monthly-summary')
+            .then(response => response.json())
+            .then(data => {
+                // Graphique d'évolution mensuelle
+                const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+                new Chart(monthlyCtx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Revenus',
+                            data: data.income,
+                            backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                            borderColor: 'rgba(40, 167, 69, 1)',
+                            borderWidth: 2,
+                            tension: 0.1
+                        }, {
+                            label: 'Dépenses',
+                            data: data.expense,
+                            backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                            borderColor: 'rgba(220, 53, 69, 1)',
+                            borderWidth: 2,
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: false
+                            },
+                            legend: {
+                                position: 'top',
+                            }
+                        },
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Erreur lors du chargement des données mensuelles:', error));
+
+        // Répartition par catégorie
+        fetch('/unified-dashboard/data/category-breakdown')
+            .then(response => response.json())
+            .then(data => {
+                const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+                
+                // Générer des couleurs aléatoires pour chaque catégorie
+                const colors = [];
+                for (let i = 0; i < data.labels.length; i++) {
+                    // Couleurs pastel variées
+                    const h = (i * 30) % 360;
+                    colors.push(`hsl(${h}, 70%, 60%)`);
+                }
+                
+                new Chart(categoryCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            data: data.values,
+                            backgroundColor: colors,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Erreur lors du chargement des données de catégorie:', error));
+
+        // Prévisions de trésorerie
+        fetch('/unified-dashboard/data/cashflow-prediction')
+            .then(response => response.json())
+            .then(data => {
+                const predictionCtx = document.getElementById('predictionChart').getContext('2d');
+                new Chart(predictionCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            type: 'line',
+                            label: 'Balance prévisionnelle',
+                            data: data.balance,
+                            borderColor: 'rgba(13, 110, 253, 1)',
+                            backgroundColor: 'rgba(13, 110, 253, 0.2)',
+                            borderWidth: 2,
+                            tension: 0.1,
+                            yAxisID: 'y'
+                        }, {
+                            type: 'bar',
+                            label: 'Revenus prévisionnels',
+                            data: data.income,
+                            backgroundColor: 'rgba(40, 167, 69, 0.6)',
+                            borderColor: 'rgba(40, 167, 69, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y1'
+                        }, {
+                            type: 'bar',
+                            label: 'Dépenses prévisionnelles',
+                            data: data.expense,
+                            backgroundColor: 'rgba(220, 53, 69, 0.6)',
+                            borderColor: 'rgba(220, 53, 69, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y1'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: false
+                            },
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                beginAtZero: true
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                grid: {
+                                    drawOnChartArea: false,
+                                },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Erreur lors du chargement des prévisions:', error));
+    });
+</script>
+{% endblock %}

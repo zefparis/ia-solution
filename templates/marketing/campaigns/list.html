@@ -1,0 +1,146 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('campaigns_list_title', 'Campagnes Marketing') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>{{ _('campaigns_list_title', 'Campagnes Marketing') }}</h1>
+                <a href="{{ url_for('marketing.create_campaign') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>{{ _('create_new_campaign', 'Nouvelle campagne') }}
+                </a>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    {% if campaigns %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('campaign_name', 'Nom') }}</th>
+                                    <th>{{ _('campaign_type', 'Type') }}</th>
+                                    <th>{{ _('campaign_status', 'Statut') }}</th>
+                                    <th>{{ _('campaign_dates', 'Dates') }}</th>
+                                    <th>{{ _('campaign_actions', 'Actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for campaign in campaigns %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('marketing.view_campaign', campaign_id=campaign.id) }}">
+                                            {{ campaign.name }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if campaign.campaign_type == 'email' %}
+                                            <span class="badge bg-primary">
+                                                <i class="fas fa-envelope me-1"></i>{{ _('campaign_type_email', 'Email') }}
+                                            </span>
+                                        {% elif campaign.campaign_type == 'social' %}
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-share-alt me-1"></i>{{ _('campaign_type_social', 'Social') }}
+                                            </span>
+                                        {% elif campaign.campaign_type == 'influencer' %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-star me-1"></i>{{ _('campaign_type_influencer', 'Influenceur') }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-file-alt me-1"></i>{{ _('campaign_type_content', 'Contenu') }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if campaign.status == 'draft' %}
+                                            <span class="badge bg-secondary">{{ _('status_draft', 'Brouillon') }}</span>
+                                        {% elif campaign.status == 'active' %}
+                                            <span class="badge bg-success">{{ _('status_active', 'Active') }}</span>
+                                        {% elif campaign.status == 'scheduled' %}
+                                            <span class="badge bg-info">{{ _('status_scheduled', 'Planifiée') }}</span>
+                                        {% elif campaign.status == 'completed' %}
+                                            <span class="badge bg-primary">{{ _('status_completed', 'Terminée') }}</span>
+                                        {% else %}
+                                            <span class="badge bg-dark">{{ campaign.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if campaign.start_date %}
+                                            {{ campaign.start_date.strftime('%d/%m/%Y') }}
+                                            {% if campaign.end_date %}
+                                                - {{ campaign.end_date.strftime('%d/%m/%Y') }}
+                                            {% endif %}
+                                        {% else %}
+                                            <em>{{ _('not_scheduled', 'Non planifiée') }}</em>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('marketing.view_campaign', campaign_id=campaign.id) }}" 
+                                               class="btn btn-sm btn-outline-primary" 
+                                               title="{{ _('view_campaign', 'Voir') }}">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('marketing.edit_campaign', campaign_id=campaign.id) }}" 
+                                               class="btn btn-sm btn-outline-secondary" 
+                                               title="{{ _('edit_campaign', 'Modifier') }}">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-danger" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#deleteModal{{ campaign.id }}"
+                                                    title="{{ _('delete_campaign', 'Supprimer') }}">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- Modal de confirmation de suppression -->
+                                        <div class="modal fade" id="deleteModal{{ campaign.id }}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">{{ _('confirm_delete', 'Confirmer la suppression') }}</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        {{ _('confirm_delete_campaign_msg', 'Êtes-vous sûr de vouloir supprimer cette campagne? Cette action est irréversible.') }}
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                            {{ _('cancel', 'Annuler') }}
+                                                        </button>
+                                                        <form method="POST" action="{{ url_for('marketing.delete_campaign', campaign_id=campaign.id) }}">
+                                                            <button type="submit" class="btn btn-danger">
+                                                                {{ _('confirm', 'Confirmer') }}
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-bullhorn fa-3x mb-3 text-muted"></i>
+                        <h4>{{ _('no_campaigns_yet', 'Aucune campagne créée pour l\'instant') }}</h4>
+                        <p class="text-muted">{{ _('create_first_campaign_msg', 'Créez votre première campagne marketing en cliquant sur le bouton ci-dessous') }}</p>
+                        <a href="{{ url_for('marketing.create_campaign') }}" class="btn btn-primary mt-2">
+                            <i class="fas fa-plus me-1"></i>{{ _('create_new_campaign', 'Nouvelle campagne') }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

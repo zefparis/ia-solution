@@ -1,0 +1,228 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {% if course %}
+        {{ _('training_admin_edit_course', 'Modifier le cours') }}
+    {% else %}
+        {{ _('training_admin_create_course', 'Créer un cours') }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('training.training_dashboard') }}">{{ _('training_dashboard', 'Formation') }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('training.admin_courses') }}">{{ _('training_admin_courses_title', 'Gestion des cours') }}</a></li>
+                    <li class="breadcrumb-item active">
+                        {% if course %}
+                            {{ _('training_admin_edit_course', 'Modifier le cours') }}
+                        {% else %}
+                            {{ _('training_admin_create_course', 'Créer un cours') }}
+                        {% endif %}
+                    </li>
+                </ol>
+            </nav>
+            
+            <h1 class="display-5">
+                {% if course %}
+                    {{ _('training_admin_edit_course', 'Modifier le cours') }}
+                {% else %}
+                    {{ _('training_admin_create_course', 'Créer un cours') }}
+                {% endif %}
+            </h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <!-- Protection CSRF (fournie par Flask-WTF) -->
+                        {{ form.csrf_token if form.csrf_token }}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+                        <!-- Informations de base -->
+                        <div class="mb-4">
+                            <h4>{{ _('training_course_basic_info', 'Informations de base') }}</h4>
+                            <hr>
+                            
+                            <div class="mb-3">
+                                <label for="title" class="form-label">{{ _('training_course_title', 'Titre') }} *</label>
+                                <input type="text" class="form-control" id="title" name="title" required
+                                    value="{{ course.title if course else '' }}">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">{{ _('training_course_description', 'Description') }}</label>
+                                <textarea class="form-control" id="description" name="description" rows="5">{{ course.description if course else '' }}</textarea>
+                                <small class="text-muted">{{ _('training_course_description_help', 'Description complète du cours. Le texte peut contenir du markdown pour la mise en forme.') }}</small>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="category" class="form-label">{{ _('training_course_category', 'Catégorie') }}</label>
+                                    <input type="text" class="form-control" id="category" name="category" 
+                                        value="{{ course.category if course else '' }}">
+                                    <small class="text-muted">{{ _('training_course_category_help', 'Par exemple: Marketing, Finance, Management, etc.') }}</small>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="difficulty_level" class="form-label">{{ _('training_course_difficulty', 'Niveau de difficulté') }} *</label>
+                                    <select class="form-select" id="difficulty_level" name="difficulty_level" required>
+                                        <option value="beginner" {% if course and course.difficulty_level == 'beginner' %}selected{% endif %}>
+                                            {{ _('training_difficulty_beginner', 'Débutant') }}
+                                        </option>
+                                        <option value="intermediate" {% if course and course.difficulty_level == 'intermediate' %}selected{% endif %}>
+                                            {{ _('training_difficulty_intermediate', 'Intermédiaire') }}
+                                        </option>
+                                        <option value="advanced" {% if course and course.difficulty_level == 'advanced' %}selected{% endif %}>
+                                            {{ _('training_difficulty_advanced', 'Avancé') }}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="duration_minutes" class="form-label">{{ _('training_course_duration', 'Durée estimée (en minutes)') }}</label>
+                                    <input type="number" class="form-control" id="duration_minutes" name="duration_minutes" min="0" 
+                                        value="{{ course.duration_minutes if course else '' }}">
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="status" class="form-label">{{ _('training_course_status', 'Statut') }} *</label>
+                                    <select class="form-select" id="status" name="status" required>
+                                        <option value="draft" {% if course and course.status == 'draft' %}selected{% endif %}>
+                                            {{ _('training_status_draft', 'Brouillon') }}
+                                        </option>
+                                        <option value="published" {% if course and course.status == 'published' %}selected{% endif %}>
+                                            {{ _('training_status_published', 'Publié') }}
+                                        </option>
+                                        <option value="archived" {% if course and course.status == 'archived' %}selected{% endif %}>
+                                            {{ _('training_status_archived', 'Archivé') }}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_public" name="is_public" 
+                                            {% if course and course.is_public %}checked{% endif %}>
+                                        <label class="form-check-label" for="is_public">
+                                            {{ _('training_course_public', 'Cours public') }}
+                                        </label>
+                                        <div class="form-text">{{ _('training_course_public_help', 'Si coché, le cours sera visible pour tous les utilisateurs, même non inscrits.') }}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_certified" name="is_certified" 
+                                            {% if course and course.is_certified %}checked{% endif %}>
+                                        <label class="form-check-label" for="is_certified">
+                                            {{ _('training_course_certified', 'Certification possible') }}
+                                        </label>
+                                        <div class="form-text">{{ _('training_course_certified_help', 'Si coché, les apprenants pourront obtenir un certificat après avoir terminé ce cours.') }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tags et métadonnées -->
+                        <div class="mb-4">
+                            <h4>{{ _('training_course_metadata', 'Tags et métadonnées') }}</h4>
+                            <hr>
+                            
+                            <div class="mb-3">
+                                <label for="tags" class="form-label">{{ _('training_course_tags', 'Tags') }}</label>
+                                <input type="text" class="form-control" id="tags" name="tags" 
+                                    value="{{ tags if tags else '' }}">
+                                <small class="text-muted">{{ _('training_course_tags_help', 'Séparés par des virgules. Par exemple: finance, comptabilité, débutant') }}</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="prerequisites" class="form-label">{{ _('training_course_prerequisites', 'Prérequis') }}</label>
+                                <textarea class="form-control" id="prerequisites" name="prerequisites" rows="3">{{ prerequisites if prerequisites else '' }}</textarea>
+                                <small class="text-muted">{{ _('training_course_prerequisites_help', 'Un prérequis par ligne. Par exemple: Connaissance de base en comptabilité') }}</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Image de couverture -->
+                        <div class="mb-4">
+                            <h4>{{ _('training_course_cover_image', 'Image de couverture') }}</h4>
+                            <hr>
+                            
+                            {% if course and course.cover_image %}
+                            <div class="mb-3">
+                                <label class="form-label">{{ _('training_course_current_image', 'Image actuelle') }}</label>
+                                <div>
+                                    <img src="{{ course.cover_image }}" alt="{{ course.title }}" class="img-thumbnail" style="max-width: 300px;">
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="mb-3">
+                                <label for="cover_image" class="form-label">{{ _('training_course_upload_image', 'Télécharger une image') }}</label>
+                                <input type="file" class="form-control" id="cover_image" name="cover_image" accept="image/*">
+                                <small class="text-muted">{{ _('training_course_image_help', 'Format recommandé: JPG ou PNG, dimensions idéales 1200x630 pixels.') }}</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Boutons de soumission -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('training.admin_courses') }}" class="btn btn-outline-secondary">
+                                {{ _('cancel', 'Annuler') }}
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                {% if course %}
+                                    {{ _('save', 'Enregistrer') }}
+                                {% else %}
+                                    {{ _('create', 'Créer') }}
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">{{ _('training_course_help', 'Aide') }}</h5>
+                </div>
+                <div class="card-body">
+                    <h6>{{ _('training_course_form_help_title', 'Comment créer un bon cours ?') }}</h6>
+                    <ul>
+                        <li>{{ _('training_course_form_help_1', 'Donnez un titre clair et descriptif à votre cours.') }}</li>
+                        <li>{{ _('training_course_form_help_2', 'Rédigez une description détaillée expliquant ce que les apprenants vont acquérir.') }}</li>
+                        <li>{{ _('training_course_form_help_3', 'Organisez votre cours en leçons logiques et progressives.') }}</li>
+                        <li>{{ _('training_course_form_help_4', 'Ajoutez des quiz pour vérifier la compréhension des concepts.') }}</li>
+                        <li>{{ _('training_course_form_help_5', 'Choisissez une belle image de couverture représentative du sujet.') }}</li>
+                    </ul>
+                    
+                    <p class="text-muted">{{ _('training_course_form_help_note', 'Note: Après avoir créé le cours, vous pourrez ajouter des leçons et des quiz.') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Script pour gérer les tags et prérequis sous forme de listes
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fonction pour initialiser le champ tags
+        if (document.getElementById('tags')) {
+            // Le champ est déjà prêt, pas besoin de transformation supplémentaire
+        }
+    });
+</script>
+{% endblock %}

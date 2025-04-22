@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+
+{% block title %}Annuler l'abonnement{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning-subtle">
+                    <h3 class="card-title mb-0 text-warning">Annuler votre abonnement</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning mb-4">
+                        <h5><i class="bi bi-exclamation-triangle-fill me-2"></i>Êtes-vous sûr de vouloir annuler ?</h5>
+                        <p class="mb-0">
+                            Votre abonnement <strong>{{ subscription.plan.display_name }}</strong> se terminera le 
+                            <strong>{{ subscription.end_date.strftime('%d/%m/%Y') }}</strong> et ne sera pas renouvelé. 
+                            Vous pourrez continuer à utiliser tous les services jusqu'à cette date.
+                        </p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>Ce que vous allez perdre :</h5>
+                        <ul class="list-group list-group-flush">
+                            {% for feature in subscription.plan.features.split(',') %}
+                                <li class="list-group-item d-flex ps-0">
+                                    <span class="text-danger me-2"><i class="bi bi-x-circle-fill"></i></span>
+                                    {{ feature }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    
+                    <form method="post">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.reason.label(class="form-label") }}
+                            {{ form.reason(class="form-select") }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.feedback.label(class="form-label") }}
+                            {{ form.feedback(class="form-control", rows=4, placeholder="Nous apprécierions vos commentaires pour améliorer notre service...") }}
+                            <div class="form-text">Vos commentaires nous aident à améliorer nos services.</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form.confirm_cancel(class="form-check-input") }}
+                                {{ form.confirm_cancel.label(class="form-check-label fw-bold") }}
+                                {% if form.confirm_cancel.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.confirm_cancel.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('subscription.index') }}" class="btn btn-outline-secondary">Retour</a>
+                            {{ form.submit(class="btn btn-danger") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

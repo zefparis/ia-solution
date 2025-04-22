@@ -1,0 +1,179 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {% if quiz %}
+        {{ _('training_admin_edit_quiz', 'Modifier le quiz') }}
+    {% else %}
+        {{ _('training_admin_create_quiz', 'Créer un quiz') }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('training.training_dashboard') }}">{{ _('training_dashboard', 'Formation') }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('training.admin_courses') }}">{{ _('training_admin_courses_title', 'Gestion des cours') }}</a></li>
+                    {% if lesson %}
+                        <li class="breadcrumb-item"><a href="{{ url_for('training.view_course', course_id=lesson.course_id) }}">{{ lesson.course.title }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('training.view_lesson', lesson_id=lesson.id) }}">{{ lesson.title }}</a></li>
+                    {% elif quiz and quiz.lesson %}
+                        <li class="breadcrumb-item"><a href="{{ url_for('training.view_course', course_id=quiz.lesson.course_id) }}">{{ quiz.lesson.course.title }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('training.view_lesson', lesson_id=quiz.lesson.id) }}">{{ quiz.lesson.title }}</a></li>
+                    {% endif %}
+                    <li class="breadcrumb-item active">
+                        {% if quiz %}
+                            {{ _('training_admin_edit_quiz', 'Modifier le quiz') }}
+                        {% else %}
+                            {{ _('training_admin_create_quiz', 'Créer un quiz') }}
+                        {% endif %}
+                    </li>
+                </ol>
+            </nav>
+            
+            <h1 class="display-5">
+                {% if quiz %}
+                    {{ _('training_admin_edit_quiz', 'Modifier le quiz') }}
+                {% else %}
+                    {{ _('training_admin_create_quiz', 'Créer un quiz pour') }} {{ lesson.title }}
+                {% endif %}
+            </h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- Protection CSRF (fournie par Flask-WTF) -->
+                        {{ form.csrf_token if form.csrf_token }}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        
+                        {% if lesson %}
+                            <input type="hidden" name="lesson_id" value="{{ lesson.id }}">
+                        {% endif %}
+
+                        <!-- Informations de base -->
+                        <div class="mb-4">
+                            <h4>{{ _('training_quiz_basic_info', 'Informations de base') }}</h4>
+                            <hr>
+                            
+                            <div class="mb-3">
+                                <label for="title" class="form-label">{{ _('training_quiz_title', 'Titre') }} *</label>
+                                <input type="text" class="form-control" id="title" name="title" required
+                                    value="{{ quiz.title if quiz else '' }}">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">{{ _('training_quiz_description', 'Description') }}</label>
+                                <textarea class="form-control" id="description" name="description" rows="3">{{ quiz.description if quiz else '' }}</textarea>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="time_limit_minutes" class="form-label">{{ _('training_quiz_time_limit', 'Limite de temps (minutes)') }}</label>
+                                    <input type="number" class="form-control" id="time_limit_minutes" name="time_limit_minutes" min="0" 
+                                        value="{{ quiz.time_limit_minutes if quiz else '' }}">
+                                    <small class="text-muted">{{ _('training_quiz_time_limit_help', 'Laissez vide pour aucune limite de temps.') }}</small>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="passing_score" class="form-label">{{ _('training_quiz_passing_score', 'Score minimal pour réussir (%)') }} *</label>
+                                    <input type="number" class="form-control" id="passing_score" name="passing_score" min="1" max="100" required
+                                        value="{{ quiz.passing_score if quiz else '70' }}">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_required" name="is_required" 
+                                        {% if not quiz or quiz.is_required %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_required">
+                                        {{ _('training_quiz_required', 'Quiz obligatoire pour terminer la leçon') }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Boutons de soumission -->
+                        <div class="d-flex justify-content-between">
+                            {% if quiz %}
+                                <a href="{{ url_for('training.view_lesson', lesson_id=quiz.lesson_id) }}" class="btn btn-outline-secondary">
+                                    {{ _('cancel', 'Annuler') }}
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('training.view_lesson', lesson_id=lesson.id) }}" class="btn btn-outline-secondary">
+                                    {{ _('cancel', 'Annuler') }}
+                                </a>
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary">
+                                {% if quiz %}
+                                    {{ _('save', 'Enregistrer') }}
+                                {% else %}
+                                    {{ _('create', 'Créer') }}
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">{{ _('training_quiz_help', 'Aide') }}</h5>
+                </div>
+                <div class="card-body">
+                    <h6>{{ _('training_quiz_form_help_title', 'Conseils pour créer un bon quiz') }}</h6>
+                    <ul>
+                        <li>{{ _('training_quiz_form_help_1', 'Créez des questions qui testent réellement la compréhension.') }}</li>
+                        <li>{{ _('training_quiz_form_help_2', 'Variez les types de questions (QCM, vrai/faux, texte).') }}</li>
+                        <li>{{ _('training_quiz_form_help_3', 'Fixez un score minimal de réussite adapté à la difficulté.') }}</li>
+                        <li>{{ _('training_quiz_form_help_4', 'Ajoutez des explications aux réponses pour plus de valeur pédagogique.') }}</li>
+                    </ul>
+                    
+                    <div class="alert alert-info mt-3">
+                        {{ _('training_quiz_questions_note', "Note: Une fois le quiz créé, vous pourrez ajouter des questions dans l'étape suivante.") }}
+                    </div>
+                </div>
+            </div>
+            
+            {% if quiz %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">{{ _('training_quiz_questions_title', 'Questions') }}</h5>
+                        <a href="{{ url_for('training.create_question', quiz_id=quiz.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plus-circle"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if questions %}
+                        <ul class="list-group">
+                            {% for question in questions %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge bg-secondary me-2">{{ question.order_index + 1 }}</span>
+                                        {{ question.question_text|truncate(40) }}
+                                    </div>
+                                    <a href="{{ url_for('training.edit_question', question_id=question.id) }}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>{{ _('training_quiz_no_questions', 'Aucune question ajoutée pour ce quiz.') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

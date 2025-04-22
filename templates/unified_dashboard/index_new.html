@@ -1,0 +1,748 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ language.get_text('dashboard.title') }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .action-card {
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .action-icon-container {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+    }
+    
+    .action-icon {
+        font-size: 28px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">{{ language.get_text('dashboard.title') }}</h1>
+            <p class="text-muted">{{ language.get_text('dashboard.welcome') }} {{ username }}</p>
+        </div>
+    </div>
+
+    <!-- Cartes de statistiques principales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">{{ language.get_text('dashboard.balance') }}</h5>
+                    <h2 class="mb-2">{{ "%.2f"|format(balance) }} €</h2>
+                    <p class="card-text text-muted">{{ language.get_text('finance.dashboard.balance_desc') }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-success">{{ language.get_text('dashboard.income') }}</h5>
+                    <h2 class="mb-2">{{ "%.2f"|format(total_income) }} €</h2>
+                    <p class="card-text text-muted">{{ language.get_text('finance.dashboard.income_desc') }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">{{ language.get_text('dashboard.expenses') }}</h5>
+                    <h2 class="mb-2">{{ "%.2f"|format(total_expenses) }} €</h2>
+                    <p class="card-text text-muted">{{ language.get_text('finance.dashboard.expenses_desc') }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-info">{{ language.get_text('invoicing.invoices') }}</h5>
+                    <h2 class="mb-2">{{ "%.2f"|format(total_invoiced) }} €</h2>
+                    <p class="card-text text-muted">{{ language.get_text('invoicing.amount_invoiced') or 'Montant facturé cette année' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphiques et statistiques avancées -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">{{ language.get_text('dashboard.monthly_evolution') or 'Évolution mensuelle' }}</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">{{ language.get_text('dashboard.category_breakdown') or 'Répartition par catégorie' }}</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deuxième rangée de graphiques -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ language.get_text('dashboard.predictions') or 'Prévisions financières' }}</h5>
+                    <select id="predictionPeriodSelect" class="form-select form-select-sm" style="width: auto;">
+                        <option value="3">3 {{ language.get_text('dashboard.months') or 'mois' }}</option>
+                        <option value="6" selected>6 {{ language.get_text('dashboard.months') or 'mois' }}</option>
+                        <option value="12">12 {{ language.get_text('dashboard.months') or 'mois' }}</option>
+                    </select>
+                </div>
+                <div class="card-body">
+                    <canvas id="predictionChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ language.get_text('dashboard.recent_transactions') or 'Transactions récentes' }}</h5>
+                    <a href="{{ url_for('finance.view_transactions') }}?lang={{ lang }}" class="btn btn-sm btn-outline-primary">{{ language.get_text('dashboard.view_all') or 'Voir tout' }}</a>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for transaction in transactions %}
+                        <div class="list-group-item px-0 py-2 border-0 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ transaction.description }}</h6>
+                                    <p class="text-muted small mb-0">{{ transaction.transaction_date.strftime('%d/%m/%Y') }}</p>
+                                </div>
+                                <span class="badge {% if transaction.is_expense %}bg-danger{% else %}bg-success{% endif %} rounded-pill">
+                                    {{ transaction.is_expense and "-" or "+" }}{{ "%.2f"|format(transaction.amount) }} €
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section des rapports business -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ language.get_text('business.recent_reports') or 'Rapports business récents' }}</h5>
+                    <a href="{{ url_for('business.test_page') }}?lang={{ lang }}" class="btn btn-sm btn-outline-primary">{{ language.get_text('business.new_consultation') or 'Nouvelle consultation' }}</a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for report in reports %}
+                        <div class="col-lg-4 mb-3">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ report.company_name }}</h5>
+                                    <p class="text-muted small">{{ report.created_at.strftime('%d/%m/%Y à %H:%M') }}</p>
+                                    <p class="card-text">{{ report.summary|truncate(100) }}</p>
+                                    <a href="{{ url_for('business.business_report', report_id=report.id) }}?lang={{ lang }}" class="btn btn-sm btn-outline-primary">{{ language.get_text('business.view_report') or 'Voir le rapport' }}</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="row mb-4">
+        <div class="col-12 mb-3">
+            <h4>{{ language.get_text('dashboard.quick_actions') or 'Actions rapides' }}</h4>
+        </div>
+        
+        <!-- Finance & Accounting Section -->
+        <div class="col-12 mb-2">
+            <h5 class="text-muted">{{ language.get_text('finance.title') }}</h5>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <a href="{{ url_for('ocr', lang=session.get('lang', 'fr')) }}" class="text-decoration-none">
+                <div class="card action-card text-center h-100">
+                    <div class="card-body">
+                        <div class="action-icon-container bg-primary bg-opacity-10 rounded-circle mb-3">
+                            <i class="fas fa-camera action-icon text-primary"></i>
+                        </div>
+                        <h5 class="card-title">{{ language.get_text('finance.dashboard.scan_document') }}</h5>
+                        <p class="card-text text-muted">{{ language.get_text('ocr.subtitle') or 'Capturez une image ou importez un document pour extraire le texte' }}</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <a href="{{ url_for('finance.add_transaction') }}?lang={{ lang }}" class="text-decoration-none">
+                <div class="card action-card text-center h-100">
+                    <div class="card-body">
+                        <div class="action-icon-container bg-success bg-opacity-10 rounded-circle mb-3">
+                            <i class="fas fa-plus-circle action-icon text-success"></i>
+                        </div>
+                        <h5 class="card-title">{{ language.get_text('finance.dashboard.add_transaction') }}</h5>
+                        <p class="card-text text-muted">{{ language.get_text('finance.add_transaction.description') or 'Ajoutez une nouvelle transaction à votre historique financier' }}</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <a href="{{ url_for('finance.generate_tax_report') }}?lang={{ lang }}" class="text-decoration-none">
+                <div class="card action-card text-center h-100">
+                    <div class="card-body">
+                        <div class="action-icon-container bg-info bg-opacity-10 rounded-circle mb-3">
+                            <i class="fas fa-file-invoice-dollar action-icon text-info"></i>
+                        </div>
+                        <h5 class="card-title">{{ language.get_text('finance.tax_report.generate') }}</h5>
+                        <p class="card-text text-muted">{{ language.get_text('finance.tax_report.description') or 'Générez un rapport fiscal pour une période donnée' }}</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <a href="{{ url_for('finance.manage_categories') }}?lang={{ lang }}" class="text-decoration-none">
+                <div class="card action-card text-center h-100">
+                    <div class="card-body">
+                        <div class="action-icon-container bg-secondary bg-opacity-10 rounded-circle mb-3">
+                            <i class="fas fa-tags action-icon text-secondary"></i>
+                        </div>
+                        <h5 class="card-title">{{ language.get_text('finance.dashboard.manage_categories') }}</h5>
+                        <p class="card-text text-muted">{{ language.get_text('finance.categories.description') or 'Gérez les catégories de transactions pour mieux organiser vos finances' }}</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <!-- Invoicing Section -->
+        <div class="col-12 mb-2 mt-3">
+            <h5 class="text-muted">{{ language.get_text('invoicing.title') }}</h5>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <a href="{{ url_for('invoicing.index', lang=lang) }}" class="text-decoration-none">
+                <div class="card action-card text-center h-100">
+                    <div class="card-body">
+                        <div class="action-icon-container bg-primary bg-opacity-10 rounded-circle mb-3">
+                            <i class="fas fa-file-invoice action-icon text-primary"></i>
+                        </div>
+                        <h5 class="card-title">{{ language.get_text('invoicing.create_invoice') or 'Créer une facture' }}</h5>
+                        <p class="card-text text-muted">{{ language.get_text('invoicing.create_invoice_desc') or 'Créez des factures professionnelles pour vos clients' }}</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <a href="{{ url_for('invoicing.index', type='quote', lang=lang) }}" class="text-decoration-none">
+                <div class="card action-card text-center h-100">
+                    <div class="card-body">
+                        <div class="action-icon-container bg-success bg-opacity-10 rounded-circle mb-3">
+                            <i class="fas fa-file-signature action-icon text-success"></i>
+                        </div>
+                        <h5 class="card-title">{{ language.get_text('invoicing.create_quote') or 'Créer un devis' }}</h5>
+                        <p class="card-text text-muted">{{ language.get_text('invoicing.create_quote_desc') or 'Préparez des devis détaillés pour vos prospects' }}</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <a href="{{ url_for('invoicing.customers', lang=lang) }}" class="text-decoration-none">
+                <div class="card action-card text-center h-100">
+                    <div class="card-body">
+                        <div class="action-icon-container bg-info bg-opacity-10 rounded-circle mb-3">
+                            <i class="fas fa-users action-icon text-info"></i>
+                        </div>
+                        <h5 class="card-title">{{ language.get_text('invoicing.manage_clients') or 'Gérer les clients' }}</h5>
+                        <p class="card-text text-muted">{{ language.get_text('invoicing.manage_clients_desc') or 'Gérez votre base de clients et leurs informations' }}</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <a href="{{ url_for('invoicing.index', page='products', lang=lang) }}" class="text-decoration-none">
+                <div class="card action-card text-center h-100">
+                    <div class="card-body">
+                        <div class="action-icon-container bg-warning bg-opacity-10 rounded-circle mb-3">
+                            <i class="fas fa-box-open action-icon text-warning"></i>
+                        </div>
+                        <h5 class="card-title">{{ language.get_text('invoicing.manage_products') or 'Gérer les produits' }}</h5>
+                        <p class="card-text text-muted">{{ language.get_text('invoicing.manage_products_desc') or 'Gérez votre catalogue de produits et services' }}</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <!-- Business & Assistance -->
+        <div class="col-12 mb-2 mt-3">
+            <h5 class="text-muted">{{ language.get_text('business.title') }}</h5>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <a href="{{ url_for('business.test', lang=lang) }}" class="text-decoration-none">
+                <div class="card action-card text-center h-100">
+                    <div class="card-body">
+                        <div class="action-icon-container bg-danger bg-opacity-10 rounded-circle mb-3">
+                            <i class="fas fa-chart-line action-icon text-danger"></i>
+                        </div>
+                        <h5 class="card-title">{{ language.get_text('business.new_consultation') }}</h5>
+                        <p class="card-text text-muted">{{ language.get_text('business.description') }}</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <a href="{{ url_for('chat', lang=lang) }}" class="text-decoration-none">
+                <div class="card action-card text-center h-100">
+                    <div class="card-body">
+                        <div class="action-icon-container bg-warning bg-opacity-10 rounded-circle mb-3">
+                            <i class="fas fa-comment-dots action-icon text-warning"></i>
+                        </div>
+                        <h5 class="card-title">{{ language.get_text('chat.title') }}</h5>
+                        <p class="card-text text-muted">{{ language.get_text('chat.description') or 'Discutez avec Benji, votre assistant IA personnel' }}</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Paramètres du tableau de bord -->
+<div class="modal fade" id="dashboardSettingsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ language.get_text('dashboard.settings') or 'Paramètres du tableau de bord' }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">{{ language.get_text('dashboard.data_range') or 'Période de données' }}</label>
+                    <select id="periodSelect" class="form-select">
+                        <option value="3">3 {{ language.get_text('dashboard.months') or 'mois' }}</option>
+                        <option value="6" selected>6 {{ language.get_text('dashboard.months') or 'mois' }}</option>
+                        <option value="12">12 {{ language.get_text('dashboard.months') or 'mois' }}</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">{{ language.get_text('dashboard.predictions_range') or 'Période de prévisions' }}</label>
+                    <select id="predictionsRangeSelect" class="form-select">
+                        <option value="3">3 {{ language.get_text('dashboard.months') or 'mois' }}</option>
+                        <option value="6" selected>6 {{ language.get_text('dashboard.months') or 'mois' }}</option>
+                        <option value="12">12 {{ language.get_text('dashboard.months') or 'mois' }}</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showBalanceSwitch" checked>
+                        <label class="form-check-label" for="showBalanceSwitch">{{ language.get_text('dashboard.show_balance') or 'Afficher le solde' }}</label>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showMonthlySwitch" checked>
+                        <label class="form-check-label" for="showMonthlySwitch">{{ language.get_text('dashboard.show_monthly_trends') or 'Afficher les tendances mensuelles' }}</label>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showCategorySwitch" checked>
+                        <label class="form-check-label" for="showCategorySwitch">{{ language.get_text('dashboard.show_category_breakdown') or 'Afficher la répartition par catégorie' }}</label>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showPredictionsSwitch" checked>
+                        <label class="form-check-label" for="showPredictionsSwitch">{{ language.get_text('dashboard.show_predictions') or 'Afficher les prévisions' }}</label>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showTransactionsSwitch" checked>
+                        <label class="form-check-label" for="showTransactionsSwitch">{{ language.get_text('dashboard.show_transactions') or 'Afficher les transactions récentes' }}</label>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showBusinessReportsSwitch" checked>
+                        <label class="form-check-label" for="showBusinessReportsSwitch">{{ language.get_text('dashboard.show_business_reports') or 'Afficher les rapports business' }}</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ language.get_text('ocr.cancel') }}</button>
+                <button type="button" class="btn btn-primary" id="saveSettingsBtn">{{ language.get_text('dashboard.save_settings') or 'Enregistrer' }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Récupérer les données du contexte
+        const monthlyData = {{ chart_data.monthly_summary|tojson }};
+        const categoryData = {{ chart_data.category_breakdown|tojson }};
+        const predictionData = {{ chart_data.cashflow_prediction|tojson }};
+        
+        // Générer les graphiques
+        createMonthlyChart(monthlyData);
+        createCategoryChart(categoryData);
+        createPredictionChart(predictionData);
+        
+        // Configuration du sélecteur de période pour les prévisions
+        document.getElementById('predictionPeriodSelect').addEventListener('change', function() {
+            const months = parseInt(this.value);
+            // Appeler l'API pour récupérer les nouvelles prévisions
+            fetch(`/unified-dashboard/data/cashflow-prediction?months=${months}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Mettre à jour le graphique avec les nouvelles données
+                    createPredictionChart(data);
+                });
+        });
+        
+        // Gestion des paramètres du tableau de bord
+        document.getElementById('saveSettingsBtn').addEventListener('click', function() {
+            const settings = {
+                periodSelect: document.getElementById('periodSelect').value,
+                predictionPeriod: document.getElementById('predictionsRangeSelect').value,
+                showBalance: document.getElementById('showBalanceSwitch').checked,
+                showMonthly: document.getElementById('showMonthlySwitch').checked,
+                showCategoryChart: document.getElementById('showCategorySwitch').checked,
+                showPredictions: document.getElementById('showPredictionsSwitch').checked,
+                showTransactions: document.getElementById('showTransactionsSwitch').checked,
+                showBusinessReports: document.getElementById('showBusinessReportsSwitch').checked
+            };
+            
+            // Save settings / Sauvegarder les paramètres
+            fetch('/unified-dashboard/settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(settings)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close modal / Fermer le modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('dashboardSettingsModal'));
+                    modal.hide();
+                    
+                    // Apply changes / Appliquer les changements
+                    applySettings(settings);
+                    
+                    // Refresh data if needed / Actualiser les données si nécessaire
+                    refreshDashboardData(settings.periodSelect, settings.predictionPeriod);
+                }
+            });
+        });
+        
+        // Function to apply settings / Fonction pour appliquer les paramètres
+        function applySettings(settings) {
+            // Show/hide elements based on settings / Afficher/masquer les éléments selon les paramètres
+            const cards = document.querySelectorAll('.row:first-of-type .col-md-3');
+            cards[0].style.display = settings.showBalance ? 'block' : 'none';
+            cards[1].style.display = settings.showMonthly ? 'block' : 'none';
+            cards[2].style.display = settings.showTransactions ? 'block' : 'none';
+            cards[3].style.display = settings.showTrend ? 'block' : 'none';
+            
+            const chartRows = document.querySelectorAll('.row:not(:first-of-type)');
+            chartRows[0].style.display = (settings.showMonthlyChart || settings.showCategoryChart) ? 'flex' : 'none';
+            chartRows[1].style.display = (settings.showPredictions || settings.showRecentTransactions) ? 'flex' : 'none';
+            
+            if (chartRows.length > 2) {
+                chartRows[2].style.display = settings.showBusinessReports ? 'flex' : 'none';
+            }
+            
+            // Update charts with new period / Mettre à jour les graphiques avec la nouvelle période
+            updateChartsPeriod(settings.periodSelect, settings.predictionPeriod);
+        }
+        
+        // Function to update chart periods / Fonction pour mettre à jour la période des graphiques
+        function updateChartsPeriod(monthsPeriod, predictionMonths) {
+            // For a complete demo, we should make API calls to get new data with updated periods
+            // Pour une démo complète, ici on devrait faire des appels API pour récupérer les données avec les nouvelles périodes
+            console.log(`Chart update: ${monthsPeriod} months of history, ${predictionMonths} months of prediction`);
+        }
+        
+        // Load saved settings / Charger les paramètres sauvegardés
+        function loadSettings() {
+            fetch('/unified-dashboard/settings')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const settings = data.settings;
+                        
+                        // Update form controls / Mettre à jour les contrôles du formulaire
+                        document.getElementById('periodSelect').value = settings.periodSelect;
+                        document.getElementById('predictionsRangeSelect').value = settings.predictionPeriod;
+                        document.getElementById('showBalanceSwitch').checked = settings.showBalance;
+                        document.getElementById('showMonthlySwitch').checked = settings.showMonthly;
+                        document.getElementById('showCategorySwitch').checked = settings.showCategoryChart;
+                        document.getElementById('showPredictionsSwitch').checked = settings.showPredictions;
+                        document.getElementById('showTransactionsSwitch').checked = settings.showTransactions;
+                        document.getElementById('showBusinessReportsSwitch').checked = settings.showBusinessReports;
+                        
+                        // Apply settings / Appliquer les paramètres
+                        applySettings(settings);
+                    }
+                });
+        }
+        
+        // Create monthly evolution chart / Créer le graphique d'évolution mensuelle
+        function createMonthlyChart(data) {
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: '{{ language.get_text('dashboard.income') or 'Revenus' }}',
+                            data: data.income,
+                            backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                            borderColor: 'rgba(40, 167, 69, 1)',
+                            borderWidth: 2,
+                            tension: 0.2
+                        },
+                        {
+                            label: '{{ language.get_text('dashboard.expenses') or 'Dépenses' }}',
+                            data: data.expenses,
+                            backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                            borderColor: 'rgba(220, 53, 69, 1)',
+                            borderWidth: 2,
+                            tension: 0.2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create category breakdown chart / Créer le graphique de répartition par catégorie
+        function createCategoryChart(data) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.values,
+                        backgroundColor: data.colors || [
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 206, 86, 0.8)',
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(153, 102, 255, 0.8)',
+                            'rgba(255, 159, 64, 0.8)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(context.parsed);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                }
+            });
+        }
+        
+        // Create prediction chart / Créer le graphique de prévisions
+        function createPredictionChart(data) {
+            const ctx = document.getElementById('predictionChart').getContext('2d');
+            
+            // Destroy existing chart if it exists / Détruire le graphique existant s'il y en a un
+            if (window.predictionChart) {
+                window.predictionChart.destroy();
+            }
+            
+            window.predictionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: '{{ language.get_text('dashboard.predicted_income') or 'Revenus prévus' }}',
+                            data: data.income,
+                            backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                            borderColor: 'rgba(40, 167, 69, 1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            tension: 0.2,
+                            fill: true
+                        },
+                        {
+                            label: '{{ language.get_text('dashboard.predicted_expenses') or 'Dépenses prévues' }}',
+                            data: data.expenses,
+                            backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                            borderColor: 'rgba(220, 53, 69, 1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            tension: 0.2,
+                            fill: true
+                        },
+                        {
+                            label: '{{ language.get_text('dashboard.predicted_balance') or 'Solde prévu' }}',
+                            data: data.balance,
+                            backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                            borderColor: 'rgba(0, 123, 255, 1)',
+                            borderWidth: 3,
+                            tension: 0.2,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        },
+                        annotation: {
+                            annotations: {
+                                line1: {
+                                    type: 'line',
+                                    mode: 'vertical',
+                                    scaleID: 'x',
+                                    value: data.current_month_index,
+                                    borderColor: 'rgba(100, 100, 100, 0.7)',
+                                    borderWidth: 2,
+                                    label: {
+                                        enabled: true,
+                                        content: '{{ language.get_text('dashboard.today') or 'Aujourd\'hui' }}',
+                                        position: 'start'
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initial loading of settings / Chargement initial des paramètres
+        loadSettings();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,169 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ _('Liste des') }} {{ doc_type_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- En-tête de la page -->
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-2">{{ doc_type_name }}</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('export.export_home') }}">{{ _('Exportation') }}</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ doc_type_name }}</li>
+                    </ol>
+                </nav>
+            </div>
+            <a href="{{ url_for('export.export_home') }}" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left me-1"></i> {{ _('Retour') }}
+            </a>
+        </div>
+    </div>
+
+    <!-- Tableau des documents -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            {% if documents|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">{{ _('Référence') }}</th>
+                            <th scope="col">{{ _('Date') }}</th>
+                            {% if doc_type == 'invoices' or doc_type == 'quotes' %}
+                                <th scope="col">{{ _('Client') }}</th>
+                                <th scope="col">{{ _('Montant') }}</th>
+                            {% elif doc_type == 'tax_reports' %}
+                                <th scope="col">{{ _('Période') }}</th>
+                                <th scope="col">{{ _('Type') }}</th>
+                            {% elif doc_type == 'business_reports' %}
+                                <th scope="col">{{ _('Entreprise') }}</th>
+                                <th scope="col">{{ _('Secteur') }}</th>
+                            {% endif %}
+                            <th scope="col" class="text-end">{{ _('Actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doc in documents %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            {% if doc_type == 'invoices' %}
+                                <td>{{ doc.invoice_number }}</td>
+                                <td>{{ doc.created_at.strftime('%d/%m/%Y') }}</td>
+                                <td>{{ doc.customer.name if doc.customer else _('Client inconnu') }}</td>
+                                <td>{{ "%.2f"|format(doc.total) }} €</td>
+                            {% elif doc_type == 'quotes' %}
+                                <td>{{ doc.quote_number }}</td>
+                                <td>{{ doc.created_at.strftime('%d/%m/%Y') }}</td>
+                                <td>{{ doc.customer.name if doc.customer else _('Client inconnu') }}</td>
+                                <td>{{ "%.2f"|format(doc.total) }} €</td>
+                            {% elif doc_type == 'tax_reports' %}
+                                <td>{{ doc.id }}</td>
+                                <td>{{ doc.created_at.strftime('%d/%m/%Y') }}</td>
+                                <td>{{ doc.start_date.strftime('%d/%m/%Y') }} - {{ doc.end_date.strftime('%d/%m/%Y') }}</td>
+                                <td>{{ doc.type }}</td>
+                            {% elif doc_type == 'business_reports' %}
+                                <td>{{ doc.id }}</td>
+                                <td>{{ doc.created_at.strftime('%d/%m/%Y') }}</td>
+                                <td>{{ doc.company_name }}</td>
+                                <td>{{ doc.sector }}</td>
+                            {% endif %}
+                            <td class="text-end">
+                                <a href="{{ url_for('export.preview_document', doc_type=doc_type, doc_id=doc.id) }}" class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="bi bi-eye me-1"></i> {{ _('Aperçu') }}
+                                </a>
+                                <div class="dropdown d-inline-block">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="exportDropdown{{ doc.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-download me-1"></i> {{ _('Exporter') }}
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown{{ doc.id }}">
+                                        {% for format_id, format in formats.items() %}
+                                        <li>
+                                            <a class="dropdown-item" href="{{ url_for('export.generate_export', doc_type=doc_type, doc_id=doc.id, format_type=format_id) }}">
+                                                <i class="bi {{ format.icon }} me-2" style="color: {{ format.color }}"></i>
+                                                {{ _('Exporter en') }} {{ format.name }}
+                                            </a>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="mb-3">
+                    <i class="bi bi-file-earmark-x fs-1 text-muted"></i>
+                </div>
+                <h4 class="mb-3">{{ _('Aucun document trouvé') }}</h4>
+                <p class="text-muted">
+                    {{ _('Il n\'y a actuellement aucun document disponible dans cette catégorie.') }}
+                </p>
+                <a href="{{ url_for('export.export_home') }}" class="btn btn-primary mt-2">
+                    {{ _('Retour à l\'accueil') }}
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Guide d'exportation rapide -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h5 class="mb-3">{{ _('Aide à l\'exportation') }}</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="list-unstyled">
+                        <li class="d-flex align-items-center mb-3">
+                            <div class="me-3">
+                                <i class="bi bi-eye-fill fs-4 text-primary"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">{{ _('Aperçu') }}</h6>
+                                <p class="text-muted small mb-0">{{ _('Visualisez le document avant l\'exportation.') }}</p>
+                            </div>
+                        </li>
+                        <li class="d-flex align-items-center mb-3">
+                            <div class="me-3">
+                                <i class="bi bi-file-earmark-pdf fs-4 text-danger"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">{{ _('Export PDF') }}</h6>
+                                <p class="text-muted small mb-0">{{ _('Format idéal pour l\'impression et le partage.') }}</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <ul class="list-unstyled">
+                        <li class="d-flex align-items-center mb-3">
+                            <div class="me-3">
+                                <i class="bi bi-file-earmark-excel fs-4 text-success"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">{{ _('Export Excel') }}</h6>
+                                <p class="text-muted small mb-0">{{ _('Pour une analyse approfondie des données.') }}</p>
+                            </div>
+                        </li>
+                        <li class="d-flex align-items-center">
+                            <div class="me-3">
+                                <i class="bi bi-file-earmark-text fs-4 text-primary"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">{{ _('Export CSV/JSON') }}</h6>
+                                <p class="text-muted small mb-0">{{ _('Pour l\'intégration avec d\'autres systèmes.') }}</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

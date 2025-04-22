@@ -1,0 +1,447 @@
+{% extends 'layout.html' %}
+
+{% block title %}Optimisation: {{ optimization.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1>{{ optimization.title }}</h1>
+                    <p class="lead mb-0">
+                        Optimisation pour le processus
+                        <a href="{{ url_for('process_analysis.view_process', process_id=optimization.process_id) }}">{{ process.name }}</a>
+                    </p>
+                </div>
+                <div>
+                    <a href="{{ url_for('process_analysis.edit_optimization', optimization_id=optimization.id) }}" class="btn btn-warning me-2">
+                        <i class="bi bi-pencil"></i> Modifier
+                    </a>
+                </div>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Détails de l'Optimisation</h3>
+                    <span class="badge 
+                        {% if optimization.status == 'proposed' %}
+                            bg-info
+                        {% elif optimization.status == 'approved' %}
+                            bg-primary
+                        {% elif optimization.status == 'in_progress' %}
+                            bg-warning text-dark
+                        {% elif optimization.status == 'completed' %}
+                            bg-success
+                        {% elif optimization.status == 'cancelled' %}
+                            bg-danger
+                        {% else %}
+                            bg-secondary
+                        {% endif %}
+                        fs-6">
+                        {% if optimization.status == 'proposed' %}
+                            Proposée
+                        {% elif optimization.status == 'approved' %}
+                            Approuvée
+                        {% elif optimization.status == 'in_progress' %}
+                            En cours
+                        {% elif optimization.status == 'completed' %}
+                            Terminée
+                        {% elif optimization.status == 'cancelled' %}
+                            Annulée
+                        {% else %}
+                            {{ optimization.status }}
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h4>Description</h4>
+                            <p>{{ optimization.description|nl2br }}</p>
+                            
+                            {% if optimization.priority %}
+                                <h4 class="mt-4">Priorité</h4>
+                                <div class="mb-3">
+                                    <span class="badge 
+                                        {% if optimization.priority == 'high' %}
+                                            bg-danger
+                                        {% elif optimization.priority == 'medium' %}
+                                            bg-warning text-dark
+                                        {% elif optimization.priority == 'low' %}
+                                            bg-success
+                                        {% else %}
+                                            bg-secondary
+                                        {% endif %}
+                                        fs-6">
+                                        {% if optimization.priority == 'high' %}
+                                            Haute
+                                        {% elif optimization.priority == 'medium' %}
+                                            Moyenne
+                                        {% elif optimization.priority == 'low' %}
+                                            Basse
+                                        {% else %}
+                                            {{ optimization.priority }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="card-title mb-0">ROI Estimé</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <h2 class="display-4">{{ optimization.estimated_roi|default('N/A', true) }}x</h2>
+                                    <p class="text-muted">Retour sur investissement</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header bg-success text-white">
+                            <h3 class="card-title mb-0">Bénéfices Attendus</h3>
+                        </div>
+                        <div class="card-body">
+                            {% if optimization.benefits %}
+                                <ul class="list-group list-group-flush">
+                                    {% for benefit in optimization.benefits %}
+                                        <li class="list-group-item">
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                            {% if benefit is mapping %}
+                                                <strong>{{ benefit.title }}</strong>: {{ benefit.description }}
+                                            {% else %}
+                                                {{ benefit }}
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted">Aucun bénéfice spécifié pour cette optimisation.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header bg-info text-white">
+                            <h3 class="card-title mb-0">Ressources Nécessaires</h3>
+                        </div>
+                        <div class="card-body">
+                            {% if optimization.resources_required %}
+                                <ul class="list-group list-group-flush">
+                                    {% for resource in optimization.resources_required %}
+                                        <li class="list-group-item">
+                                            <i class="bi bi-gear-fill text-info me-2"></i>
+                                            {% if resource is mapping %}
+                                                <strong>{{ resource.type }}</strong>: {{ resource.description }}
+                                            {% else %}
+                                                {{ resource }}
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted">Aucune ressource spécifiée pour cette optimisation.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">Plan de Mise en Œuvre</h3>
+                </div>
+                <div class="card-body">
+                    {% if optimization.implementation_plan %}
+                        <div class="timeline">
+                            {% for step in optimization.implementation_plan %}
+                                <div class="timeline-item">
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <h4>{{ step.title|default('Étape ' ~ loop.index, true) }}</h4>
+                                        <p>{{ step.description }}</p>
+                                        {% if step.duration %}
+                                            <p class="text-muted">
+                                                <i class="bi bi-clock"></i> Durée estimée: {{ step.duration }}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Aucun plan de mise en œuvre spécifié pour cette optimisation.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Jalons de Mise en Œuvre</h3>
+                    <a href="{{ url_for('process_analysis.new_milestone', optimization_id=optimization.id) }}" class="btn btn-sm btn-dark">
+                        <i class="bi bi-plus-circle"></i> Ajouter un Jalon
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if milestones and milestones|length > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Jalon</th>
+                                        <th>Date Prévue</th>
+                                        <th>Statut</th>
+                                        <th>Progression</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for milestone in milestones %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ milestone.title }}</strong>
+                                                {% if milestone.description %}
+                                                    <p class="text-muted mb-0 small">{{ milestone.description|truncate(50) }}</p>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ milestone.planned_date }}</td>
+                                            <td>
+                                                <span class="badge 
+                                                    {% if milestone.status == 'pending' %}
+                                                        bg-secondary
+                                                    {% elif milestone.status == 'in_progress' %}
+                                                        bg-primary
+                                                    {% elif milestone.status == 'completed' %}
+                                                        bg-success
+                                                    {% elif milestone.status == 'delayed' %}
+                                                        bg-danger
+                                                    {% else %}
+                                                        bg-info
+                                                    {% endif %}">
+                                                    {% if milestone.status == 'pending' %}
+                                                        En attente
+                                                    {% elif milestone.status == 'in_progress' %}
+                                                        En cours
+                                                    {% elif milestone.status == 'completed' %}
+                                                        Terminé
+                                                    {% elif milestone.status == 'delayed' %}
+                                                        Retardé
+                                                    {% else %}
+                                                        {{ milestone.status }}
+                                                    {% endif %}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="progress">
+                                                    <div class="progress-bar 
+                                                        {% if milestone.completion_percentage < 30 %}
+                                                            bg-danger
+                                                        {% elif milestone.completion_percentage < 70 %}
+                                                            bg-warning
+                                                        {% else %}
+                                                            bg-success
+                                                        {% endif %}"
+                                                        role="progressbar"
+                                                        style="width: {{ milestone.completion_percentage }}%"
+                                                        aria-valuenow="{{ milestone.completion_percentage }}"
+                                                        aria-valuemin="0"
+                                                        aria-valuemax="100">
+                                                        {{ milestone.completion_percentage }}%
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('process_analysis.edit_milestone', milestone_id=milestone.id) }}" class="btn btn-sm btn-warning">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Aucun jalon défini pour cette optimisation.</p>
+                        <div class="text-center">
+                            <a href="{{ url_for('process_analysis.new_milestone', optimization_id=optimization.id) }}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Créer le Premier Jalon
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Mesures de Résultats</h3>
+                    <a href="{{ url_for('process_analysis.new_result', optimization_id=optimization.id) }}" class="btn btn-sm btn-light">
+                        <i class="bi bi-plus-circle"></i> Ajouter une Mesure
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if results and results|length > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Métrique</th>
+                                        <th>Valeur Initiale</th>
+                                        <th>Valeur Actuelle</th>
+                                        <th>Valeur Cible</th>
+                                        <th>Progrès</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for result in results %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ result.metric_name }}</strong>
+                                                {% if result.notes %}
+                                                    <p class="text-muted mb-0 small">{{ result.notes|truncate(50) }}</p>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ result.baseline_value }} {{ result.unit|default('', true) }}</td>
+                                            <td>{{ result.current_value }} {{ result.unit|default('', true) }}</td>
+                                            <td>{{ result.target_value }} {{ result.unit|default('', true) }}</td>
+                                            <td>
+                                                {% if result.target_value != result.baseline_value %}
+                                                    {% set progress = ((result.current_value - result.baseline_value) / (result.target_value - result.baseline_value) * 100)|round %}
+                                                    {% if progress < 0 %}
+                                                        {% set progress = 0 %}
+                                                    {% elif progress > 100 %}
+                                                        {% set progress = 100 %}
+                                                    {% endif %}
+                                                    
+                                                    <div class="progress">
+                                                        <div class="progress-bar 
+                                                            {% if progress < 30 %}
+                                                                bg-danger
+                                                            {% elif progress < 70 %}
+                                                                bg-warning
+                                                            {% else %}
+                                                                bg-success
+                                                            {% endif %}"
+                                                            role="progressbar"
+                                                            style="width: {{ progress }}%"
+                                                            aria-valuenow="{{ progress }}"
+                                                            aria-valuemin="0"
+                                                            aria-valuemax="100">
+                                                            {{ progress }}%
+                                                        </div>
+                                                    </div>
+                                                {% else %}
+                                                    <span class="text-muted">N/A</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('process_analysis.edit_result', result_id=result.id) }}" class="btn btn-sm btn-warning">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Aucune mesure de résultat définie pour cette optimisation.</p>
+                        <div class="text-center">
+                            <a href="{{ url_for('process_analysis.new_result', optimization_id=optimization.id) }}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Créer la Première Mesure
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between mb-5">
+                <a href="{{ url_for('process_analysis.view_process', process_id=optimization.process_id) }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Retour au Processus
+                </a>
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                    <i class="bi bi-trash"></i> Supprimer cette Optimisation
+                </button>
+            </div>
+            
+            <!-- Modal de confirmation de suppression -->
+            <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="deleteModalLabel">Confirmer la suppression</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            Êtes-vous sûr de vouloir supprimer l'optimisation <strong>{{ optimization.title }}</strong> ? Cette action est irréversible et supprimera également tous les jalons et mesures de résultats associés.
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                            <a href="{{ url_for('process_analysis.delete_optimization', optimization_id=optimization.id) }}" class="btn btn-danger">Supprimer</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Styles pour la timeline d'implémentation */
+    .timeline {
+        position: relative;
+        padding: 20px 0;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 16px;
+        width: 4px;
+        background-color: #dee2e6;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-left: 40px;
+        margin-bottom: 30px;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        top: 5px;
+        left: 0;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background-color: #0d6efd;
+        border: 3px solid #fff;
+        z-index: 1;
+    }
+    
+    .timeline-content {
+        padding: 0 0 0 10px;
+    }
+</style>
+{% endblock %}

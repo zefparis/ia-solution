@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ language.get_text('business.consultation') or 'Consultation Business' }} - IA Solution{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-briefcase fa-3x text-primary mb-3"></i>
+                        <h2 class="mb-3">{{ language.get_text('business.consultation') or 'Consultation Business' }}</h2>
+                        <p class="lead">{{ language.get_text('business.ai_ready') or 'Notre assistant IA est prêt à vous aider avec votre entreprise' }}</p>
+                    </div>
+
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="fas fa-info-circle fa-2x"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-2">{{ language.get_text('business.login_required') or 'Connexion requise' }}</h5>
+                                <p class="mb-0">{{ language.get_text('business.login_message') or 'Pour accéder à notre consultant IA business et bénéficier de ses conseils personnalisés, veuillez vous connecter ou créer un compte.' }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 bg-light mb-3 mb-md-0">
+                                <div class="card-body p-4">
+                                    <h5 class="mb-3"><i class="fas fa-lightbulb text-warning me-2"></i>{{ language.get_text('business.can_help_with') or 'Notre consultant IA peut vous aider à :' }}</h5>
+                                    <ul class="list-unstyled">
+                                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>{{ language.get_text('business.market_analysis') or 'Analyser votre marché et votre concurrence' }}</li>
+                                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>{{ language.get_text('business.strengths_weaknesses') or 'Identifier vos forces et faiblesses' }}</li>
+                                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>{{ language.get_text('business.growth_opportunities') or 'Trouver des opportunités de croissance' }}</li>
+                                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>{{ language.get_text('business.strategy') or 'Élaborer une stratégie adaptée' }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 bg-light">
+                                <div class="card-body p-4">
+                                    <h5 class="mb-3"><i class="fas fa-star text-primary me-2"></i>{{ language.get_text('business.advantages') or 'Avantages :' }}</h5>
+                                    <ul class="list-unstyled">
+                                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>{{ language.get_text('business.quick_consultation') or 'Consultation rapide et personnalisée' }}</li>
+                                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>{{ language.get_text('business.best_practices') or 'Recommandations basées sur les meilleures pratiques' }}</li>
+                                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>{{ language.get_text('business.precise_analysis') or 'Analyses sectorielles précises' }}</li>
+                                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>{{ language.get_text('business.available_24_7') or 'Disponible 24/7 pour vous assister' }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row justify-content-center">
+                        <div class="col-md-10 text-center">
+                            <a href="{{ url_for('login', next=url_for('chat_page', topic='business')) }}" class="btn btn-primary btn-lg px-5 me-3">
+                                <i class="fas fa-sign-in-alt me-2"></i>{{ language.get_text('nav.login') or 'Se connecter' }}
+                            </a>
+                            <a href="{{ url_for('register') }}" class="btn btn-outline-primary btn-lg px-5">
+                                <i class="fas fa-user-plus me-2"></i>{{ language.get_text('nav.register') or 'S\'inscrire' }}
+                            </a>
+                            <div class="mt-4">
+                                <a href="{{ url_for('home') }}" class="text-decoration-none">
+                                    <i class="fas fa-arrow-left me-1"></i>{{ language.get_text('general.back_to_home') or 'Retour à l\'accueil' }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

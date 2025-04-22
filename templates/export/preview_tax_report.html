@@ -1,0 +1,307 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ _('Aperçu Rapport fiscal') }} {{ document.id }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- En-tête de la page -->
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-2">{{ _('Aperçu du rapport fiscal') }}</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('export.export_home') }}">{{ _('Exportation') }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('export.list_documents', doc_type='tax_reports') }}">{{ _('Rapports fiscaux') }}</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ _('Aperçu') }}</li>
+                    </ol>
+                </nav>
+            </div>
+            <div>
+                <a href="{{ url_for('export.list_documents', doc_type='tax_reports') }}" class="btn btn-outline-primary me-2">
+                    <i class="bi bi-arrow-left me-1"></i> {{ _('Retour') }}
+                </a>
+                <div class="dropdown d-inline-block">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-download me-1"></i> {{ _('Exporter') }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+                        {% for format_id, format in formats.items() %}
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('export.generate_export', doc_type='tax_reports', doc_id=document.id, format_type=format_id) }}">
+                                <i class="bi {{ format.icon }} me-2" style="color: {{ format.color }}"></i>
+                                {{ _('Exporter en') }} {{ format.name }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aperçu du rapport fiscal -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">{{ _('Rapport Fiscal') }} - {{ document.report_type }}</h5>
+            <span class="badge bg-info">{{ document.created_at.strftime('%d/%m/%Y') }}</span>
+        </div>
+        <div class="card-body">
+            <!-- Informations générales -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-3">{{ _('Informations générales') }}</h6>
+                    <div class="mb-2">
+                        <span class="fw-bold">{{ _('Type de rapport') }}:</span>
+                        <span class="ms-2">{{ document.report_type }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="fw-bold">{{ _('Période') }}:</span>
+                        <span class="ms-2">{{ document.period_start.strftime('%d/%m/%Y') }} - {{ document.period_end.strftime('%d/%m/%Y') }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="fw-bold">{{ _('Référence') }}:</span>
+                        <span class="ms-2">TAX-{{ document.id }}</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-3">{{ _('Détails du rapport') }}</h6>
+                    <div class="mb-2">
+                        <span class="fw-bold">{{ _('Date de création') }}:</span>
+                        <span class="ms-2">{{ document.created_at.strftime('%d/%m/%Y') }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="fw-bold">{{ _('Créé par') }}:</span>
+                        <span class="ms-2">{{ document.user.username }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="fw-bold">{{ _('Statut') }}:</span>
+                        <span class="badge bg-success ms-2">{{ document.status or _('Finalisé') }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Résumé financier -->
+            <div class="mt-4">
+                <h5 class="border-bottom pb-2 mb-3">{{ _('Résumé financier') }}</h5>
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-light h-100">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">{{ _('Chiffre d\'affaires') }}</h6>
+                                <h3 class="fw-bold text-primary">{{ "%.2f"|format(document.revenue) }} €</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-light h-100">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">{{ _('Dépenses') }}</h6>
+                                <h3 class="fw-bold text-danger">{{ "%.2f"|format(document.expenses) }} €</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-light h-100">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">{{ _('Bénéfice brut') }}</h6>
+                                <h3 class="fw-bold text-success">{{ "%.2f"|format(document.profit) }} €</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-light h-100">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">{{ _('TVA collectée') }}</h6>
+                                <h3 class="fw-bold text-info">{{ "%.2f"|format(document.vat_collected) }} €</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Détails de la TVA -->
+            <div class="mt-4">
+                <h5 class="border-bottom pb-2 mb-3">{{ _('Détails de la TVA') }}</h5>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header">{{ _('TVA collectée') }}</div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>{{ _('TVA sur ventes') }}:</span>
+                                    <span>{{ "%.2f"|format(document.vat_collected) }} €</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>{{ _('Taux moyen') }}:</span>
+                                    <span>{{ "%.1f"|format(document.avg_vat_rate) }}%</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2 fw-bold">
+                                    <span>{{ _('Total collecté') }}:</span>
+                                    <span>{{ "%.2f"|format(document.vat_collected) }} €</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header">{{ _('TVA déductible') }}</div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>{{ _('TVA sur achats') }}:</span>
+                                    <span>{{ "%.2f"|format(document.vat_deductible) }} €</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>{{ _('TVA sur frais généraux') }}:</span>
+                                    <span>{{ "%.2f"|format(document.vat_deductible_expenses) }} €</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2 fw-bold">
+                                    <span>{{ _('Total déductible') }}:</span>
+                                    <span>{{ "%.2f"|format(document.vat_deductible + document.vat_deductible_expenses) }} €</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header">{{ _('Solde TVA') }}</div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>{{ _('TVA collectée') }}:</span>
+                                    <span>{{ "%.2f"|format(document.vat_collected) }} €</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>{{ _('TVA déductible') }}:</span>
+                                    <span>-{{ "%.2f"|format(document.vat_deductible + document.vat_deductible_expenses) }} €</span>
+                                </div>
+                                <div class="d-flex justify-content-between mt-2 pt-2 border-top fw-bold">
+                                    <span>{{ _('Solde à payer') }}:</span>
+                                    <span class="text-{% if document.vat_collected - document.vat_deductible - document.vat_deductible_expenses > 0 %}danger{% else %}success{% endif %}">
+                                        {{ "%.2f"|format(document.vat_collected - document.vat_deductible - document.vat_deductible_expenses) }} €
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Répartition des revenus et dépenses -->
+            <div class="mt-4">
+                <h5 class="border-bottom pb-2 mb-3">{{ _('Répartition des revenus et dépenses') }}</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header">{{ _('Revenus par catégorie') }}</div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>{{ _('Catégorie') }}</th>
+                                                <th class="text-end">{{ _('Montant') }}</th>
+                                                <th class="text-end">{{ _('Pourcentage') }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for category in document.income_categories|default([]) %}
+                                            <tr>
+                                                <td>{{ category.name }}</td>
+                                                <td class="text-end">{{ "%.2f"|format(category.amount) }} €</td>
+                                                <td class="text-end">{{ "%.1f"|format(category.percentage) }}%</td>
+                                            </tr>
+                                            {% else %}
+                                            <tr>
+                                                <td colspan="3" class="text-center">{{ _('Aucune donnée disponible') }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header">{{ _('Dépenses par catégorie') }}</div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>{{ _('Catégorie') }}</th>
+                                                <th class="text-end">{{ _('Montant') }}</th>
+                                                <th class="text-end">{{ _('Pourcentage') }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for category in document.expense_categories|default([]) %}
+                                            <tr>
+                                                <td>{{ category.name }}</td>
+                                                <td class="text-end">{{ "%.2f"|format(category.amount) }} €</td>
+                                                <td class="text-end">{{ "%.1f"|format(category.percentage) }}%</td>
+                                            </tr>
+                                            {% else %}
+                                            <tr>
+                                                <td colspan="3" class="text-center">{{ _('Aucune donnée disponible') }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notes -->
+            {% if document.notes %}
+            <div class="mt-4">
+                <h5 class="border-bottom pb-2 mb-3">{{ _('Notes et observations') }}</h5>
+                <div class="card bg-light">
+                    <div class="card-body">
+                        {{ document.notes|safe }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Options d'exportation -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h5 class="mb-3">{{ _('Options d\'exportation') }}</h5>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                {% for format_id, format in formats.items() %}
+                <div class="col">
+                    <div class="card h-100 border-1 {% if format_id == 'pdf' %}border-danger{% elif format_id == 'excel' %}border-success{% elif format_id == 'csv' %}border-primary{% elif format_id == 'json' %}border-warning{% endif %}">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi {{ format.icon }} me-2 fs-4" style="color: {{ format.color }}"></i>
+                                <h5 class="card-title mb-0">{{ format.name }}</h5>
+                            </div>
+                            <p class="card-text small">
+                                {% if format_id == 'pdf' %}
+                                    {{ _('Document PDF formaté pour l\'impression et le partage professionnel.') }}
+                                {% elif format_id == 'excel' %}
+                                    {{ _('Feuille de calcul Excel avec tableaux détaillés et calculs intégrés.') }}
+                                {% elif format_id == 'csv' %}
+                                    {{ _('Format CSV compatible avec les logiciels comptables.') }}
+                                {% elif format_id == 'json' %}
+                                    {{ _('Format JSON pour l\'intégration avec des outils analytiques.') }}
+                                {% endif %}
+                            </p>
+                            <a href="{{ url_for('export.generate_export', doc_type='tax_reports', doc_id=document.id, format_type=format_id) }}" class="btn btn-sm btn-outline-primary w-100">
+                                {{ _('Télécharger') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

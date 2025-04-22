@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devis {{ document.quote_number }}</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            margin-bottom: 30px;
+        }
+        .company-info {
+            float: left;
+            width: 50%;
+        }
+        .document-info {
+            float: right;
+            width: 45%;
+            text-align: right;
+        }
+        .document-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .clear {
+            clear: both;
+        }
+        .parties {
+            margin: 20px 0;
+        }
+        .party {
+            width: 45%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .from {
+            float: left;
+            background-color: #f9f9f9;
+        }
+        .to {
+            float: right;
+            background-color: #f9f9f9;
+        }
+        .party-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #666;
+        }
+        .dates {
+            margin: 20px 0;
+            clear: both;
+        }
+        .date-row {
+            margin-bottom: 5px;
+        }
+        .label {
+            font-weight: bold;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background-color: #2c3e50;
+            color: white;
+            font-weight: normal;
+            padding: 8px;
+            text-align: left;
+        }
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .amount-column {
+            text-align: right;
+        }
+        .item-row:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .totals {
+            width: 350px;
+            float: right;
+            margin: 20px 0;
+        }
+        .total-row {
+            padding: 5px 0;
+        }
+        .grand-total {
+            font-weight: bold;
+            border-top: 2px solid #333;
+            padding-top: 5px !important;
+        }
+        .notes {
+            clear: both;
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px dotted #ddd;
+        }
+        .terms {
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px dotted #ddd;
+        }
+        .footer {
+            margin-top: 50px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 10px;
+            color: #999;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            background-color: #3498db;
+            color: white;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-info">
+            <div class="document-title">DEVIS</div>
+            <div style="font-weight: bold;">{{ document.user.company_name or document.user.username }}</div>
+            {% if document.user.address %}
+            <div>{{ document.user.address }}</div>
+            {% endif %}
+            {% if document.user.phone %}
+            <div>Tél: {{ document.user.phone }}</div>
+            {% endif %}
+            <div>Email: {{ document.user.email }}</div>
+        </div>
+        <div class="document-info">
+            <div style="margin-bottom: 15px;">
+                <span class="status">{{ document.status }}</span>
+            </div>
+            <div><span class="label">Numéro:</span> {{ document.quote_number }}</div>
+            <div><span class="label">Date:</span> {{ document.created_at.strftime('%d/%m/%Y') }}</div>
+            <div><span class="label">Validité:</span> {{ document.valid_until.strftime('%d/%m/%Y') if document.valid_until else 'Non spécifiée' }}</div>
+            {% if document.reference %}
+            <div><span class="label">Référence:</span> {{ document.reference }}</div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="clear"></div>
+    
+    <div class="parties">
+        <div class="party from">
+            <div class="party-title">DE</div>
+            <div>{{ document.user.company_name or document.user.username }}</div>
+            {% if document.user.address %}
+            <div>{{ document.user.address }}</div>
+            {% endif %}
+            <div>{{ document.user.email }}</div>
+            {% if document.user.phone %}
+            <div>{{ document.user.phone }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="party to">
+            <div class="party-title">POUR</div>
+            {% if document.customer %}
+            <div>{{ document.customer.name }}</div>
+            {% if document.customer.address %}
+            <div>{{ document.customer.address }}</div>
+            {% endif %}
+            <div>{{ document.customer.email }}</div>
+            {% if document.customer.phone %}
+            <div>{{ document.customer.phone }}</div>
+            {% endif %}
+            {% else %}
+            <div>Client non spécifié</div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="clear"></div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th style="width: 10%;">Quantité</th>
+                <th style="width: 15%;">Prix unitaire</th>
+                <th style="width: 10%;">TVA</th>
+                <th style="width: 15%;">Total HT</th>
+                <th style="width: 15%;">Total TTC</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in document.items %}
+            <tr class="item-row">
+                <td>{{ item.description }}</td>
+                <td class="amount-column">{{ item.quantity }}</td>
+                <td class="amount-column">{{ "%.2f"|format(item.unit_price) }} €</td>
+                <td class="amount-column">{{ item.tax_rate }}%</td>
+                <td class="amount-column">{{ "%.2f"|format(item.subtotal) }} €</td>
+                <td class="amount-column">{{ "%.2f"|format(item.total) }} €</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="totals">
+        <div class="total-row">
+            <table>
+                <tr>
+                    <td style="width: 70%; text-align: right; border: none;"><span class="label">Total HT:</span></td>
+                    <td style="width: 30%; text-align: right; border: none;">{{ "%.2f"|format(document.subtotal) }} €</td>
+                </tr>
+                <tr>
+                    <td style="text-align: right; border: none;"><span class="label">Total TVA:</span></td>
+                    <td style="text-align: right; border: none;">{{ "%.2f"|format(document.tax_amount) }} €</td>
+                </tr>
+                <tr class="grand-total">
+                    <td style="text-align: right; border: none;"><span class="label">Total TTC:</span></td>
+                    <td style="text-align: right; border: none;">{{ "%.2f"|format(document.total) }} €</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <div class="clear"></div>
+    
+    {% if document.notes %}
+    <div class="notes">
+        <div class="label">Notes:</div>
+        <p>{{ document.notes }}</p>
+    </div>
+    {% endif %}
+    
+    {% if document.terms %}
+    <div class="terms">
+        <div class="label">Conditions:</div>
+        <p>{{ document.terms }}</p>
+    </div>
+    {% endif %}
+    
+    <div class="footer">
+        <p>Document généré le {{ document.created_at.strftime('%d/%m/%Y à %H:%M') }} via IA-Solution.</p>
+    </div>
+</body>
+</html>

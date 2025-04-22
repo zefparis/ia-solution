@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="fr" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IA-Solution – Powered by Benji</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Dark Theme CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='dark-theme.css') }}">
+</head>
+<body>
+    <!-- Barre de navigation principale -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('home') }}">
+                <i class="fas fa-robot me-2"></i>IA-Solution
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('home') }}">
+                            <i class="fas fa-home me-1"></i>Accueil
+                        </a>
+                    </li>
+                    {% if session.get('access_token') %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('ocr') }}">
+                            <i class="fas fa-camera me-1"></i>Numériser
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('finance_dashboard') }}">
+                            <i class="fas fa-chart-bar me-1"></i>Finances
+                        </a>
+                    </li>
+                    {% if session.get('is_admin') %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin') }}">
+                            <i class="fas fa-cog me-1"></i>Admin
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% endif %}
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <button class="btn btn-sm btn-outline-light me-2 theme-toggle">
+                            <i class="fas fa-moon theme-icon-dark"></i>
+                            <i class="fas fa-sun d-none theme-icon-light"></i>
+                        </button>
+                    </li>
+                    {% if session.get('access_token') %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user me-1"></i>{{ session.get('display_name', session.get('username', 'Profil')) }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('profile') }}">
+                                <i class="fas fa-id-card me-2"></i>Mon profil
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-outline-primary me-2" href="{{ url_for('login') }}">
+                            <i class="fas fa-sign-in-alt me-1"></i>Connexion
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-primary" href="{{ url_for('register') }}">
+                            <i class="fas fa-user-plus me-1"></i>Inscription
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- En-tête principal avec gradient -->
+    <header class="text-white py-5" style="background: linear-gradient(135deg, #13547a 0%, #203A43 100%);">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-7">
+                    <span class="badge bg-danger px-3 py-2 mb-3">Nouveau : Gestion de fichiers cloud</span>
+                    <h1 class="display-4 fw-bold mb-3">IA-Solution, votre plateforme intelligente</h1>
+                    <p class="lead mb-4">La solution complète qui révolutionne la gestion de vos documents financiers, simplifie votre comptabilité et vous aide à prendre les bonnes décisions.</p>
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <span>Numérisation intelligente de documents avec l'IA</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <span>Analyse automatique des dépenses et revenus</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <span>Rapports fiscaux personnalisés prêts à l'emploi</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <span>Stockage sécurisé dans le cloud</span>
+                        </div>
+                    </div>
+                    {% if not session.get('access_token') %}
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-4 me-md-2">Commencer gratuitement</a>
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg px-4">Connexion</a>
+                    </div>
+                    {% else %}
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                        <a href="{{ url_for('finance_dashboard') }}" class="btn btn-primary btn-lg px-4 me-md-2">Mon tableau de bord</a>
+                        <a href="{{ url_for('subscription.files') }}" class="btn btn-outline-light btn-lg px-4">Gérer mes fichiers</a>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-5 d-none d-md-block text-center">
+                    <div class="position-relative">
+                        <i class="fas fa-robot fa-10x text-info opacity-75"></i>
+                        <div class="position-absolute top-0 end-0 mt-2 me-2">
+                            <span class="badge bg-primary p-2">IA Avancée</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container my-5">
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="row mb-3">
+                    <div class="col-12">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Section des fonctionnalités supprimée pour éviter la répétition avec "Comment ça marche" -->
+        
+        <!-- Comment ça marche -->
+        <section class="mb-5 py-4 bg-light rounded-3">
+            <div class="container">
+                <h2 class="text-center mb-4">Comment ça marche ?</h2>
+                <div class="row">
+                    <div class="col-lg-10 mx-auto">
+                        <div class="row g-3">
+                    <div style="border-radius: 0.25rem; box-shadow: 0 .125rem .25rem rgba(0,0,0,.075); padding: 1rem; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
+                        <div style="width: 40px; height: 40px; background-color: var(--bs-primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div style="flex-grow: 1; text-align: center;">
+                            <h5 style="font-size: 1rem; margin-bottom: 0.75rem;">Conversation intelligente</h5>
+                            <p style="font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.4;">Discutez naturellement avec Benji pour obtenir des réponses, des conseils ou simplement pour bavarder.</p>
+                        </div>
+                        <a href="{{ url_for('chat_page') }}" class="btn btn-sm btn-outline-primary" style="width: 80%; padding: 0.375rem 0.5rem;">Essayer</a>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div style="border-radius: 0.25rem; box-shadow: 0 .125rem .25rem rgba(0,0,0,.075); padding: 1rem; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
+                        <div style="width: 40px; height: 40px; background-color: var(--bs-info); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <div style="flex-grow: 1; text-align: center;">
+                            <h5 style="font-size: 1rem; margin-bottom: 0.75rem;">Numérisation de documents</h5>
+                            <p style="font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.4;">Capturez et extrayez du texte de vos documents, factures et reçus grâce à la reconnaissance optique.</p>
+                        </div>
+                        <a href="{{ url_for('ocr') }}" class="btn btn-sm btn-outline-info" style="width: 80%; padding: 0.375rem 0.5rem;">Scanner</a>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div style="border-radius: 0.25rem; box-shadow: 0 .125rem .25rem rgba(0,0,0,.075); padding: 0.5rem; margin-bottom: 0.5rem;">
+                        <div class="text-center">
+                            <div style="width: 30px; height: 30px; background-color: var(--bs-success); color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.25rem;">
+                                <i class="fas fa-chart-pie" style="font-size: 0.8rem;"></i>
+                            </div>
+                            <h5 style="font-size: 0.9rem; margin: 0.25rem 0;">Comptable de poche</h5>
+                            <p style="font-size: 0.7rem; margin: 0.25rem 0; line-height: 1.1;">Suivez vos finances, catégorisez vos dépenses et générez des rapports à partir de vos documents.</p>
+                            <a href="{{ url_for('finance_dashboard') }}" class="btn btn-sm btn-outline-success" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">Tableau de bord</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row g-4 mt-3">
+                <div class="col-md-4">
+                    <div style="border-radius: 0.25rem; box-shadow: 0 .125rem .25rem rgba(0,0,0,.075); padding: 0.5rem; margin-bottom: 0.5rem;">
+                        <div class="text-center">
+                            <div style="width: 30px; height: 30px; background-color: var(--bs-warning); color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.25rem;">
+                                <i class="fas fa-file-invoice-dollar" style="font-size: 0.8rem;"></i>
+                            </div>
+                            <h5 style="font-size: 0.9rem; margin: 0.25rem 0;">Rapports fiscaux</h5>
+                            <p style="font-size: 0.7rem; margin: 0.25rem 0; line-height: 1.1;">Générez des rapports fiscaux intelligents basés sur vos transactions pour simplifier votre déclaration.</p>
+                            <a href="{{ url_for('financial_reports') }}" class="btn btn-sm btn-outline-warning" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">Rapports</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div style="border-radius: 0.25rem; box-shadow: 0 .125rem .25rem rgba(0,0,0,.075); padding: 0.5rem; margin-bottom: 0.5rem;">
+                        <div class="text-center">
+                            <div style="width: 30px; height: 30px; background-color: var(--bs-danger); color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.25rem;">
+                                <i class="fas fa-cloud-upload-alt" style="font-size: 0.8rem;"></i>
+                            </div>
+                            <h5 style="font-size: 0.9rem; margin: 0.25rem 0;">Stockage cloud sécurisé</h5>
+                            <p style="font-size: 0.7rem; margin: 0.25rem 0; line-height: 1.1;">Stockez vos documents importants dans le cloud avec différents niveaux d'abonnement selon vos besoins.</p>
+                            <a href="{{ url_for('subscription.files') }}" class="btn btn-sm btn-outline-danger" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">Mes fichiers</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div style="border-radius: 0.25rem; box-shadow: 0 .125rem .25rem rgba(0,0,0,.075); padding: 0.5rem; margin-bottom: 0.5rem;">
+                        <div class="text-center">
+                            <div style="width: 30px; height: 30px; background-color: var(--bs-secondary); color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.25rem;">
+                                <i class="fas fa-user-circle" style="font-size: 0.8rem;"></i>
+                            </div>
+                            <h5 style="font-size: 0.9rem; margin: 0.25rem 0;">Profil personnalisable</h5>
+                            <p style="font-size: 0.7rem; margin: 0.25rem 0; line-height: 1.1;">Personnalisez votre expérience avec un profil sur mesure et des préférences adaptées à vos besoins.</p>
+                            <a href="{{ url_for('profile') }}" class="btn btn-sm btn-outline-secondary" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">Mon profil</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Comment ça marche -->
+        <section class="mb-5 py-4 bg-light rounded-3">
+            <div class="container">
+                <h2 class="text-center mb-4">Comment ça marche ?</h2>
+                <div class="row">
+                    <div class="col-lg-10 mx-auto">
+                        <div class="row g-3">
+                            <div class="col-md-6 col-lg-3">
+                                <div class="comment-ca-marche-card">
+                                    <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-danger" style="z-index: 5;">
+                                        1
+                                    </span>
+                                    <div style="width: 40px; height: 40px; background-color: var(--bs-primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                                        <i class="fas fa-file-import"></i>
+                                    </div>
+                                    <div style="flex-grow: 1; text-align: center;">
+                                        <h5 style="font-size: 1rem; margin-bottom: 0.75rem;">Importez vos documents</h5>
+                                        <p style="font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.4;">Capturez des photos de vos factures et reçus avec OCR ou importez vos fichiers.</p>
+                                    </div>
+                                    <a href="{{ url_for('ocr') }}" class="btn btn-primary btn-sm" style="width: 80%; padding: 0.375rem 0.5rem;">Essayer</a>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="comment-ca-marche-card">
+                                    <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-danger" style="z-index: 5;">
+                                        2
+                                    </span>
+                                    <div style="width: 40px; height: 40px; background-color: var(--bs-info); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                                        <i class="fas fa-brain"></i>
+                                    </div>
+                                    <div style="flex-grow: 1; text-align: center;">
+                                        <h5 style="font-size: 1rem; margin-bottom: 0.75rem;">IA avancée</h5>
+                                        <p style="font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.4;">Notre IA analyse vos documents pour extraire montants, dates et types de dépenses.</p>
+                                    </div>
+                                    <a href="{{ url_for('process_text', text_id=1) }}" class="btn btn-info btn-sm text-white" style="width: 80%; padding: 0.375rem 0.5rem;">Voir exemple</a>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="comment-ca-marche-card">
+                                    <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-danger" style="z-index: 5;">
+                                        3
+                                    </span>
+                                    <div style="width: 40px; height: 40px; background-color: var(--bs-warning); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <div style="flex-grow: 1; text-align: center;">
+                                        <h5 style="font-size: 1rem; margin-bottom: 0.75rem;">Tableau de bord</h5>
+                                        <p style="font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.4;">Visualisez vos finances avec des graphiques et catégories personnalisables.</p>
+                                    </div>
+                                    <a href="{{ url_for('finance_dashboard') }}" class="btn btn-warning btn-sm" style="width: 80%; padding: 0.375rem 0.5rem;">Statistiques</a>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="comment-ca-marche-card">
+                                    <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-danger" style="z-index: 5;">
+                                        4
+                                    </span>
+                                    <div style="width: 40px; height: 40px; background-color: var(--bs-success); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                                        <i class="fas fa-file-invoice"></i>
+                                    </div>
+                                    <div style="flex-grow: 1; text-align: center;">
+                                        <h5 style="font-size: 1rem; margin-bottom: 0.75rem;">Rapports fiscaux</h5>
+                                        <p style="font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.4;">Générez des rapports fiscaux et financiers pour vos déclarations d'impôts.</p>
+                                    </div>
+                                    <a href="{{ url_for('financial_reports') }}" class="btn btn-success btn-sm text-white" style="width: 80%; padding: 0.375rem 0.5rem;">Rapports</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-5">
+                    <p class="lead mb-4">Et ce n'est pas tout ! Discutez directement avec notre assistant IA pour obtenir des conseils personnalisés sur vos finances.</p>
+                    <a href="{{ url_for('chat_page') }}" class="btn btn-primary px-4">
+                        <i class="fas fa-comments me-2"></i>Poser une question à notre IA
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Témoignages clients -->
+        <section class="mb-5 py-5 bg-light rounded-3">
+            <div class="container">
+                <h2 class="text-center mb-4">Ce que nos utilisateurs disent</h2>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex mb-3">
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                </div>
+                                <p class="card-text fst-italic">"IA-Solution a complètement transformé ma façon de gérer mes finances. La numérisation des factures est incroyablement précise et le classement automatique me fait gagner des heures chaque mois !"</p>
+                                <div class="d-flex align-items-center mt-3">
+                                    <div class="flex-shrink-0">
+                                        <span class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;">
+                                            <i class="fas fa-user"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5 class="mb-0">Sophie Martin</h5>
+                                        <small class="text-muted">Freelance, Paris</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex mb-3">
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                </div>
+                                <p class="card-text fst-italic">"Les rapports fiscaux générés par IA-Solution sont d'une précision remarquable. Mon comptable a été impressionné par la qualité des données et l'organisation. Un gain de temps considérable !"</p>
+                                <div class="d-flex align-items-center mt-3">
+                                    <div class="flex-shrink-0">
+                                        <span class="bg-success text-white rounded-circle d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;">
+                                            <i class="fas fa-user"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5 class="mb-0">Thomas Dubois</h5>
+                                        <small class="text-muted">Entrepreneur, Lyon</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex mb-3">
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star-half-alt text-warning"></i>
+                                </div>
+                                <p class="card-text fst-italic">"L'interface est intuitive et la reconnaissance des documents est bluffante. J'apprécie particulièrement le stockage cloud sécurisé et l'aide de l'IA pour classifier mes dépenses."</p>
+                                <div class="d-flex align-items-center mt-3">
+                                    <div class="flex-shrink-0">
+                                        <span class="bg-info text-white rounded-circle d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;">
+                                            <i class="fas fa-user"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5 class="mb-0">Marie Leroy</h5>
+                                        <small class="text-muted">Avocate, Bordeaux</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bouton pour accéder au chat -->
+        <section class="mb-5 text-center py-4 bg-light rounded-3">
+            <div class="container">
+                <h2 class="mb-3">Discutez avec notre assistant IA</h2>
+                <p class="lead mb-4">Posez vos questions à notre assistant intelligent et obtenez des réponses personnalisées pour gérer vos finances.</p>
+                <a href="{{ url_for('chat_page') }}" class="btn btn-primary btn-lg px-4 py-2">
+                    <i class="fas fa-comments me-2"></i>Démarrer une conversation
+                </a>
+                <p class="text-muted mt-3 small">L'assistant vocal est disponible dans l'interface de chat.</p>
+            </div>
+        </section>
+        
+        <!-- Section Plans d'abonnement -->
+        <section class="mb-5">
+            <h2 class="text-center mb-4">Nos formules d'abonnement</h2>
+            <p class="text-center lead mb-5">Choisissez le plan qui correspond à vos besoins</p>
+            
+            <div class="row g-4 justify-content-center">
+                <div class="col-md-6 col-lg-3">
+                    <div class="pricing-card">
+                        <div class="card-header text-center py-2">
+                            <h5 class="my-0">Essai gratuit</h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <h3 class="mb-2">0€ <small class="text-muted fw-light">/mois</small></h3>
+                            <p class="mb-3">Idéal pour découvrir nos fonctionnalités</p>
+                            <ul class="list-unstyled mb-4">
+                                <li class="mb-2"><i class="fas fa-check text-success me-1"></i>14 jours d'essai</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-1"></i>1 Go de stockage</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-1"></i>Accès à toutes les fonctionnalités</li>
+                                <li class="mb-2"><i class="fas fa-times text-danger me-1"></i>Limité dans le temps</li>
+                            </ul>
+                            <a href="{{ url_for('subscription.plans') }}" class="btn btn-outline-primary" style="width: 100%;">Commencer</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-3">
+                    <div class="pricing-card">
+                        <div class="card-header text-center py-2">
+                            <h5 class="my-0">Essential</h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <h3 class="mb-2">12€ <small class="text-muted fw-light">/mois</small></h3>
+                            <p class="mb-3">Pour les besoins personnels</p>
+                            <ul class="list-unstyled mb-4">
+                                <li class="mb-2"><i class="fas fa-check text-success me-1"></i>10 Go de stockage</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-1"></i>Rapports fiscaux basiques</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-1"></i>Exportation des données</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-1"></i>Support par email</li>
+                            </ul>
+                            <a href="{{ url_for('subscription.plans') }}" class="btn btn-primary" style="width: 100%;">S'abonner</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-3">
+                    <div class="pricing-card border-primary">
+                        <div class="card-header text-center py-2 bg-primary text-white position-relative">
+                            <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-danger">
+                                Populaire
+                            </span>
+                            <h5 class="my-0">Pro</h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <h3 class="mb-2">25€ <small class="text-muted fw-light">/mois</small></h3>
+                            <p class="mb-3">Pour les entrepreneurs et TPE</p>
+                            <ul class="list-unstyled mb-4">
+                                <li class="mb-2"><i class="fas fa-check text-success me-1"></i>50 Go de stockage</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-1"></i>Rapports fiscaux avancés</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-1"></i>API pour intégrations</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-1"></i>Support prioritaire</li>
+                            </ul>
+                            <a href="{{ url_for('subscription.plans') }}" class="btn btn-primary" style="width: 100%;">S'abonner</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-3">
+                    <div class="pricing-card">
+                        <div class="card-header text-center py-2">
+                            <h5 class="my-0">Premium</h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <h3 class="mb-2">49€ <small class="text-muted fw-light">/mois</small></h3>
+                            <p class="mb-3">Pour les PME et professionnels</p>
+                            <ul class="list-unstyled mb-4">
+                                <li class="mb-2"><i class="fas fa-check text-success me-1"></i>100 Go de stockage</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-1"></i>Rapports fiscaux personnalisés</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-1"></i>Intégration comptable</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-1"></i>Support dédié</li>
+                            </ul>
+                            <a href="{{ url_for('subscription.plans') }}" class="btn btn-outline-primary" style="width: 100%;">S'abonner</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Financier -->
+        {% if session.get('access_token') %}
+        <section class="mb-5 py-4 bg-success text-white rounded-3">
+            <div class="container text-center">
+                <h2 class="mb-3">Prêt à gérer vos finances ?</h2>
+                <p class="lead mb-4">Accédez à votre tableau de bord financier pour commencer à suivre vos dépenses et vos revenus.</p>
+                <a href="{{ url_for('finance_dashboard') }}" class="btn btn-light btn-lg px-4">
+                    <i class="fas fa-chart-line me-2"></i>Tableau de bord financier
+                </a>
+            </div>
+        </section>
+        {% else %}
+        <section class="mb-5 py-4 bg-primary text-white rounded-3">
+            <div class="container text-center">
+                <h2 class="mb-3">Prêt à essayer IA-Solution ?</h2>
+                <p class="lead mb-4">Créez un compte gratuitement pour accéder à toutes les fonctionnalités.</p>
+                <a href="{{ url_for('register') }}" class="btn btn-light btn-lg px-4">
+                    <i class="fas fa-user-plus me-2"></i>Créer un compte
+                </a>
+            </div>
+        </section>
+        {% endif %}
+    </div>
+
+    <!-- Error Toast -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-danger text-white">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <strong class="me-auto">Erreur</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="errorToastBody">
+                Une erreur s'est produite. Veuillez réessayer.
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-4 text-center text-muted">
+        <div class="container">
+            <p>IA-Solution – Powered by Benji &copy; 2025</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Annyang for voice recognition -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
+    <!-- Theme JavaScript -->
+    <script src="{{ url_for('static', filename='simple-theme.js') }}"></script>
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

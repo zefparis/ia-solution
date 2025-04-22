@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('modules.title') }} - IA-Solution{% endblock %}
+
+{% block content %}
+<!-- En-tête du système de modules -->
+<div class="text-center py-5 bg-primary text-white">
+    <div class="container">
+        <h1>{{ _('modules.title') }}</h1>
+        <p class="lead">{{ _('modules.subtitle') }}</p>
+        <div class="mt-4">
+            <a href="{{ url_for('modules.modules_marketplace') }}" class="btn btn-light btn-lg mx-2">
+                <i class="fas fa-store"></i> {{ _('modules.explore_store') }}
+            </a>
+            {% if session.get('access_token') %}
+            <a href="{{ url_for('modules.my_modules') }}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-cubes"></i> {{ _('modules.my_modules') }}
+            </a>
+            {% else %}
+            <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-sign-in-alt"></i> {{ _('modules.login_to_install') }}
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <!-- Message de test -->
+    <div class="alert alert-info">
+        <h4>Page de test</h4>
+        <p>Cette page est une version simplifiée du système de modules pour tester le fonctionnement de base.</p>
+    </div>
+    
+    <!-- Catégories de modules -->
+    <section class="mb-5">
+        <h2 class="mb-4">{{ _('modules.categories') }}</h2>
+        <div class="row">
+            {% for category in categories %}
+            <div class="col-md-4 mb-4">
+                <div class="card text-center h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="fas fa-cubes fa-3x text-primary"></i>
+                        </div>
+                        <h4 class="card-title">{{ category.name }}</h4>
+                        <p class="card-text text-muted">{{ category.description }}</p>
+                        <a href="{{ url_for('modules.modules_marketplace', category=category.id) }}" class="btn btn-outline-primary">
+                            {{ _('modules.explore') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

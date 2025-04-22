@@ -1,0 +1,184 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('marketplace_api_connections', 'Connexions API') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3">{{ _('marketplace_api_connections', 'Connexions API') }}</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('marketplace.marketplace_home') }}">{{ _('marketplace_title', 'API Marketplace') }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ _('marketplace_api_connections', 'Connexions API') }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <p class="mb-0">{{ _('marketplace_connections_desc', 'Gérez vos connexions aux API externes et intégrations tierces.') }}</p>
+                        <a href="{{ url_for('marketplace.create_api_connection') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>{{ _('marketplace_create_connection', 'Créer une connexion') }}
+                        </a>
+                    </div>
+
+                    {% if connections %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{{ _('marketplace_connection_name', 'Nom') }}</th>
+                                        <th>{{ _('marketplace_extension', 'Extension') }}</th>
+                                        <th>{{ _('marketplace_connection_status', 'Statut') }}</th>
+                                        <th>{{ _('marketplace_last_connected', 'Dernière connexion') }}</th>
+                                        <th class="text-end">{{ _('actions', 'Actions') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for connection in connections %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ connection.name }}</strong>
+                                                {% if connection.description %}
+                                                    <br><small class="text-muted">{{ connection.description }}</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('marketplace.view_extension', slug=connection.extension.slug) }}">
+                                                    {{ connection.extension.name }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                {% if connection.connection_status == 'active' %}
+                                                    <span class="badge bg-success">{{ _('marketplace_active', 'Active') }}</span>
+                                                {% elif connection.connection_status == 'pending' %}
+                                                    <span class="badge bg-warning">{{ _('marketplace_pending', 'En attente') }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">{{ _('marketplace_error', 'Erreur') }}</span>
+                                                    {% if connection.error_message %}
+                                                        <i class="fas fa-info-circle text-danger ms-1" data-bs-toggle="tooltip" title="{{ connection.error_message }}"></i>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if connection.last_connected %}
+                                                    {{ connection.last_connected.strftime('%d/%m/%Y %H:%M') }}
+                                                {% else %}
+                                                    <span class="text-muted">{{ _('marketplace_never_connected', 'Jamais connecté') }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="btn-group">
+                                                    <form action="{{ url_for('marketplace.test_api_connection', connection_id=connection.id) }}" method="post" class="d-inline-block me-1">
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-sync me-1"></i>{{ _('marketplace_test_connection', 'Tester') }}
+                                                        </button>
+                                                    </form>
+                                                    <a href="{{ url_for('marketplace.edit_api_connection', connection_id=connection.id) }}" class="btn btn-sm btn-outline-secondary me-1">
+                                                        <i class="fas fa-edit me-1"></i>{{ _('marketplace_edit_connection', 'Modifier') }}
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ connection.id }}">
+                                                        <i class="fas fa-trash me-1"></i>{{ _('marketplace_delete_connection', 'Supprimer') }}
+                                                    </button>
+                                                </div>
+
+                                                <!-- Modal de confirmation de suppression -->
+                                                <div class="modal fade" id="deleteModal{{ connection.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ connection.id }}" aria-hidden="true">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="deleteModalLabel{{ connection.id }}">{{ _('marketplace_confirm_delete', 'Confirmer la suppression') }}</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                {{ _('marketplace_delete_connection_confirm', 'Êtes-vous sûr de vouloir supprimer la connexion') }} <strong>{{ connection.name }}</strong>?
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('cancel', 'Annuler') }}</button>
+                                                                <form action="{{ url_for('marketplace.delete_api_connection', connection_id=connection.id) }}" method="post">
+                                                                    <button type="submit" class="btn btn-danger">{{ _('marketplace_delete_connection', 'Supprimer') }}</button>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-plug fa-3x text-muted mb-3"></i>
+                            <h5>{{ _('marketplace_no_connections', 'Aucune connexion API configurée') }}</h5>
+                            <p class="text-muted">{{ _('marketplace_connections_empty_state', 'Créez votre première connexion pour intégrer des API externes.') }}</p>
+                            <a href="{{ url_for('marketplace.create_api_connection') }}" class="btn btn-primary mt-2">
+                                <i class="fas fa-plus me-1"></i>{{ _('marketplace_create_connection', 'Créer une connexion') }}
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section d'aide -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="h6 mb-0">{{ _('marketplace_connection_help', 'Comment fonctionnent les connexions API ?') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-4 mb-md-0">
+                            <div class="mb-3">
+                                <i class="fas fa-search fa-3x text-primary"></i>
+                            </div>
+                            <h6>1. {{ _('marketplace_connection_step1', 'Trouvez une extension') }}</h6>
+                            <p class="small text-muted">{{ _('marketplace_connection_step1_desc', 'Parcourez le marketplace pour trouver une extension compatible avec l\'API que vous souhaitez intégrer.') }}</p>
+                        </div>
+                        <div class="col-md-4 text-center mb-4 mb-md-0">
+                            <div class="mb-3">
+                                <i class="fas fa-key fa-3x text-primary"></i>
+                            </div>
+                            <h6>2. {{ _('marketplace_connection_step2', 'Configurez vos identifiants') }}</h6>
+                            <p class="small text-muted">{{ _('marketplace_connection_step2_desc', 'Créez une connexion et configurez vos identifiants API (clés API, tokens, etc.).') }}</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-cogs fa-3x text-primary"></i>
+                            </div>
+                            <h6>3. {{ _('marketplace_connection_step3', 'Utilisez l\'intégration') }}</h6>
+                            <p class="small text-muted">{{ _('marketplace_connection_step3_desc', 'L\'extension utilise automatiquement vos identifiants pour se connecter à l\'API et intégrer les fonctionnalités.') }}</p>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('marketplace.list_extensions', type='connector') }}" class="btn btn-outline-primary">
+                            {{ _('marketplace_discover_connectors', 'Découvrir les connecteurs disponibles') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialisation des tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,486 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _("content_generator") }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">{{ _("ai_content_generator") }}</h1>
+    
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">{{ _("generate_new_content") }}</h5>
+                </div>
+                <div class="card-body">
+                    <form id="content-generator-form">
+                        <div class="mb-3">
+                            <label for="content_type" class="form-label">{{ _("content_type") }}</label>
+                            <select class="form-select" id="content_type" name="content_type" required>
+                                <option value="" selected disabled>{{ _("select_content_type") }}</option>
+                                <option value="email">{{ _("email_marketing") }}</option>
+                                <option value="social">{{ _("social_media_post") }}</option>
+                                <option value="blog">{{ _("blog_article") }}</option>
+                                <option value="ad">{{ _("advertisement") }}</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3" id="platform-container" style="display: none;">
+                            <label for="platform" class="form-label">{{ _("platform") }}</label>
+                            <select class="form-select" id="platform" name="platform">
+                                <option value="" selected disabled>{{ _("select_platform") }}</option>
+                                <option value="facebook">Facebook</option>
+                                <option value="instagram">Instagram</option>
+                                <option value="twitter">Twitter</option>
+                                <option value="linkedin">LinkedIn</option>
+                                <option value="tiktok">TikTok</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="business_sector" class="form-label">{{ _("business_sector") }}</label>
+                            <select class="form-select" id="business_sector" name="business_sector" required>
+                                <option value="" selected disabled>{{ _("select_sector") }}</option>
+                                <option value="retail">{{ _("retail") }}</option>
+                                <option value="technology">{{ _("technology") }}</option>
+                                <option value="healthcare">{{ _("healthcare") }}</option>
+                                <option value="education">{{ _("education") }}</option>
+                                <option value="finance">{{ _("finance") }}</option>
+                                <option value="food">{{ _("food_restaurant") }}</option>
+                                <option value="travel">{{ _("travel_tourism") }}</option>
+                                <option value="real_estate">{{ _("real_estate") }}</option>
+                                <option value="manufacturing">{{ _("manufacturing") }}</option>
+                                <option value="consulting">{{ _("consulting") }}</option>
+                                <option value="other">{{ _("other") }}</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="prompt_instructions" class="form-label">{{ _("specific_instructions") }}</label>
+                            <textarea class="form-control" id="prompt_instructions" name="prompt_instructions" rows="4" placeholder="{{ _('specific_instructions_placeholder') }}"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="language" class="form-label">{{ _("language") }}</label>
+                            <select class="form-select" id="language" name="language">
+                                <option value="fr" {% if session.language == 'fr' %}selected{% endif %}>{{ _("french") }}</option>
+                                <option value="en" {% if session.language == 'en' %}selected{% endif %}>{{ _("english") }}</option>
+                            </select>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary" id="generate-btn">
+                                <span class="spinner-border spinner-border-sm d-none" id="loading-spinner" role="status" aria-hidden="true"></span>
+                                {{ _("generate_content") }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ _("generated_content") }}</h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary d-none" id="copy-btn">
+                            <i class="bi bi-clipboard"></i> {{ _("copy") }}
+                        </button>
+                        <button class="btn btn-sm btn-outline-info d-none" id="variations-btn">
+                            <i class="bi bi-shuffle"></i> {{ _("variations") }}
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="result-container" class="d-none">
+                        <div class="mb-3">
+                            <div class="border rounded p-3 bg-light" id="content-result" style="min-height: 300px; max-height: 500px; overflow-y: auto;"></div>
+                        </div>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button class="btn btn-outline-primary" id="use-in-campaign-btn">
+                                {{ _("use_in_campaign") }}
+                            </button>
+                            <button class="btn btn-outline-secondary" id="save-favorite-btn">
+                                <i class="bi bi-star"></i> {{ _("save_to_favorites") }}
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="placeholder-container" class="text-center py-5">
+                        <i class="bi bi-magic text-muted mb-3" style="font-size: 3rem;"></i>
+                        <p>{{ _("content_will_appear_here") }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ _("recent_generated_content") }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_contents %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{{ _("type") }}</th>
+                                        <th>{{ _("sector") }}</th>
+                                        <th>{{ _("date") }}</th>
+                                        <th>{{ _("preview") }}</th>
+                                        <th>{{ _("actions") }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for content in recent_contents %}
+                                        <tr>
+                                            <td>
+                                                {% if content.content_type == 'email' %}
+                                                    <i class="bi bi-envelope text-primary"></i>
+                                                {% elif content.content_type == 'social' %}
+                                                    <i class="bi bi-share text-info"></i>
+                                                {% elif content.content_type == 'blog' %}
+                                                    <i class="bi bi-file-text text-success"></i>
+                                                {% elif content.content_type == 'ad' %}
+                                                    <i class="bi bi-badge-ad text-warning"></i>
+                                                {% endif %}
+                                                {{ content.content_type }}
+                                                {% if content.platform %}
+                                                    ({{ content.platform }})
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ content.business_sector }}</td>
+                                            <td>{{ content.created_at.strftime('%d/%m/%Y') }}</td>
+                                            <td><span class="text-truncate d-inline-block" style="max-width: 300px;">{{ content.generated_content[:50] }}...</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-secondary view-content-btn" data-content="{{ content.generated_content }}">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary copy-content-btn" data-content="{{ content.generated_content }}">
+                                                    <i class="bi bi-clipboard"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-info variation-content-btn" data-id="{{ content.id }}">
+                                                    <i class="bi bi-shuffle"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p>{{ _("no_content_generated_yet") }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal pour afficher le contenu complet -->
+    <div class="modal fade" id="contentModal" tabindex="-1" aria-labelledby="contentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="contentModalLabel">{{ _("generated_content") }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="border rounded p-3 mb-3 bg-light" id="modal-content"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" id="modal-copy-btn">
+                        <i class="bi bi-clipboard"></i> {{ _("copy") }}
+                    </button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{{ _("close") }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal pour les variations -->
+    <div class="modal fade" id="variationsModal" tabindex="-1" aria-labelledby="variationsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="variationsModalLabel">{{ _("content_variations") }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="variations-count" class="form-label">{{ _("number_of_variations") }}</label>
+                        <select class="form-select" id="variations-count">
+                            <option value="3">3</option>
+                            <option value="5">5</option>
+                            <option value="7">7</option>
+                        </select>
+                    </div>
+                    
+                    <div id="variations-loading" class="text-center py-4 d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">{{ _("loading") }}</span>
+                        </div>
+                        <p class="mt-2">{{ _("generating_variations") }}</p>
+                    </div>
+                    
+                    <div id="variations-container"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _("close") }}</button>
+                    <button type="button" class="btn btn-primary" id="generate-variations-btn">{{ _("generate_variations") }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Variables globales
+        let currentContentId = null;
+        
+        // Afficher/masquer le champ plateforme en fonction du type de contenu
+        const contentTypeSelect = document.getElementById('content_type');
+        const platformContainer = document.getElementById('platform-container');
+        const platformSelect = document.getElementById('platform');
+        
+        contentTypeSelect.addEventListener('change', function() {
+            if (this.value === 'social') {
+                platformContainer.style.display = 'block';
+                platformSelect.setAttribute('required', 'required');
+            } else {
+                platformContainer.style.display = 'none';
+                platformSelect.removeAttribute('required');
+            }
+        });
+        
+        // Formulaire de génération de contenu
+        const form = document.getElementById('content-generator-form');
+        const generateBtn = document.getElementById('generate-btn');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const resultContainer = document.getElementById('result-container');
+        const placeholderContainer = document.getElementById('placeholder-container');
+        const contentResult = document.getElementById('content-result');
+        const copyBtn = document.getElementById('copy-btn');
+        const variationsBtn = document.getElementById('variations-btn');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Afficher l'indicateur de chargement
+            generateBtn.setAttribute('disabled', 'disabled');
+            loadingSpinner.classList.remove('d-none');
+            
+            // Récupérer les données du formulaire
+            const formData = new FormData(form);
+            
+            // Envoyer la requête AJAX
+            fetch('{{ url_for("marketing.generate_content") }}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Afficher le contenu généré
+                    contentResult.textContent = data.content;
+                    currentContentId = data.content_id;
+                    
+                    // Afficher les boutons d'action
+                    copyBtn.classList.remove('d-none');
+                    variationsBtn.classList.remove('d-none');
+                    
+                    // Afficher le conteneur de résultat
+                    resultContainer.classList.remove('d-none');
+                    placeholderContainer.classList.add('d-none');
+                } else {
+                    // Afficher un message d'erreur
+                    alert('{{ _("error_generating_content") }}: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('{{ _("error_generating_content") }}');
+            })
+            .finally(() => {
+                // Masquer l'indicateur de chargement
+                generateBtn.removeAttribute('disabled');
+                loadingSpinner.classList.add('d-none');
+            });
+        });
+        
+        // Copier le contenu généré
+        copyBtn.addEventListener('click', function() {
+            navigator.clipboard.writeText(contentResult.textContent).then(() => {
+                const originalText = this.innerHTML;
+                this.innerHTML = `<i class="bi bi-check"></i> {{ _("copied") }}`;
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                }, 2000);
+            });
+        });
+        
+        // Boutons de visualisation du contenu
+        const viewContentBtns = document.querySelectorAll('.view-content-btn');
+        const modalContent = document.getElementById('modal-content');
+        const contentModal = new bootstrap.Modal(document.getElementById('contentModal'));
+        
+        viewContentBtns.forEach(button => {
+            button.addEventListener('click', function() {
+                const content = this.getAttribute('data-content');
+                modalContent.textContent = content;
+                contentModal.show();
+            });
+        });
+        
+        // Bouton de copie dans le modal
+        const modalCopyBtn = document.getElementById('modal-copy-btn');
+        modalCopyBtn.addEventListener('click', function() {
+            navigator.clipboard.writeText(modalContent.textContent).then(() => {
+                const originalText = this.innerHTML;
+                this.innerHTML = `<i class="bi bi-check"></i> {{ _("copied") }}`;
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                }, 2000);
+            });
+        });
+        
+        // Boutons de copie dans le tableau
+        const copyContentBtns = document.querySelectorAll('.copy-content-btn');
+        copyContentBtns.forEach(button => {
+            button.addEventListener('click', function() {
+                const content = this.getAttribute('data-content');
+                navigator.clipboard.writeText(content).then(() => {
+                    const originalIcon = this.innerHTML;
+                    this.innerHTML = `<i class="bi bi-check"></i>`;
+                    setTimeout(() => {
+                        this.innerHTML = originalIcon;
+                    }, 2000);
+                });
+            });
+        });
+        
+        // Gestion des variations
+        const variationContentBtns = document.querySelectorAll('.variation-content-btn');
+        const variationsModal = new bootstrap.Modal(document.getElementById('variationsModal'));
+        const variationsContainer = document.getElementById('variations-container');
+        const variationsLoading = document.getElementById('variations-loading');
+        const generateVariationsBtn = document.getElementById('generate-variations-btn');
+        
+        // Ouvrir le modal de variations
+        variationContentBtns.forEach(button => {
+            button.addEventListener('click', function() {
+                currentContentId = this.getAttribute('data-id');
+                variationsContainer.innerHTML = '';
+                variationsModal.show();
+            });
+        });
+        
+        // Bouton de variations dans le résultat
+        variationsBtn.addEventListener('click', function() {
+            if (currentContentId) {
+                variationsContainer.innerHTML = '';
+                variationsModal.show();
+            }
+        });
+        
+        // Générer des variations
+        generateVariationsBtn.addEventListener('click', function() {
+            if (!currentContentId) return;
+            
+            // Afficher l'indicateur de chargement
+            variationsLoading.classList.remove('d-none');
+            generateVariationsBtn.setAttribute('disabled', 'disabled');
+            variationsContainer.innerHTML = '';
+            
+            // Récupérer le nombre de variations
+            const numVariations = document.getElementById('variations-count').value;
+            
+            // Créer les données du formulaire
+            const formData = new FormData();
+            formData.append('num_variations', numVariations);
+            
+            // Envoyer la requête AJAX
+            fetch(`{{ url_for("marketing.create_variations", content_id=0) }}`.replace('0', currentContentId), {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Afficher les variations
+                    data.variations.forEach((variation, index) => {
+                        const variationCard = document.createElement('div');
+                        variationCard.classList.add('card', 'mb-3');
+                        variationCard.innerHTML = `
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">{{ _("variation") }} ${index + 1}</h6>
+                                <button class="btn btn-sm btn-outline-secondary copy-variation-btn" data-content="${variation.content.replace(/"/g, '&quot;')}">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">${variation.content}</p>
+                            </div>
+                        `;
+                        variationsContainer.appendChild(variationCard);
+                    });
+                    
+                    // Ajouter les événements de copie aux nouveaux boutons
+                    document.querySelectorAll('.copy-variation-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const content = this.getAttribute('data-content');
+                            navigator.clipboard.writeText(content).then(() => {
+                                const originalIcon = this.innerHTML;
+                                this.innerHTML = `<i class="bi bi-check"></i>`;
+                                setTimeout(() => {
+                                    this.innerHTML = originalIcon;
+                                }, 2000);
+                            });
+                        });
+                    });
+                } else {
+                    // Afficher un message d'erreur
+                    variationsContainer.innerHTML = `
+                        <div class="alert alert-danger">
+                            {{ _("error_generating_variations") }}: ${data.error}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                variationsContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        {{ _("error_generating_variations") }}
+                    </div>
+                `;
+            })
+            .finally(() => {
+                // Masquer l'indicateur de chargement
+                variationsLoading.classList.add('d-none');
+                generateVariationsBtn.removeAttribute('disabled');
+            });
+        });
+        
+        // Utiliser dans une campagne (à implémenter)
+        const useInCampaignBtn = document.getElementById('use-in-campaign-btn');
+        useInCampaignBtn.addEventListener('click', function() {
+            alert('Cette fonctionnalité sera disponible prochainement.');
+        });
+        
+        // Enregistrer en favoris (à implémenter)
+        const saveFavoriteBtn = document.getElementById('save-favorite-btn');
+        saveFavoriteBtn.addEventListener('click', function() {
+            alert('Cette fonctionnalité sera disponible prochainement.');
+        });
+    });
+</script>
+{% endblock %}

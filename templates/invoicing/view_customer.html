@@ -1,0 +1,282 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ customer.name }} - IA Solution{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ customer.name }}</h1>
+        <div>
+            <a href="{{ url_for('invoicing.edit_customer', customer_id=customer.id) }}" class="btn btn-outline-primary me-2">
+                <i class="fas fa-edit me-2"></i>Modifier
+            </a>
+            <a href="{{ url_for('invoicing.customers') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+            </a>
+        </div>
+    </div>
+
+    {% for message in get_flashed_messages(with_categories=true) %}
+    <div class="alert alert-{{ message[0] }}" role="alert">
+        {{ message[1] }}
+    </div>
+    {% endfor %}
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Informations générales</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-md-4 text-muted">Type :</div>
+                        <div class="col-md-8">
+                            {% if customer.is_company %}
+                            <span class="badge bg-info">Entreprise</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Particulier</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if customer.is_company and customer.contact_name %}
+                    <div class="row mb-2">
+                        <div class="col-md-4 text-muted">Contact :</div>
+                        <div class="col-md-8">{{ customer.contact_name }}</div>
+                    </div>
+                    {% endif %}
+                    <div class="row mb-2">
+                        <div class="col-md-4 text-muted">Email :</div>
+                        <div class="col-md-8">
+                            {% if customer.email %}
+                            <a href="mailto:{{ customer.email }}">{{ customer.email }}</a>
+                            {% else %}
+                            <span class="text-muted">Non renseigné</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-4 text-muted">Téléphone :</div>
+                        <div class="col-md-8">
+                            {% if customer.phone %}
+                            <a href="tel:{{ customer.phone }}">{{ customer.phone }}</a>
+                            {% else %}
+                            <span class="text-muted">Non renseigné</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if customer.tax_id %}
+                    <div class="row mb-2">
+                        <div class="col-md-4 text-muted">SIRET/TVA :</div>
+                        <div class="col-md-8">{{ customer.tax_id }}</div>
+                    </div>
+                    {% endif %}
+                    <div class="row mb-2">
+                        <div class="col-md-4 text-muted">Créé le :</div>
+                        <div class="col-md-8">{{ customer.created_at.strftime('%d/%m/%Y') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Adresse</h5>
+                </div>
+                <div class="card-body">
+                    {% if customer.address or customer.postal_code or customer.city or customer.country %}
+                    <address class="mb-0">
+                        {% if customer.address %}{{ customer.address }}<br>{% endif %}
+                        {% if customer.postal_code or customer.city %}
+                            {{ customer.postal_code or '' }} {{ customer.city or '' }}<br>
+                        {% endif %}
+                        {% if customer.country %}{{ customer.country }}{% endif %}
+                    </address>
+                    {% else %}
+                    <p class="text-muted mb-0">Aucune adresse renseignée</p>
+                    {% endif %}
+                    
+                    {% if customer.notes %}
+                    <hr>
+                    <h6>Notes</h6>
+                    <p class="mb-0">{{ customer.notes|nl2br }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Factures</h5>
+                    <a href="{{ url_for('invoicing.add_invoice') }}?customer_id={{ customer.id }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i>Nouvelle facture
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if invoices %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>N° Facture</th>
+                                    <th>Date</th>
+                                    <th>Échéance</th>
+                                    <th>Montant</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invoice in invoices %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('invoicing.view_invoice', invoice_id=invoice.id) }}">
+                                            {{ invoice.invoice_number }}
+                                        </a>
+                                    </td>
+                                    <td>{{ invoice.issue_date.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        {% if invoice.due_date %}
+                                            {{ invoice.due_date.strftime('%d/%m/%Y') }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ invoice.total }} €</td>
+                                    <td>
+                                        {% if invoice.status == 'draft' %}
+                                        <span class="badge bg-secondary">Brouillon</span>
+                                        {% elif invoice.status == 'sent' %}
+                                        <span class="badge bg-primary">Envoyée</span>
+                                        {% elif invoice.status == 'paid' %}
+                                        <span class="badge bg-success">Payée</span>
+                                        {% elif invoice.status == 'overdue' %}
+                                        <span class="badge bg-danger">En retard</span>
+                                        {% elif invoice.status == 'cancelled' %}
+                                        <span class="badge bg-danger">Annulée</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('invoicing.view_invoice', invoice_id=invoice.id) }}" class="btn btn-outline-primary" title="Voir">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if invoice.status in ['draft', 'sent'] %}
+                                            <a href="{{ url_for('invoicing.edit_invoice', invoice_id=invoice.id) }}" class="btn btn-outline-secondary" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center p-4">
+                        <p class="text-muted mb-3">Aucune facture pour ce client</p>
+                        <a href="{{ url_for('invoicing.add_invoice') }}?customer_id={{ customer.id }}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-2"></i>Créer une facture
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Devis</h5>
+                    <a href="{{ url_for('invoicing.add_quote') }}?customer_id={{ customer.id }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i>Nouveau devis
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if quotes %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>N° Devis</th>
+                                    <th>Date</th>
+                                    <th>Validité</th>
+                                    <th>Montant</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for quote in quotes %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('invoicing.view_quote', quote_id=quote.id) }}">
+                                            {{ quote.quote_number }}
+                                        </a>
+                                    </td>
+                                    <td>{{ quote.issue_date.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        {% if quote.expiry_date %}
+                                            {{ quote.expiry_date.strftime('%d/%m/%Y') }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ quote.total }} €</td>
+                                    <td>
+                                        {% if quote.status == 'draft' %}
+                                        <span class="badge bg-secondary">Brouillon</span>
+                                        {% elif quote.status == 'sent' %}
+                                        <span class="badge bg-primary">Envoyé</span>
+                                        {% elif quote.status == 'accepted' %}
+                                        <span class="badge bg-success">Accepté</span>
+                                        {% elif quote.status == 'rejected' %}
+                                        <span class="badge bg-danger">Refusé</span>
+                                        {% elif quote.status == 'expired' %}
+                                        <span class="badge bg-warning">Expiré</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('invoicing.view_quote', quote_id=quote.id) }}" class="btn btn-outline-primary" title="Voir">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if quote.status in ['draft', 'sent'] %}
+                                            <a href="{{ url_for('invoicing.edit_quote', quote_id=quote.id) }}" class="btn btn-outline-secondary" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% endif %}
+                                            {% if quote.status == 'accepted' and not quote.invoice_id %}
+                                            <form method="post" action="{{ url_for('invoicing.convert_quote_to_invoice', quote_id=quote.id) }}" style="display: inline;">
+                                                <button type="submit" class="btn btn-outline-success" title="Convertir en facture">
+                                                    <i class="fas fa-file-invoice"></i>
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center p-4">
+                        <p class="text-muted mb-3">Aucun devis pour ce client</p>
+                        <a href="{{ url_for('invoicing.add_quote') }}?customer_id={{ customer.id }}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-2"></i>Créer un devis
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

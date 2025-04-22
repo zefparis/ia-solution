@@ -1,0 +1,160 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ language.get_text('finance.dashboard.title') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="display-5">{{ language.get_text('finance.dashboard.heading') }}</h1>
+                <a href="{{ language.url_with_lang('unified_dashboard.dashboard_home') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-tachometer-alt me-2"></i>{{ language.get_text('dashboard.title') or 'Tableau de bord' }}
+                </a>
+            </div>
+            <p class="lead">{{ language.get_text('finance.dashboard.welcome') }}</p>
+        </div>
+    </div>
+
+    <!-- Résumé financier -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ language.get_text('finance.dashboard.total_income') }}</h5>
+                    <h2 class="text-success">{{ total_income|round(2) }} €</h2>
+                    <p class="card-text text-muted">{{ language.get_text('finance.dashboard.income_desc') }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ language.get_text('finance.dashboard.total_expenses') }}</h5>
+                    <h2 class="text-danger">{{ total_expenses|round(2) }} €</h2>
+                    <p class="card-text text-muted">{{ language.get_text('finance.dashboard.expenses_desc') }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ language.get_text('finance.dashboard.current_balance') }}</h5>
+                    <h2 class="{% if balance >= 0 %}text-primary{% else %}text-danger{% endif %}">{{ balance|round(2) }} €</h2>
+                    <p class="card-text text-muted">{{ language.get_text('finance.dashboard.balance_desc') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides et documents en attente -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0">
+                    <h5>{{ language.get_text('finance.dashboard.quick_actions') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="/ocr" class="btn btn-primary">
+                            <i class="fas fa-camera me-2"></i>{{ language.get_text('finance.dashboard.scan_document') }}
+                        </a>
+                        <a href="{{ url_for('finance.add_transaction') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus-circle me-2"></i>{{ language.get_text('finance.dashboard.add_transaction') }}
+                        </a>
+                        <a href="{{ url_for('finance.manage_categories') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-tags me-2"></i>{{ language.get_text('finance.dashboard.manage_categories') }}
+                        </a>
+                        <a href="{{ url_for('finance.financial_reports') }}" class="btn btn-outline-info">
+                            <i class="fas fa-chart-pie me-2"></i>{{ language.get_text('finance.dashboard.view_reports') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5>{{ language.get_text('finance.dashboard.documents_to_process') }}</h5>
+                    <span class="badge bg-warning text-dark">{{ unprocessed_texts|length }}</span>
+                </div>
+                <div class="card-body">
+                    {% if unprocessed_texts %}
+                        <div class="list-group">
+                            {% for text in unprocessed_texts %}
+                                <a href="{{ url_for('finance.process_text', text_id=text.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ text.title or language.get_text('finance.dashboard.untitled_document') }}</h6>
+                                        <small class="text-muted">{{ language.get_text('finance.dashboard.extracted_on') }} {{ text.created_at.strftime('%d/%m/%Y à %H:%M') }}</small>
+                                    </div>
+                                    <span class="badge bg-primary rounded-pill">{{ language.get_text('finance.dashboard.process') }}</span>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <p>{{ language.get_text('finance.dashboard.no_pending_documents') }}</p>
+                            <a href="/ocr" class="btn btn-sm btn-outline-primary">{{ language.get_text('finance.dashboard.scan_document') }}</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transactions récentes -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5>{{ language.get_text('finance.dashboard.recent_transactions') }}</h5>
+                    <a href="{{ url_for('finance.view_transactions') }}" class="btn btn-sm btn-outline-primary">{{ language.get_text('finance.dashboard.view_all') }}</a>
+                </div>
+                <div class="card-body">
+                    {% if transactions %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{{ language.get_text('finance.transactions.date') }}</th>
+                                        <th>{{ language.get_text('finance.transactions.description') }}</th>
+                                        <th>{{ language.get_text('finance.transactions.category') }}</th>
+                                        <th class="text-end">{{ language.get_text('finance.transactions.amount') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transaction in transactions %}
+                                        <tr>
+                                            <td>{{ transaction.transaction_date.strftime('%d/%m/%Y') }}</td>
+                                            <td>{{ transaction.description or language.get_text('finance.transactions.no_description') }}</td>
+                                            <td>
+                                                {% if transaction.category %}
+                                                    <span class="badge" style="background-color: {{ transaction.category.color }}">
+                                                        {{ transaction.category.name }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ language.get_text('finance.transactions.uncategorized') }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end {% if transaction.is_expense %}text-danger{% else %}text-success{% endif %}">
+                                                {{ transaction.is_expense and "-" or "+" }}{{ transaction.amount|round(2) }} €
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                            <p>{{ language.get_text('finance.transactions.no_transactions') }}</p>
+                            <a href="{{ url_for('finance.add_transaction') }}" class="btn btn-sm btn-outline-primary">{{ language.get_text('finance.dashboard.add_transaction') }}</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

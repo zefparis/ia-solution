@@ -1,0 +1,180 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ predictive_translations['sales_predictions'][lang] }}{% endblock %}
+
+{% block styles %}
+<style>
+    .card-prediction {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        overflow: hidden;
+        height: 100%;
+    }
+    
+    .card-prediction:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.15);
+    }
+    
+    .card-header-custom {
+        border-bottom: none;
+        padding: 1.25rem 1.25rem 0;
+    }
+    
+    .prediction-status {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+    }
+    
+    .prediction-date {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    .prediction-description {
+        color: #6c757d;
+        font-size: 0.9rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        height: 40px;
+    }
+    
+    .prediction-footer {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 0.75rem 1.25rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    .prediction-icon {
+        font-size: 2.5rem;
+        opacity: 0.2;
+        position: absolute;
+        bottom: 0.5rem;
+        right: 0.5rem;
+    }
+    
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ predictive_translations['sales_predictions'][lang] }}</h1>
+        <a href="{{ url_for('predictive.new_prediction') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i> {{ predictive_translations['new_prediction'][lang] }}
+        </a>
+    </div>
+    
+    {% if predictions %}
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            {% for prediction in predictions %}
+                <div class="col">
+                    <div class="card card-prediction h-100">
+                        <div class="card-body position-relative" style="padding-bottom: 3.5rem;">
+                            <span class="prediction-status">
+                                {% if prediction.status == 'completed' %}
+                                    <span class="badge bg-success status-badge">
+                                        <i class="bi bi-check-circle me-1"></i> 
+                                        {{ lang == 'fr' and 'Terminé' or 'Completed' }}
+                                    </span>
+                                {% elif prediction.status == 'processing' %}
+                                    <span class="badge bg-warning status-badge">
+                                        <i class="bi bi-hourglass-split me-1"></i> 
+                                        {{ lang == 'fr' and 'En cours' or 'Processing' }}
+                                    </span>
+                                {% elif prediction.status == 'failed' %}
+                                    <span class="badge bg-danger status-badge">
+                                        <i class="bi bi-exclamation-triangle me-1"></i> 
+                                        {{ lang == 'fr' and 'Échoué' or 'Failed' }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary status-badge">
+                                        <i class="bi bi-clock me-1"></i> 
+                                        {{ lang == 'fr' and 'En attente' or 'Pending' }}
+                                    </span>
+                                {% endif %}
+                            </span>
+                            
+                            <h5 class="card-title mb-2 pe-5">{{ prediction.name }}</h5>
+                            <div class="prediction-date mb-2">
+                                <i class="bi bi-calendar3 me-1"></i> 
+                                {{ prediction.start_date.strftime('%d/%m/%Y') }} - {{ prediction.end_date.strftime('%d/%m/%Y') }}
+                            </div>
+                            
+                            {% if prediction.description %}
+                                <p class="prediction-description mb-3">{{ prediction.description }}</p>
+                            {% endif %}
+                            
+                            <div class="prediction-scenarios mt-3">
+                                <div class="row">
+                                    {% for scenario in prediction.scenarios %}
+                                        <div class="col">
+                                            <div class="d-flex align-items-center">
+                                                <div class="scenario-color-indicator me-2" 
+                                                     style="width: 10px; height: 10px; border-radius: 50%; 
+                                                            background-color: {% if scenario.scenario_type == 'optimistic' %}#28a745
+                                                                             {% elif scenario.scenario_type == 'realistic' %}#007bff
+                                                                             {% elif scenario.scenario_type == 'pessimistic' %}#dc3545
+                                                                             {% else %}#6610f2{% endif %};">
+                                                </div>
+                                                <small>
+                                                    {{ scenario.name }} {% if scenario.probability %}({{ (scenario.probability * 100)|int }}%){% endif %}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <i class="bi bi-graph-up prediction-icon text-primary"></i>
+                            
+                            <div class="prediction-footer">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        {{ prediction.date_created.strftime('%d/%m/%Y') }}
+                                    </small>
+                                    <div>
+                                        <a href="{{ url_for('predictive.view_prediction', prediction_id=prediction.id) }}" class="btn btn-sm btn-outline-primary me-1">
+                                            <i class="bi bi-eye"></i> {{ lang == 'fr' and 'Voir' or 'View' }}
+                                        </a>
+                                        <a href="{{ url_for('predictive.edit_prediction', prediction_id=prediction.id) }}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-pencil"></i> {{ lang == 'fr' and 'Modifier' or 'Edit' }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-graph-up display-1 text-muted mb-3"></i>
+                <h4>{{ predictive_translations['no_predictions'][lang] }}</h4>
+                <p class="text-muted">
+                    {{ lang == 'fr' and "Les prévisions de ventes vous aident à planifier votre activité future et à anticiper les tendances."
+                    or "Sales forecasts help you plan your future business activity and anticipate trends." }}
+                </p>
+                <a href="{{ url_for('predictive.new_prediction') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i> {{ predictive_translations['new_prediction'][lang] }}
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

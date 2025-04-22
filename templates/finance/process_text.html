@@ -1,0 +1,167 @@
+{% extends "layout.html" %}
+
+{% block title %}Classifier un document{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('finance.finance_dashboard') }}">Finance</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Classifier un document</li>
+                </ol>
+            </nav>
+            <h1 class="display-5 mb-3">Classifier un document</h1>
+            <p class="lead">Analysez et classifiez ce document dans votre système financier.</p>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6 mb-4 mb-md-0">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5>Contenu du document</h5>
+                </div>
+                <div class="card-body">
+                    <div class="bg-light p-3 rounded mb-3" style="max-height: 400px; overflow-y: auto;">
+                        <pre style="white-space: pre-wrap; word-break: break-word;">{{ text.content }}</pre>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">Extrait le {{ text.created_at.strftime('%d/%m/%Y à %H:%M') }}</small>
+                        <span class="badge bg-secondary">{{ text.source }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5>Créer une transaction</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="document_type" class="form-label">Type de document</label>
+                            <select class="form-select" id="document_type" name="document_type" required>
+                                <option value="" disabled {% if not suggested_data.document_type %}selected{% endif %}>Sélectionnez un type</option>
+                                <option value="facture" {% if suggested_data.document_type == 'facture' %}selected{% endif %}>Facture</option>
+                                <option value="reçu" {% if suggested_data.document_type == 'reçu' %}selected{% endif %}>Reçu/Ticket</option>
+                                <option value="devis" {% if suggested_data.document_type == 'devis' %}selected{% endif %}>Devis</option>
+                                <option value="relevé" {% if suggested_data.document_type == 'relevé' %}selected{% endif %}>Relevé bancaire</option>
+                                <option value="autre" {% if suggested_data.document_type == 'autre' %}selected{% endif %}>Autre</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Montant</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="amount" name="amount" placeholder="0.00" required pattern="[0-9]+(\.[0-9]{1,2})?" value="{{ suggested_data.amount or '' }}">
+                                <span class="input-group-text">€</span>
+                            </div>
+                            <div class="form-text">Utilisez le point comme séparateur décimal (ex: 42.50)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="transaction_date" class="form-label">Date de la transaction</label>
+                            <input type="date" class="form-control" id="transaction_date" name="transaction_date" required value="{{ suggested_data.date|default(today, true) }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <input type="text" class="form-control" id="description" name="description" placeholder="Description de la transaction" value="{{ text.title or '' }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="vendor_name" class="form-label">Vendeur/Fournisseur</label>
+                            <input type="text" class="form-control" id="vendor_name" name="vendor_name" list="vendors_list" placeholder="Nom du vendeur" value="{{ suggested_data.vendor or '' }}">
+                            <datalist id="vendors_list">
+                                {% for vendor in vendors %}
+                                    <option value="{{ vendor.name }}">
+                                {% endfor %}
+                            </datalist>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="category_id" class="form-label">Catégorie</label>
+                            <select class="form-select" id="category_id" name="category_id">
+                                <option value="">Sélectionnez une catégorie</option>
+                                <optgroup label="Dépenses">
+                                    {% for category in categories %}
+                                        {% if category.type == 'expense' %}
+                                            <option value="{{ category.id }}">{{ category.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="Revenus">
+                                    {% for category in categories %}
+                                        {% if category.type == 'income' %}
+                                            <option value="{{ category.id }}">{{ category.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Type de transaction</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="is_expense" id="is_expense_true" value="expense" checked>
+                                <label class="form-check-label" for="is_expense_true">
+                                    Dépense
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="is_expense" id="is_expense_false" value="income">
+                                <label class="form-check-label" for="is_expense_false">
+                                    Revenu
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Enregistrer
+                            </button>
+                            <a href="{{ url_for('finance.finance_dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Si on n'a pas de date suggérée, utiliser la date d'aujourd'hui
+        const dateInput = document.getElementById('transaction_date');
+        if (!dateInput.value) {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            dateInput.value = `${year}-${month}-${day}`;
+        }
+
+        // Changer le type de transaction en fonction de la catégorie sélectionnée
+        const categorySelect = document.getElementById('category_id');
+        const expenseRadio = document.getElementById('is_expense_true');
+        const incomeRadio = document.getElementById('is_expense_false');
+
+        categorySelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            
+            if (selectedOption.parentElement.label === 'Revenus') {
+                incomeRadio.checked = true;
+            } else if (selectedOption.parentElement.label === 'Dépenses') {
+                expenseRadio.checked = true;
+            }
+        });
+    });
+</script>
+{% endblock %}

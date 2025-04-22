@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="fr" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}IA-Solution{% endblock %}</title>
+    <!-- Bootstrap CSS - Thème Replit -->
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <!-- Font Awesome pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Dark Theme CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='dark-theme.css') }}">
+    {% block extra_css %}{% endblock %}
+    
+    <style>
+        .back-button-container {
+            padding-top: 10px;
+            padding-bottom: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .back-button-container {
+                padding-left: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ language.url_with_lang('home') }}">
+                <i class="fas fa-robot me-2"></i>IA-Solution
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <!-- Liens essentiels toujours visibles -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ language.url_with_lang('home') }}">
+                            <i class="fas fa-home me-1"></i>{{ language.get_text('nav.home', 'Accueil') }}
+                        </a>
+                    </li>
+                    
+                    <!-- Assistant IA - Toujours visible -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ language.url_with_lang('chat_page') }}">
+                            <i class="fas fa-robot me-1"></i>{{ language.get_text('nav.chat', 'Assistant IA') }}
+                        </a>
+                    </li>
+                    
+                    <!-- OCR Scan - Toujours visible -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ language.url_with_lang('ocr') }}">
+                            <i class="fas fa-camera me-1"></i>{{ language.get_text('nav.ocr', 'Scanner') }}
+                        </a>
+                    </li>
+
+                    {% if session.get('access_token') %}
+                    <!-- MENU PRINCIPAL - TABLEAU DE BORD (pour utilisateurs connectés) -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="dashboardDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-tachometer-alt me-1"></i>{{ language.get_text('nav.dashboard_main', 'Tableau de bord') }}
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="dashboardDropdown">
+                            <!-- Section Dashboard -->
+                            <li>
+                                <a class="dropdown-item" href="{{ language.url_with_lang('unified_dashboard.dashboard_home') }}">
+                                    <i class="fas fa-home me-1"></i>{{ language.get_text('nav.dashboard', 'Tableau principal') }}
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Section Finance -->
+                            <li class="dropdown-header">{{ language.get_text('nav.finance_section', 'Finance') }}</li>
+                            <li>
+                                <a class="dropdown-item" href="{{ language.url_with_lang('finance.finance_dashboard') }}">
+                                    <i class="fas fa-chart-bar me-1"></i>{{ language.get_text('nav.finance', 'Tableau financier') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ language.url_with_lang('invoicing.index') }}">
+                                    <i class="fas fa-file-invoice me-1"></i>{{ language.get_text('nav.invoicing', 'Facturation') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ language.url_with_lang('predictive.index') }}">
+                                    <i class="fas fa-chart-pie me-1"></i>{{ language.get_text('nav.predictive', 'Intelligence Prédictive') }}
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Section Business -->
+                            <li class="dropdown-header">{{ language.get_text('nav.business_section', 'Business') }}</li>
+                            <li>
+                                <a class="dropdown-item" href="{{ language.url_with_lang('business.business_consultation') }}">
+                                    <i class="fas fa-file-alt me-1"></i>{{ language.get_text('nav.business_reports', 'Consultation Business') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ language.url_with_lang('process_analysis.index') }}">
+                                    <i class="fas fa-project-diagram me-1"></i>{{ language.get_text('nav.process_analysis', 'Analyse des Processus') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ language.url_with_lang('marketing.marketing_dashboard') }}">
+                                    <i class="fas fa-bullhorn me-1"></i>{{ language.get_text('nav.marketing', 'Marketing IA') }}
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Section Modules et Formation -->
+                            <li class="dropdown-header">{{ language.get_text('nav.modules_section', 'Modules et Formation') }}</li>
+                            <li>
+                                <a class="dropdown-item" href="{{ language.url_with_lang('modules.modules_marketplace') }}">
+                                    <i class="fas fa-th-large me-1"></i>{{ language.get_text('nav.modules', 'Mes modules') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ language.url_with_lang('modules.modules_marketplace') }}">
+                                    <i class="fas fa-store me-1"></i>{{ language.get_text('nav.modules_store', 'Marketplace') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ language.url_with_lang('training.training_dashboard') }}">
+                                    <i class="fas fa-graduation-cap me-1"></i>{{ language.get_text('nav.training', 'Formation') }}
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Outils et Export -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-tools me-1"></i>{{ language.get_text('nav.tools', 'Outils') }}
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="toolsDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{{ language.url_with_lang('export.export_home') }}">
+                                    <i class="fas fa-file-export me-1"></i>{{ language.get_text('nav.export', 'Export') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ language.url_with_lang('profile') }}">
+                                    <i class="fas fa-user-cog me-1"></i>{{ language.get_text('nav.profile', 'Profil') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ language.url_with_lang('subscription.plans') }}">
+                                    <i class="fas fa-credit-card me-1"></i>{{ language.get_text('nav.subscription', 'Abonnement') }}
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    
+                    {% if session.get('is_admin') %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ language.url_with_lang('admin') }}">
+                            <i class="fas fa-cog me-1"></i>Admin
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% endif %}
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ language.url_with_lang('legal_info' if lang == 'fr' else 'legal_info_en') }}">
+                            <i class="fas fa-gavel me-1"></i>{{ language.get_text('nav.legal', 'Mentions légales') }}
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown me-2">
+                        <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            {% if lang == 'fr' %}
+                            <i class="fas fa-language me-1"></i> FR
+                            {% else %}
+                            <i class="fas fa-language me-1"></i> EN
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="langDropdown">
+                            <li>
+                                <a class="dropdown-item {% if lang == 'fr' %}active{% endif %}" 
+                                   href="{{ language.url_with_lang(request.endpoint, **dict(request.view_args, lang='fr')) }}">
+                                   <img src="{{ url_for('static', filename='img/flag-fr.svg') }}" alt="Français" width="20" class="me-2">Français
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item {% if lang == 'en' %}active{% endif %}" 
+                                   href="{{ language.url_with_lang(request.endpoint, **dict(request.view_args, lang='en')) }}">
+                                   <img src="{{ url_for('static', filename='img/flag-en.svg') }}" alt="English" width="20" class="me-2">English
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-sm btn-outline-light me-2 theme-toggle">
+                            <i class="fas fa-moon theme-icon-dark"></i>
+                            <i class="fas fa-sun d-none theme-icon-light"></i>
+                        </button>
+                    </li>
+                    {% if session.get('access_token') %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user me-1"></i>
+                            {% if session.get('display_name') %}
+                                {{ session.get('display_name') }}
+                            {% elif session.get('username') %}
+                                {% if '@' in session.get('username') %}
+                                    {{ session.get('username').split('@')[0] }}
+                                {% else %}
+                                    {{ session.get('username')|truncate(10, true) }}
+                                {% endif %}
+                            {% else %}
+                                Profil
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="{{ language.url_with_lang('profile') }}">
+                                <i class="fas fa-id-card me-2"></i>{{ language.get_text('account.profile') }}
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ language.url_with_lang('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>{{ language.get_text('nav.logout') }}
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="authDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle me-1"></i>{{ language.get_text('nav.account', 'Compte') }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="authDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{{ language.url_with_lang('login') }}">
+                                    <i class="fas fa-sign-in-alt me-2"></i>{{ language.get_text('nav.login', 'Connexion') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ language.url_with_lang('register') }}">
+                                    <i class="fas fa-user-plus me-2"></i>{{ language.get_text('nav.register', 'Inscription') }}
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ language.url_with_lang('subscription.plans') }}">
+                                    <i class="fas fa-tags me-2"></i>{{ language.get_text('nav.pricing', 'Tarifs') }}
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <a class="btn btn-sm btn-primary" href="{{ language.url_with_lang('register') }}">
+                            <i class="fas fa-user-plus me-1"></i>{{ language.get_text('nav.register', 'Inscription') }}
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Back Button -->
+    {% if request.path != '/' and request.path != '/en' and request.path != '/fr' %}
+    <div class="container back-button-container mt-2">
+        <button onclick="goBack()" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>{{ language.get_text('navigation.back') or 'Retour' }}
+        </button>
+    </div>
+    {% endif %}
+    
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer mt-5 py-3 bg-dark text-light">
+        <div class="container text-center">
+            <p class="mb-0">IA-Solution – Powered by Benji &copy; 2025</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Theme JS -->
+    <script src="{{ url_for('static', filename='simple-theme.js') }}"></script>
+    
+    <!-- Back Button Script -->
+    <script>
+        function goBack() {
+            // Si l'historique contient plus d'une page, revenir à la page précédente
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // Sinon, rediriger vers la page d'accueil
+                window.location.href = '{{ language.url_with_lang("home") }}';
+            }
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

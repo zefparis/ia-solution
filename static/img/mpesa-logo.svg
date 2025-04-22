@@ -1,0 +1,29 @@
+<svg width="120" height="60" viewBox="0 0 120 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fond du logo M-Pesa -->
+  <rect width="120" height="60" rx="8" fill="#F0F0F0"/>
+  
+  <!-- Logo Vodacom / M-Pesa -->
+  <g transform="translate(10, 10)">
+    <!-- Cercle Vodacom -->
+    <circle cx="25" cy="20" r="18" fill="#E60000"/>
+    
+    <!-- Texte VODACOM -->
+    <text x="25" y="10" font-family="Arial, sans-serif" font-size="8" font-weight="bold" text-anchor="middle" fill="white">VODACOM</text>
+    
+    <!-- M-PESA -->
+    <g transform="translate(0, 4)">
+      <!-- Lettre M stylisée -->
+      <path d="M15 14L15 32L19 32L19 22L25 30L30 22L30 32L34 32L34 14L30 14L25 22L20 14L15 14Z" fill="white"/>
+      
+      <!-- Tiret -->
+      <rect x="36" y="22" width="8" height="3" fill="white"/>
+      
+      <!-- PESA texte -->
+      <text x="55" y="25" font-family="Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="white">PESA</text>
+    </g>
+  </g>
+  
+  <!-- Bande inférieure avec la description -->
+  <rect x="0" y="48" width="120" height="12" fill="#E60000"/>
+  <text x="60" y="57" font-family="Arial, sans-serif" font-size="8" font-weight="bold" text-anchor="middle" fill="white">PAIEMENT MOBILE</text>
+</svg>

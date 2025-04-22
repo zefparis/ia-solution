@@ -1,0 +1,248 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {% if lesson %}
+        {{ _('training_admin_edit_lesson', 'Modifier la leçon') }}
+    {% else %}
+        {{ _('training_admin_create_lesson', 'Créer une leçon') }}
+    {% endif %}
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* Style pour le champ de contenu enrichi */
+    .ck-editor__editable_inline {
+        min-height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('training.training_dashboard') }}">{{ _('training_dashboard', 'Formation') }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('training.admin_courses') }}">{{ _('training_admin_courses_title', 'Gestion des cours') }}</a></li>
+                    {% if course %}
+                        <li class="breadcrumb-item"><a href="{{ url_for('training.view_course', course_id=course.id) }}">{{ course.title }}</a></li>
+                    {% elif lesson and lesson.course %}
+                        <li class="breadcrumb-item"><a href="{{ url_for('training.view_course', course_id=lesson.course.id) }}">{{ lesson.course.title }}</a></li>
+                    {% endif %}
+                    <li class="breadcrumb-item active">
+                        {% if lesson %}
+                            {{ _('training_admin_edit_lesson', 'Modifier la leçon') }}
+                        {% else %}
+                            {{ _('training_admin_create_lesson', 'Créer une leçon') }}
+                        {% endif %}
+                    </li>
+                </ol>
+            </nav>
+            
+            <h1 class="display-5">
+                {% if lesson %}
+                    {{ _('training_admin_edit_lesson', 'Modifier la leçon') }}
+                {% else %}
+                    {{ _('training_admin_create_lesson', 'Créer une leçon pour') }} {{ course.title }}
+                {% endif %}
+            </h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <!-- Protection CSRF (fournie par Flask-WTF) -->
+                        {{ form.csrf_token if form.csrf_token }}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        
+                        {% if course %}
+                            <input type="hidden" name="course_id" value="{{ course.id }}">
+                        {% endif %}
+
+                        <!-- Informations de base -->
+                        <div class="mb-4">
+                            <h4>{{ _('training_lesson_basic_info', 'Informations de base') }}</h4>
+                            <hr>
+                            
+                            <div class="mb-3">
+                                <label for="title" class="form-label">{{ _('training_lesson_title', 'Titre') }} *</label>
+                                <input type="text" class="form-control" id="title" name="title" required
+                                    value="{{ lesson.title if lesson else '' }}">
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="order_index" class="form-label">{{ _('training_lesson_order', 'Ordre d\'affichage') }} *</label>
+                                    <input type="number" class="form-control" id="order_index" name="order_index" min="0" required
+                                        value="{{ lesson.order_index if lesson else next_order }}">
+                                    <small class="text-muted">{{ _('training_lesson_order_help', 'Détermine la position de la leçon dans le cours.') }}</small>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="duration_minutes" class="form-label">{{ _('training_lesson_duration', 'Durée estimée (en minutes)') }}</label>
+                                    <input type="number" class="form-control" id="duration_minutes" name="duration_minutes" min="0" 
+                                        value="{{ lesson.duration_minutes if lesson else '' }}">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="lesson_type" class="form-label">{{ _('training_lesson_type', 'Type de leçon') }} *</label>
+                                <select class="form-select" id="lesson_type" name="lesson_type" required>
+                                    <option value="text" {% if lesson and lesson.lesson_type == 'text' %}selected{% endif %}>
+                                        {{ _('training_lesson_type_text', 'Texte') }}
+                                    </option>
+                                    <option value="video" {% if lesson and lesson.lesson_type == 'video' %}selected{% endif %}>
+                                        {{ _('training_lesson_type_video', 'Vidéo') }}
+                                    </option>
+                                    <option value="interactive" {% if lesson and lesson.lesson_type == 'interactive' %}selected{% endif %}>
+                                        {{ _('training_lesson_type_interactive', 'Contenu interactif') }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Contenu de la leçon -->
+                        <div class="mb-4">
+                            <h4>{{ _('training_lesson_content_title', 'Contenu de la leçon') }}</h4>
+                            <hr>
+                            
+                            <div class="mb-3 video-url-section" style="display: {% if lesson and lesson.lesson_type == 'video' %}block{% else %}none{% endif %};">
+                                <label for="media_url" class="form-label">{{ _('training_lesson_video_url', 'URL de la vidéo') }}</label>
+                                <input type="url" class="form-control" id="media_url" name="media_url" 
+                                    value="{{ lesson.media_url if lesson else '' }}">
+                                <small class="text-muted">{{ _('training_lesson_video_help', 'URL YouTube ou Vimeo. Ex: https://www.youtube.com/watch?v=VIDEO_ID') }}</small>
+                            </div>
+                            
+                            <div class="mb-3 content-section" style="display: {% if not lesson or lesson.lesson_type == 'text' or lesson.lesson_type == 'interactive' %}block{% else %}none{% endif %};">
+                                <label for="content" class="form-label">{{ _('training_lesson_content', 'Contenu') }}</label>
+                                <textarea class="form-control" id="content" name="content" rows="10">{{ lesson.content if lesson else '' }}</textarea>
+                                <small class="text-muted">{{ _('training_lesson_content_help', 'Le contenu peut inclure du texte formaté, des images, des listes, etc.') }}</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Ressources additionnelles -->
+                        <div class="mb-4">
+                            <h4>{{ _('training_lesson_resources', 'Ressources additionnelles') }}</h4>
+                            <hr>
+                            
+                            <div class="mb-3">
+                                <label for="additional_resources" class="form-label">{{ _('training_lesson_resources_list', 'Liste des ressources') }}</label>
+                                <textarea class="form-control" id="additional_resources" name="additional_resources" rows="4">{{ additional_resources if additional_resources else '' }}</textarea>
+                                <small class="text-muted">{{ _('training_lesson_resources_help', 'Une ressource par ligne, au format: Titre|URL (par exemple: Documentation officielle|https://example.com)') }}</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Boutons de soumission -->
+                        <div class="d-flex justify-content-between">
+                            {% if lesson %}
+                                <a href="{{ url_for('training.view_course', course_id=lesson.course_id) }}" class="btn btn-outline-secondary">
+                                    {{ _('cancel', 'Annuler') }}
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('training.view_course', course_id=course.id) }}" class="btn btn-outline-secondary">
+                                    {{ _('cancel', 'Annuler') }}
+                                </a>
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary">
+                                {% if lesson %}
+                                    {{ _('save', 'Enregistrer') }}
+                                {% else %}
+                                    {{ _('create', 'Créer') }}
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">{{ _('training_lesson_help', 'Aide') }}</h5>
+                </div>
+                <div class="card-body">
+                    <h6>{{ _('training_lesson_form_help_title', 'Conseils pour créer une bonne leçon') }}</h6>
+                    <ul>
+                        <li>{{ _('training_lesson_form_help_1', 'Organisez votre contenu de manière logique et progressive.') }}</li>
+                        <li>{{ _('training_lesson_form_help_2', 'Utilisez des en-têtes, des listes et des images pour structurer le contenu.') }}</li>
+                        <li>{{ _('training_lesson_form_help_3', 'Pour les vidéos, privilégiez des contenus concis (5-15 minutes).') }}</li>
+                        <li>{{ _('training_lesson_form_help_4', 'Ajoutez des ressources additionnelles pour approfondir.') }}</li>
+                        <li>{{ _('training_lesson_form_help_5', 'Créez des quiz associés pour vérifier la compréhension.') }}</li>
+                    </ul>
+                    
+                    <div class="alert alert-info mt-3">
+                        {{ _('training_lesson_quiz_note', 'Note: Une fois la leçon créée, vous pourrez ajouter des quiz pour évaluer les connaissances acquises.') }}
+                    </div>
+                </div>
+            </div>
+            
+            {% if lesson %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">{{ _('training_lesson_quiz_title', 'Quiz associés') }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if quizzes %}
+                        <ul class="list-group">
+                            {% for quiz in quizzes %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ quiz.title }}
+                                    <a href="{{ url_for('training.edit_quiz', quiz_id=quiz.id) }}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>{{ _('training_lesson_no_quizzes', 'Aucun quiz associé à cette leçon.') }}</p>
+                    {% endif %}
+                    
+                    <div class="mt-3">
+                        <a href="{{ url_for('training.create_quiz', lesson_id=lesson.id) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-plus-circle me-1"></i> {{ _('training_lesson_add_quiz', 'Ajouter un quiz') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- CKEditor pour l'édition enrichie -->
+<script src="https://cdn.ckeditor.com/ckeditor5/34.0.0/classic/ckeditor.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser l'éditeur WYSIWYG pour le contenu
+        ClassicEditor
+            .create(document.querySelector('#content'), {
+                toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'insertTable', 'undo', 'redo']
+            })
+            .catch(error => {
+                console.error(error);
+            });
+        
+        // Gestion de l'affichage des champs en fonction du type de leçon
+        const lessonTypeSelect = document.getElementById('lesson_type');
+        const videoUrlSection = document.querySelector('.video-url-section');
+        const contentSection = document.querySelector('.content-section');
+        
+        lessonTypeSelect.addEventListener('change', function() {
+            if (this.value === 'video') {
+                videoUrlSection.style.display = 'block';
+                contentSection.style.display = 'none';
+            } else {
+                videoUrlSection.style.display = 'none';
+                contentSection.style.display = 'block';
+            }
+        });
+    });
+</script>
+{% endblock %}

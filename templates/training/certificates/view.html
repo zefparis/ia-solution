@@ -1,0 +1,214 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('training_certificate', 'Certificat') }} - {{ course.title }}{% endblock %}
+
+{% block styles %}
+<style>
+    .certificate-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .certificate {
+        position: relative;
+        border: 20px solid #091f2f;
+        padding: 2.5rem;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        background-color: #fff;
+        color: #333;
+    }
+    
+    .certificate-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .certificate-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        color: #091f2f;
+    }
+    
+    .certificate-subtitle {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .certificate-content {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .certificate-recipient {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        color: #091f2f;
+    }
+    
+    .certificate-course {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .certificate-description {
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .certificate-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-top: 3rem;
+    }
+    
+    .certificate-date {
+        font-size: 1.1rem;
+        text-align: center;
+    }
+    
+    .certificate-signature {
+        text-align: center;
+    }
+    
+    .certificate-logo {
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    .certificate-logo img {
+        max-height: 60px;
+    }
+    
+    .certificate-seal {
+        position: absolute;
+        bottom: 30px;
+        right: 30px;
+        width: 120px;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #091f2f;
+        border-radius: 50%;
+        color: #091f2f;
+        font-weight: bold;
+        opacity: 0.8;
+        transform: rotate(-15deg);
+    }
+    
+    .certificate-id {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        font-size: 0.8rem;
+        color: #777;
+    }
+    
+    .certificate-verification {
+        margin-top: 1.5rem;
+        text-align: center;
+        font-size: 0.9rem;
+        color: #555;
+    }
+    
+    .certificate-actions {
+        margin-top: 2rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    @media print {
+        .certificate-actions, .breadcrumb, nav, header, footer {
+            display: none !important;
+        }
+        
+        body {
+            background-color: white;
+        }
+        
+        .certificate {
+            box-shadow: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Fil d'Ariane (ne sera pas affiché à l'impression) -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('training.training_dashboard') }}">{{ _('training_dashboard', 'Formation') }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('training.list_certificates') }}">{{ _('training_certificates', 'Certificats') }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ course.title }}</li>
+        </ol>
+    </nav>
+    
+    <div class="certificate-container mb-5">
+        <div class="certificate">
+            <div class="certificate-header">
+                <div class="certificate-logo">
+                    <img src="/static/img/logo.png" alt="IA-Solution" onerror="this.style.display='none'">
+                </div>
+                <div class="certificate-title">{{ _('training_certificate_of_completion', 'Certificat d\'Accomplissement') }}</div>
+                <div class="certificate-subtitle">{{ _('training_presented_to', 'Décerné à') }}</div>
+            </div>
+            
+            <div class="certificate-content">
+                <div class="certificate-recipient">{{ user.username }}</div>
+                <div class="certificate-course">{{ course.title }}</div>
+                <div class="certificate-description">
+                    {{ _('training_certificate_description', 'pour avoir complété avec succès toutes les exigences du cours, y compris les leçons et les évaluations requises.') }}
+                </div>
+            </div>
+            
+            <div class="certificate-footer">
+                <div class="certificate-date">
+                    <div>{{ enrollment.certification_date.strftime('%d/%m/%Y') }}</div>
+                    <div class="mt-2 border-top pt-1">{{ _('training_date', 'Date') }}</div>
+                </div>
+                
+                <div class="certificate-signature">
+                    <div>____________________</div>
+                    <div class="mt-2">{{ _('training_instructor', 'Formateur') }}</div>
+                </div>
+            </div>
+            
+            <div class="certificate-seal">
+                {{ _('training_certified', 'CERTIFIÉ') }}
+            </div>
+            
+            <div class="certificate-id">
+                ID: {{ enrollment.certificate_id }}
+            </div>
+        </div>
+        
+        <div class="certificate-verification">
+            {{ _('training_certificate_verification', 'Ce certificat peut être vérifié en utilisant l\'identifiant unique ') }} 
+            <strong>{{ enrollment.certificate_id }}</strong>
+        </div>
+        
+        <div class="certificate-actions">
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="bi bi-printer"></i> {{ _('training_print_certificate', 'Imprimer le certificat') }}
+            </button>
+            
+            <a href="{{ url_for('training.view_course', course_id=course.id) }}" class="btn btn-outline-primary">
+                <i class="bi bi-book"></i> {{ _('training_view_course', 'Voir le cours') }}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Scripts pour la page de certificat
+    });
+</script>
+{% endblock %}

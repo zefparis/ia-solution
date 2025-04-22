@@ -1,0 +1,312 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ quiz.title }} | {{ lesson.title }}{% endblock %}
+
+{% block styles %}
+<style>
+    .quiz-timer {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    
+    .quiz-question {
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        padding: 1.5rem;
+        background-color: #fff;
+        margin-bottom: 1.5rem;
+    }
+    
+    .quiz-options label {
+        display: block;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .quiz-options label:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .quiz-options input[type="radio"]:checked + label,
+    .quiz-options input[type="checkbox"]:checked + label {
+        background-color: #e9ecef;
+        border-color: #adb5bd;
+    }
+    
+    .quiz-options input[type="radio"],
+    .quiz-options input[type="checkbox"] {
+        display: none;
+    }
+    
+    .true-false-options {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .true-false-options label {
+        flex: 1;
+        text-align: center;
+    }
+    
+    .progress-indicator {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+    
+    .progress-indicator .step {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 0.25rem;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    
+    .progress-indicator .step.active {
+        background-color: #0d6efd;
+        color: #fff;
+        border-color: #0d6efd;
+    }
+    
+    .progress-indicator .step.completed {
+        background-color: #198754;
+        color: #fff;
+        border-color: #198754;
+    }
+    
+    .quiz-navigation {
+        position: sticky;
+        bottom: 0;
+        background-color: #fff;
+        padding: 1rem 0;
+        border-top: 1px solid #dee2e6;
+        z-index: 100;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Fil d'Ariane -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('training.training_dashboard') }}">{{ _('training_dashboard', 'Formation') }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('training.view_course', course_id=course.id) }}">{{ course.title }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('training.view_lesson', lesson_id=lesson.id) }}">{{ lesson.title }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ quiz.title }}</li>
+        </ol>
+    </nav>
+    
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h1 class="h3 mb-0">{{ quiz.title }}</h1>
+                        
+                        {% if quiz.time_limit_minutes %}
+                        <div class="quiz-timer">
+                            <i class="bi bi-stopwatch"></i> <span id="timer">{{ quiz.time_limit_minutes }}:00</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if quiz.description %}
+                    <p class="text-muted mt-2">{{ quiz.description }}</p>
+                    {% endif %}
+                    
+                    <div class="d-flex flex-wrap mt-2 mb-0">
+                        <div class="me-3">
+                            <i class="bi bi-list-ol"></i> {{ questions|length }} {{ _('training_questions', 'questions') }}
+                        </div>
+                        <div class="me-3">
+                            <i class="bi bi-award"></i> {{ _('training_passing_score', 'Score requis') }}: {{ quiz.passing_score }}%
+                        </div>
+                        <div>
+                            <i class="bi bi-asterisk"></i> {{ _('training_attempt', 'Tentative') }} #{{ attempt.attempt_number }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <form action="{{ url_for('training.submit_quiz', attempt_id=attempt.id) }}" method="post" id="quizForm">
+        <!-- Indicateur de progression -->
+        {% if questions|length > 1 %}
+        <div class="progress-indicator mb-4">
+            {% for i in range(1, questions|length + 1) %}
+                <div class="step {% if i == 1 %}active{% endif %}" id="step{{ i }}">{{ i }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- Questions du quiz -->
+        <div class="quiz-questions">
+            {% for question in questions %}
+                <div id="question{{ loop.index }}" class="quiz-question {% if loop.index > 1 %}d-none{% endif %}">
+                    <h2 class="h5 mb-4">
+                        {{ _('training_question', 'Question') }} {{ loop.index }}: {{ question.question_text }}
+                    </h2>
+                    
+                    {% if question.question_type == 'multiple_choice' %}
+                        <div class="quiz-options">
+                            {% set options = question.get_options() %}
+                            {% for option in options %}
+                                <div class="mb-3">
+                                    <input type="radio" id="q{{ question.id }}_option{{ loop.index0 }}" 
+                                           name="question_{{ question.id }}" value="{{ loop.index0 }}">
+                                    <label for="q{{ question.id }}_option{{ loop.index0 }}">{{ option }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% elif question.question_type == 'true_false' %}
+                        <div class="quiz-options">
+                            <div class="true-false-options">
+                                <input type="radio" id="q{{ question.id }}_true" 
+                                       name="question_{{ question.id }}" value="true">
+                                <label for="q{{ question.id }}_true">{{ _('training_true', 'Vrai') }}</label>
+                                
+                                <input type="radio" id="q{{ question.id }}_false" 
+                                       name="question_{{ question.id }}" value="false">
+                                <label for="q{{ question.id }}_false">{{ _('training_false', 'Faux') }}</label>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Question à réponse texte -->
+                        <div class="form-group">
+                            <textarea class="form-control" name="question_{{ question.id }}" 
+                                      rows="4" placeholder="{{ _('training_enter_answer', 'Entrez votre réponse ici...') }}"></textarea>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Navigation entre les questions -->
+        <div class="quiz-navigation mt-4">
+            <div class="d-flex justify-content-between">
+                <button type="button" id="prevBtn" class="btn btn-outline-secondary" disabled>
+                    <i class="bi bi-arrow-left"></i> {{ _('training_previous', 'Précédent') }}
+                </button>
+                
+                <span id="questionCounter" class="align-self-center">
+                    {{ _('training_question', 'Question') }} <span id="currentQuestion">1</span> {{ _('training_of', 'sur') }} {{ questions|length }}
+                </span>
+                
+                <div>
+                    <button type="button" id="nextBtn" class="btn btn-outline-primary me-2" {% if questions|length == 1 %}style="display: none;"{% endif %}>
+                        {{ _('training_next', 'Suivant') }} <i class="bi bi-arrow-right"></i>
+                    </button>
+                    
+                    <button type="submit" id="submitBtn" class="btn btn-success" {% if questions|length > 1 %}style="display: none;"{% endif %}>
+                        {{ _('training_submit_quiz', 'Soumettre le quiz') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let currentQuestion = 1;
+        const totalQuestions = {{ questions|length }};
+        
+        // Éléments DOM
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const questionCounter = document.getElementById('currentQuestion');
+        
+        // Timer pour le quiz (si configuré)
+        {% if quiz.time_limit_minutes %}
+        const timerDisplay = document.getElementById('timer');
+        let timeLeft = {{ quiz.time_limit_minutes }} * 60; // en secondes
+        
+        const timerInterval = setInterval(function() {
+            timeLeft--;
+            
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            
+            timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                alert("{{ _('training_time_up', 'Temps écoulé ! Le quiz va être soumis automatiquement.') }}");
+                document.getElementById('quizForm').submit();
+            }
+        }, 1000);
+        {% endif %}
+        
+        // Navigation entre les questions
+        function showQuestion(questionNumber) {
+            // Cacher toutes les questions
+            document.querySelectorAll('.quiz-question').forEach(question => {
+                question.classList.add('d-none');
+            });
+            
+            // Afficher la question actuelle
+            document.getElementById(`question${questionNumber}`).classList.remove('d-none');
+            
+            // Mettre à jour le compteur
+            questionCounter.textContent = questionNumber;
+            
+            // Mettre à jour les indicateurs de progression
+            document.querySelectorAll('.step').forEach((step, index) => {
+                step.classList.remove('active');
+                if (index + 1 < questionNumber) {
+                    step.classList.add('completed');
+                } else if (index + 1 === questionNumber) {
+                    step.classList.add('active');
+                } else {
+                    step.classList.remove('completed');
+                }
+            });
+            
+            // Gérer l'état des boutons
+            prevBtn.disabled = (questionNumber === 1);
+            
+            if (questionNumber === totalQuestions) {
+                nextBtn.style.display = 'none';
+                submitBtn.style.display = 'inline-block';
+            } else {
+                nextBtn.style.display = 'inline-block';
+                submitBtn.style.display = 'none';
+            }
+            
+            // Mettre à jour la variable globale
+            currentQuestion = questionNumber;
+        }
+        
+        // Gestionnaires d'événements pour les boutons
+        prevBtn.addEventListener('click', function() {
+            if (currentQuestion > 1) {
+                showQuestion(currentQuestion - 1);
+            }
+        });
+        
+        nextBtn.addEventListener('click', function() {
+            if (currentQuestion < totalQuestions) {
+                showQuestion(currentQuestion + 1);
+            }
+        });
+        
+        // Initialiser l'affichage
+        showQuestion(1);
+    });
+</script>
+{% endblock %}

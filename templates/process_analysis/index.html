@@ -1,0 +1,111 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ translations['title'][lang] }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">{{ translations['process_analysis_title'][lang] }}</h1>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">{{ translations['our_approach'][lang] }}</h2>
+                    <p class="card-text">
+                        {{ translations['approach_description'][lang] }}
+                    </p>
+                    
+                    <h3 class="mt-4">{{ translations['methodology_title'][lang] }}</h3>
+                    <div class="row mt-3">
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-primary">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ translations['step1_title'][lang] }}</h5>
+                                    <p class="card-text">{{ translations['step1_desc'][lang] }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-info">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ translations['step2_title'][lang] }}</h5>
+                                    <p class="card-text">{{ translations['step2_desc'][lang] }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-success">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ translations['step3_title'][lang] }}</h5>
+                                    <p class="card-text">{{ translations['step3_desc'][lang] }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 border-warning">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ translations['step4_title'][lang] }}</h5>
+                                    <p class="card-text">{{ translations['step4_desc'][lang] }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 border-danger">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ translations['step5_title'][lang] }}</h5>
+                                    <p class="card-text">{{ translations['step5_desc'][lang] }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h3 class="card-title">{{ translations['benefits'][lang] }}</h3>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">{{ translations['benefit1'][lang] }}</li>
+                                <li class="list-group-item">{{ translations['benefit2'][lang] }}</li>
+                                <li class="list-group-item">{{ translations['benefit3'][lang] }}</li>
+                                <li class="list-group-item">{{ translations['benefit4'][lang] }}</li>
+                                <li class="list-group-item">{{ translations['benefit5'][lang] }}</li>
+                                <li class="list-group-item">{{ translations['benefit6'][lang] }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h3 class="card-title">{{ translations['our_services'][lang] }}</h3>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">{{ translations['service1'][lang] }}</li>
+                                <li class="list-group-item">{{ translations['service2'][lang] }}</li>
+                                <li class="list-group-item">{{ translations['service3'][lang] }}</li>
+                                <li class="list-group-item">{{ translations['service4'][lang] }}</li>
+                                <li class="list-group-item">{{ translations['service5'][lang] }}</li>
+                                <li class="list-group-item">{{ translations['service6'][lang] }}</li>
+                                <li class="list-group-item">{{ translations['service7'][lang] }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mb-5">
+                <a href="{{ url_for('process_analysis.processes') }}" class="btn btn-primary btn-lg me-3">
+                    <i class="bi bi-list-check"></i> {{ translations['view_my_processes'][lang] }}
+                </a>
+                <a href="{{ url_for('process_analysis.new_process') }}" class="btn btn-success btn-lg">
+                    <i class="bi bi-plus-circle"></i> {{ translations['create_new_process'][lang] }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

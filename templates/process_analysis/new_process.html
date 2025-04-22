@@ -1,0 +1,466 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ translations['new_process'][lang] }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">{{ translations['new_process'][lang] }}</h1>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST" action="{{ url_for('process_analysis.new_process') }}">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="card-title mb-0">{{ translations['general_information'][lang] }}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">{{ translations['process_name'][lang] }} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                            <div class="form-text">
+                                {% if lang == 'fr' %}
+                                    Exemple: "Processus d'Onboarding Client", "Gestion des Commandes", etc.
+                                {% else %}
+                                    Example: "Customer Onboarding Process", "Order Management", etc.
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="department" class="form-label">{{ translations['department'][lang] }}</label>
+                            <select class="form-select" id="department" name="department">
+                                <option value="">
+                                    {% if lang == 'fr' %}
+                                        Sélectionner un département
+                                    {% else %}
+                                        Select a department
+                                    {% endif %}
+                                </option>
+                                <option value="Commercial">
+                                    {% if lang == 'fr' %}
+                                        Commercial / Ventes
+                                    {% else %}
+                                        Sales
+                                    {% endif %}
+                                </option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Finance">
+                                    {% if lang == 'fr' %}
+                                        Finance / Comptabilité
+                                    {% else %}
+                                        Finance / Accounting
+                                    {% endif %}
+                                </option>
+                                <option value="RH">
+                                    {% if lang == 'fr' %}
+                                        Ressources Humaines
+                                    {% else %}
+                                        Human Resources
+                                    {% endif %}
+                                </option>
+                                <option value="Opérations">
+                                    {% if lang == 'fr' %}
+                                        Opérations
+                                    {% else %}
+                                        Operations
+                                    {% endif %}
+                                </option>
+                                <option value="Production">Production</option>
+                                <option value="Logistique">
+                                    {% if lang == 'fr' %}
+                                        Logistique / Supply Chain
+                                    {% else %}
+                                        Logistics / Supply Chain
+                                    {% endif %}
+                                </option>
+                                <option value="IT">
+                                    {% if lang == 'fr' %}
+                                        IT / Systèmes d'Information
+                                    {% else %}
+                                        IT / Information Systems
+                                    {% endif %}
+                                </option>
+                                <option value="Service Client">
+                                    {% if lang == 'fr' %}
+                                        Service Client
+                                    {% else %}
+                                        Customer Service
+                                    {% endif %}
+                                </option>
+                                <option value="R&D">
+                                    {% if lang == 'fr' %}
+                                        R&D / Innovation
+                                    {% else %}
+                                        R&D / Innovation
+                                    {% endif %}
+                                </option>
+                                <option value="Autre">
+                                    {% if lang == 'fr' %}
+                                        Autre
+                                    {% else %}
+                                        Other
+                                    {% endif %}
+                                </option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">{{ translations['process_description'][lang] }}</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                            <div class="form-text">
+                                {% if lang == 'fr' %}
+                                    Décrivez brièvement l'objectif et le contexte de ce processus.
+                                {% else %}
+                                    Briefly describe the purpose and context of this process.
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h3 class="card-title mb-0">{{ translations['current_state'][lang] }}</h3>
+                    </div>
+                    <div class="card-body">
+                        <h4>{{ translations['process_steps'][lang] }}</h4>
+                        <p class="text-muted">{{ translations['step_description'][lang] }}</p>
+                        
+                        <div id="steps-container">
+                            <div class="row mb-3 step-row">
+                                <div class="col-md-8">
+                                    <label class="form-label">{{ translations['step_name'][lang] }} <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="step_name_0" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">{{ translations['step_duration'][lang] }} <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" name="step_duration_0" min="0.1" step="0.1" required>
+                                </div>
+                                <div class="col-md-1 d-flex align-items-end">
+                                    <button type="button" class="btn btn-danger mb-0 remove-step" disabled>
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="add-step" class="btn btn-outline-primary mt-2">
+                            <i class="bi bi-plus-circle"></i> {{ translations['add_step'][lang] }}
+                        </button>
+                        
+                        <hr>
+                        
+                        <h4>{{ translations['bottlenecks'][lang] }}</h4>
+                        <p class="text-muted">{{ translations['bottlenecks_description'][lang] }}</p>
+                        
+                        <div id="bottlenecks-container">
+                            <div class="mb-3">
+                                <input type="text" class="form-control" name="bottleneck_0" placeholder="{% if lang == 'fr' %}Exemple: Validation manuelle des commandes{% else %}Example: Manual order validation{% endif %}">
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="add-bottleneck" class="btn btn-outline-warning">
+                            <i class="bi bi-plus-circle"></i> {{ translations['add_bottleneck'][lang] }}
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h3 class="card-title mb-0">{{ translations['pain_points'][lang] }}</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">{{ translations['pain_points_description'][lang] }}</p>
+                        
+                        <div id="pain-points-container">
+                            <div class="row mb-3 pain-point-row">
+                                <div class="col-md-8">
+                                    <label class="form-label">{{ translations['pain_point'][lang] }}</label>
+                                    <input type="text" class="form-control" name="pain_point_name_0" placeholder="{% if lang == 'fr' %}Exemple: Temps d'attente trop long pour les clients{% else %}Example: Long waiting times for customers{% endif %}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">{{ translations['impact'][lang] }}</label>
+                                    <select class="form-select" name="pain_point_impact_0">
+                                        <option value="low">{% if lang == 'fr' %}Faible{% else %}Low{% endif %}</option>
+                                        <option value="medium" selected>{% if lang == 'fr' %}Moyen{% else %}Medium{% endif %}</option>
+                                        <option value="high">{% if lang == 'fr' %}Élevé{% else %}High{% endif %}</option>
+                                        <option value="critical">{% if lang == 'fr' %}Critique{% else %}Critical{% endif %}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-1 d-flex align-items-end">
+                                    <button type="button" class="btn btn-danger mb-0 remove-pain-point" disabled>
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="add-pain-point" class="btn btn-outline-warning">
+                            <i class="bi bi-plus-circle"></i> {{ translations['add_pain_point'][lang] }}
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="card-title mb-0">{{ translations['kpis'][lang] }}</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">{{ translations['kpis_description'][lang] }}</p>
+                        
+                        <div id="kpis-container">
+                            <div class="row mb-3 kpi-row">
+                                <div class="col-md-3">
+                                    <label class="form-label">{{ translations['kpi_name'][lang] }}</label>
+                                    <input type="text" class="form-control" name="kpi_name_0" placeholder="{% if lang == 'fr' %}Exemple: Délai de traitement{% else %}Example: Processing time{% endif %}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">{{ translations['current_value'][lang] }}</label>
+                                    <input type="number" class="form-control" name="kpi_value_0" step="0.01">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">{{ translations['unit'][lang] }}</label>
+                                    <input type="text" class="form-control" name="kpi_unit_0" placeholder="{% if lang == 'fr' %}Ex: jours, %{% else %}Ex: days, %{% endif %}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">{{ translations['target_value'][lang] }}</label>
+                                    <input type="number" class="form-control" name="kpi_target_0" step="0.01">
+                                </div>
+                                <div class="col-md-1 d-flex align-items-end">
+                                    <button type="button" class="btn btn-danger mb-0 remove-kpi" disabled>
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="add-kpi" class="btn btn-outline-success">
+                            <i class="bi bi-plus-circle"></i> {{ translations['add_kpi'][lang] }}
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-5">
+                    <a href="{{ url_for('process_analysis.processes') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> {{ translations['cancel'][lang] }}
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> {{ translations['save_process'][lang] }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Gestion dynamique des étapes du processus
+    document.addEventListener('DOMContentLoaded', function() {
+        // Compteurs pour les identifiants dynamiques
+        let stepCounter = 1;
+        let bottleneckCounter = 1;
+        let painPointCounter = 1;
+        let kpiCounter = 1;
+        
+        // Traductions pour le JavaScript
+        const lang = "{{ lang }}";
+        const translations = {
+            stepName: {% if lang == 'fr' %}"Nom de l'étape"{% else %}"Step Name"{% endif %},
+            stepDuration: {% if lang == 'fr' %}"Durée (jours)"{% else %}"Duration (days)"{% endif %},
+            painPoint: {% if lang == 'fr' %}"Point de douleur"{% else %}"Pain Point"{% endif %},
+            impact: {% if lang == 'fr' %}"Impact"{% else %}"Impact"{% endif %},
+            newPainPoint: {% if lang == 'fr' %}"Nouveau point de douleur"{% else %}"New pain point"{% endif %},
+            anotherBottleneck: {% if lang == 'fr' %}"Autre goulot d'étranglement"{% else %}"Another bottleneck"{% endif %},
+            kpiName: {% if lang == 'fr' %}"Nom du KPI"{% else %}"KPI Name"{% endif %},
+            currentValue: {% if lang == 'fr' %}"Valeur actuelle"{% else %}"Current Value"{% endif %},
+            unit: {% if lang == 'fr' %}"Unité"{% else %}"Unit"{% endif %},
+            targetValue: {% if lang == 'fr' %}"Valeur cible"{% else %}"Target Value"{% endif %},
+            newKpi: {% if lang == 'fr' %}"Nouveau KPI"{% else %}"New KPI"{% endif %},
+            unitPlaceholder: {% if lang == 'fr' %}"Unité"{% else %}"Unit"{% endif %},
+            atLeastOneStep: {% if lang == 'fr' %}"Vous devez avoir au moins une étape dans le processus."{% else %}"You must have at least one step in the process."{% endif %},
+            impact_low: {% if lang == 'fr' %}"Faible"{% else %}"Low"{% endif %},
+            impact_medium: {% if lang == 'fr' %}"Moyen"{% else %}"Medium"{% endif %},
+            impact_high: {% if lang == 'fr' %}"Élevé"{% else %}"High"{% endif %},
+            impact_critical: {% if lang == 'fr' %}"Critique"{% else %}"Critical"{% endif %}
+        };
+        
+        // Ajouter une étape
+        document.getElementById('add-step').addEventListener('click', function() {
+            const container = document.getElementById('steps-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'row mb-3 step-row';
+            newRow.innerHTML = `
+                <div class="col-md-8">
+                    <label class="form-label">${translations.stepName} <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="step_name_${stepCounter}" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">${translations.stepDuration} <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" name="step_duration_${stepCounter}" min="0.1" step="0.1" required>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="button" class="btn btn-danger mb-0 remove-step">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(newRow);
+            stepCounter++;
+            
+            // Activer les boutons de suppression
+            activateRemoveButtons();
+        });
+        
+        // Ajouter un goulot d'étranglement
+        document.getElementById('add-bottleneck').addEventListener('click', function() {
+            const container = document.getElementById('bottlenecks-container');
+            const newInput = document.createElement('div');
+            newInput.className = 'mb-3 bottleneck-row';
+            newInput.innerHTML = `
+                <div class="input-group">
+                    <input type="text" class="form-control" name="bottleneck_${bottleneckCounter}" placeholder="${translations.anotherBottleneck}">
+                    <button type="button" class="btn btn-danger remove-bottleneck">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(newInput);
+            bottleneckCounter++;
+            
+            // Activer les boutons de suppression
+            activateRemoveButtons();
+        });
+        
+        // Ajouter un point de douleur
+        document.getElementById('add-pain-point').addEventListener('click', function() {
+            const container = document.getElementById('pain-points-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'row mb-3 pain-point-row';
+            newRow.innerHTML = `
+                <div class="col-md-8">
+                    <label class="form-label">${translations.painPoint}</label>
+                    <input type="text" class="form-control" name="pain_point_name_${painPointCounter}" placeholder="${translations.newPainPoint}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">${translations.impact}</label>
+                    <select class="form-select" name="pain_point_impact_${painPointCounter}">
+                        <option value="low">${translations.impact_low}</option>
+                        <option value="medium" selected>${translations.impact_medium}</option>
+                        <option value="high">${translations.impact_high}</option>
+                        <option value="critical">${translations.impact_critical}</option>
+                    </select>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="button" class="btn btn-danger mb-0 remove-pain-point">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(newRow);
+            painPointCounter++;
+            
+            // Activer les boutons de suppression
+            activateRemoveButtons();
+        });
+        
+        // Ajouter un KPI
+        document.getElementById('add-kpi').addEventListener('click', function() {
+            const container = document.getElementById('kpis-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'row mb-3 kpi-row';
+            newRow.innerHTML = `
+                <div class="col-md-3">
+                    <label class="form-label">${translations.kpiName}</label>
+                    <input type="text" class="form-control" name="kpi_name_${kpiCounter}" placeholder="${translations.newKpi}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">${translations.currentValue}</label>
+                    <input type="number" class="form-control" name="kpi_value_${kpiCounter}" step="0.01">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">${translations.unit}</label>
+                    <input type="text" class="form-control" name="kpi_unit_${kpiCounter}" placeholder="${translations.unitPlaceholder}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">${translations.targetValue}</label>
+                    <input type="number" class="form-control" name="kpi_target_${kpiCounter}" step="0.01">
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="button" class="btn btn-danger mb-0 remove-kpi">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(newRow);
+            kpiCounter++;
+            
+            // Activer les boutons de suppression
+            activateRemoveButtons();
+        });
+        
+        // Fonction pour activer les boutons de suppression
+        function activateRemoveButtons() {
+            // Supprimer les étapes
+            document.querySelectorAll('.remove-step').forEach(button => {
+                button.addEventListener('click', function() {
+                    if (document.querySelectorAll('.step-row').length > 1) {
+                        this.closest('.step-row').remove();
+                    } else {
+                        alert(translations.atLeastOneStep);
+                    }
+                });
+                // Activer tous les boutons sauf si c'est le seul élément
+                if (document.querySelectorAll('.step-row').length > 1) {
+                    button.disabled = false;
+                }
+            });
+            
+            // Supprimer les goulots d'étranglement
+            document.querySelectorAll('.remove-bottleneck').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.closest('.bottleneck-row').remove();
+                });
+            });
+            
+            // Supprimer les points de douleur
+            document.querySelectorAll('.remove-pain-point').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.closest('.pain-point-row').remove();
+                });
+                // Activer tous les boutons sauf si c'est le seul élément
+                if (document.querySelectorAll('.pain-point-row').length > 1) {
+                    button.disabled = false;
+                }
+            });
+            
+            // Supprimer les KPIs
+            document.querySelectorAll('.remove-kpi').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.closest('.kpi-row').remove();
+                });
+                // Activer tous les boutons sauf si c'est le seul élément
+                if (document.querySelectorAll('.kpi-row').length > 1) {
+                    button.disabled = false;
+                }
+            });
+        }
+        
+        // Initialiser les boutons de suppression
+        activateRemoveButtons();
+    });
+</script>
+{% endblock %}

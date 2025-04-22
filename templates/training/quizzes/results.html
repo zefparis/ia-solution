@@ -1,0 +1,253 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('training_quiz_results', 'Résultats du quiz') }} | {{ quiz.title }}{% endblock %}
+
+{% block styles %}
+<style>
+    .result-summary {
+        text-align: center;
+        padding: 2rem 0;
+    }
+    
+    .result-score {
+        font-size: 3rem;
+        font-weight: bold;
+    }
+    
+    .result-badge {
+        font-size: 1.2rem;
+        padding: 0.5rem 1rem;
+        margin-top: 1rem;
+        display: inline-block;
+    }
+    
+    .question-item {
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        padding: 1.5rem;
+        background-color: #fff;
+        margin-bottom: 1.5rem;
+    }
+    
+    .question-item.correct {
+        border-left: 5px solid #198754;
+    }
+    
+    .question-item.incorrect {
+        border-left: 5px solid #dc3545;
+    }
+    
+    .answer-option {
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+    }
+    
+    .answer-option.selected {
+        background-color: #e9ecef;
+        border-color: #adb5bd;
+    }
+    
+    .answer-option.correct {
+        background-color: rgba(25, 135, 84, 0.1);
+        border-color: #198754;
+    }
+    
+    .answer-option.incorrect {
+        background-color: rgba(220, 53, 69, 0.1);
+        border-color: #dc3545;
+    }
+    
+    .explanation {
+        background-color: #f8f9fa;
+        border-radius: 0.25rem;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Fil d'Ariane -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('training.training_dashboard') }}">{{ _('training_dashboard', 'Formation') }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('training.view_course', course_id=course.id) }}">{{ course.title }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('training.view_lesson', lesson_id=lesson.id) }}">{{ lesson.title }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ _('training_quiz_results', 'Résultats du quiz') }}</li>
+        </ol>
+    </nav>
+    
+    <!-- Résumé des résultats -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="result-summary">
+                <h1 class="h3 mb-4">{{ _('training_quiz_completed', 'Quiz terminé') }}</h1>
+                
+                <div class="result-score">{{ attempt.score }}%</div>
+                
+                <div class="d-flex justify-content-center gap-3 mb-3">
+                    <div>
+                        <i class="bi bi-check-circle-fill text-success me-1"></i>
+                        {{ correct_answers }} / {{ total_questions }} {{ _('training_correct', 'correctes') }}
+                    </div>
+                    <div>
+                        <i class="bi bi-stopwatch me-1"></i>
+                        {% set duration = (attempt.end_time - attempt.start_time).total_seconds() / 60 %}
+                        {{ duration|round }} {{ _('training_minutes', 'minutes') }}
+                    </div>
+                </div>
+                
+                {% if attempt.passed %}
+                    <div class="result-badge bg-success text-white">
+                        <i class="bi bi-trophy-fill me-2"></i>{{ _('training_passed', 'Réussi') }}
+                    </div>
+                    <p class="mt-3">{{ _('training_congratulations', 'Félicitations ! Vous avez réussi ce quiz.') }}</p>
+                {% else %}
+                    <div class="result-badge bg-warning text-dark">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ _('training_not_passed', 'Non réussi') }}
+                    </div>
+                    <p class="mt-3">{{ _('training_try_again_message', 'Vous n\'avez pas atteint le score minimal requis. Révisez et réessayez !') }}</p>
+                {% endif %}
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('training.view_lesson', lesson_id=lesson.id) }}" class="btn btn-primary me-2">
+                        <i class="bi bi-arrow-left"></i> {{ _('training_back_to_lesson', 'Retour à la leçon') }}
+                    </a>
+                    
+                    {% if not attempt.passed %}
+                        <a href="{{ url_for('training.start_quiz', quiz_id=quiz.id) }}" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-repeat"></i> {{ _('training_retry_quiz', 'Réessayer le quiz') }}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Révision détaillée des questions -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-transparent">
+            <h2 class="h5 mb-0">{{ _('training_detailed_review', 'Révision détaillée') }}</h2>
+        </div>
+        <div class="card-body">
+            {% for answer in answers %}
+                {% set question = questions_map[answer.question_id] %}
+                <div class="question-item {% if answer.is_correct %}correct{% else %}incorrect{% endif %}">
+                    <div class="d-flex justify-content-between mb-3">
+                        <h3 class="h5">{{ _('training_question', 'Question') }} {{ loop.index }}</h3>
+                        <div>
+                            {% if answer.is_correct %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-lg"></i> {{ _('training_correct', 'Correct') }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-x-lg"></i> {{ _('training_incorrect', 'Incorrect') }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <p class="mb-3">{{ question.question_text }}</p>
+                    
+                    {% if question.question_type == 'multiple_choice' %}
+                        {% set options = question.get_options() %}
+                        {% for option in options %}
+                            <div class="answer-option
+                                {% if loop.index0|string == answer.user_answer %}selected{% endif %}
+                                {% if loop.index0|string == question.correct_answer %}correct
+                                {% elif loop.index0|string == answer.user_answer and answer.user_answer != question.correct_answer %}incorrect{% endif %}">
+                                
+                                {% if loop.index0|string == question.correct_answer %}
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                {% elif loop.index0|string == answer.user_answer and answer.user_answer != question.correct_answer %}
+                                    <i class="bi bi-x-circle-fill text-danger me-2"></i>
+                                {% endif %}
+                                
+                                {{ option }}
+                            </div>
+                        {% endfor %}
+                    {% elif question.question_type == 'true_false' %}
+                        <div class="d-flex gap-3 mb-3">
+                            <div class="answer-option flex-grow-1 text-center
+                                {% if answer.user_answer == 'true' %}selected{% endif %}
+                                {% if question.correct_answer == 'true' %}correct
+                                {% elif answer.user_answer == 'true' and question.correct_answer != 'true' %}incorrect{% endif %}">
+                                
+                                {% if question.correct_answer == 'true' %}
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                {% elif answer.user_answer == 'true' and question.correct_answer != 'true' %}
+                                    <i class="bi bi-x-circle-fill text-danger me-2"></i>
+                                {% endif %}
+                                
+                                {{ _('training_true', 'Vrai') }}
+                            </div>
+                            
+                            <div class="answer-option flex-grow-1 text-center
+                                {% if answer.user_answer == 'false' %}selected{% endif %}
+                                {% if question.correct_answer == 'false' %}correct
+                                {% elif answer.user_answer == 'false' and question.correct_answer != 'false' %}incorrect{% endif %}">
+                                
+                                {% if question.correct_answer == 'false' %}
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                {% elif answer.user_answer == 'false' and question.correct_answer != 'false' %}
+                                    <i class="bi bi-x-circle-fill text-danger me-2"></i>
+                                {% endif %}
+                                
+                                {{ _('training_false', 'Faux') }}
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Question à réponse texte -->
+                        <div class="mb-3">
+                            <h4 class="h6">{{ _('training_your_answer', 'Votre réponse') }}:</h4>
+                            <div class="answer-option {% if answer.is_correct %}correct{% else %}incorrect{% endif %}">
+                                {% if answer.user_answer %}
+                                    {{ answer.user_answer }}
+                                {% else %}
+                                    <em>{{ _('training_no_answer', 'Aucune réponse fournie') }}</em>
+                                {% endif %}
+                            </div>
+                            
+                            <h4 class="h6 mt-3">{{ _('training_correct_answer', 'Réponse correcte') }}:</h4>
+                            <div class="answer-option correct">
+                                {{ question.correct_answer }}
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if question.explanation %}
+                        <div class="explanation">
+                            <h4 class="h6">{{ _('training_explanation', 'Explication') }}:</h4>
+                            <p class="mb-0">{{ question.explanation }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Navigation -->
+    <div class="d-flex justify-content-between mb-5">
+        <a href="{{ url_for('training.view_lesson', lesson_id=lesson.id) }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> {{ _('training_back_to_lesson', 'Retour à la leçon') }}
+        </a>
+        
+        <a href="{{ url_for('training.view_course', course_id=course.id) }}" class="btn btn-outline-primary">
+            {{ _('training_course_overview', 'Aperçu du cours') }} <i class="bi bi-grid"></i>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Scripts pour la page de résultats
+    document.addEventListener('DOMContentLoaded', function() {
+        // Vous pouvez ajouter ici des fonctionnalités interactives
+    });
+</script>
+{% endblock %}

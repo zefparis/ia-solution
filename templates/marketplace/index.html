@@ -1,0 +1,246 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('marketplace_title', 'API Marketplace') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h1 class="display-5 mb-3">{{ _('marketplace_title', 'API Marketplace') }}</h1>
+            <p class="lead">{{ _('marketplace_subtitle', 'Intégrations, extensions et automatisations pour votre entreprise') }}</p>
+        </div>
+    </div>
+
+    <!-- Section de recherche -->
+    <div class="row mb-5 justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <form action="{{ url_for('marketplace.search') }}" method="get">
+                        <div class="input-group">
+                            <input type="text" class="form-control form-control-lg" name="q" placeholder="{{ _('marketplace_search_placeholder', 'Rechercher des extensions, API, templates...') }}">
+                            <button class="btn btn-primary btn-lg" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sections principales -->
+    <div class="row mb-5">
+        <!-- Extensions -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-puzzle-piece fa-4x text-primary"></i>
+                    </div>
+                    <h2 class="h4">{{ _('marketplace_extensions', 'Extensions API') }}</h2>
+                    <p class="text-muted mb-4">{{ _('marketplace_extensions_desc', 'Étendez les fonctionnalités de votre IA-Solution avec des extensions métier spécialisées.') }}</p>
+                    <a href="{{ url_for('marketplace.list_extensions') }}" class="btn btn-primary">
+                        {{ _('marketplace_explore_extensions', 'Explorer les extensions') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connexions API -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-plug fa-4x text-primary"></i>
+                    </div>
+                    <h2 class="h4">{{ _('marketplace_api_connections', 'Connexions API') }}</h2>
+                    <p class="text-muted mb-4">{{ _('marketplace_api_connections_desc', 'Connectez IA-Solution à vos outils et services externes préférés.') }}</p>
+                    <a href="{{ url_for('marketplace.list_api_connections') }}" class="btn btn-primary">
+                        {{ _('marketplace_manage_connections', 'Gérer les connexions') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Automatisations -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-robot fa-4x text-primary"></i>
+                    </div>
+                    <h2 class="h4">{{ _('marketplace_automation_templates', 'Templates d\'automatisation') }}</h2>
+                    <p class="text-muted mb-4">{{ _('marketplace_automation_templates_desc', 'Automatisez vos processus métier grâce à des templates prêts à l\'emploi.') }}</p>
+                    <a href="{{ url_for('marketplace.list_automation_templates') }}" class="btn btn-primary">
+                        {{ _('marketplace_explore_templates', 'Explorer les templates') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Catégories populaires -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="h3 text-center mb-4">{{ _('marketplace_popular_categories', 'Catégories populaires') }}</h2>
+            <div class="row">
+                {% for category in categories %}
+                    <div class="col-md-3 col-sm-6 mb-4">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <div class="rounded-circle bg-light d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
+                                    <i class="{{ category.icon }} fa-2x text-primary"></i>
+                                </div>
+                                <h3 class="h5 mb-2">{{ category.name }}</h3>
+                                <p class="small text-muted mb-3">{{ category.description }}</p>
+                                <a href="{{ url_for('marketplace.list_extensions', category=category.slug) }}" class="btn btn-sm btn-outline-primary">
+                                    {{ _('marketplace_view_category', 'Voir la catégorie') }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Extensions mises en avant -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h3 mb-0">{{ _('marketplace_featured_extensions', 'Extensions mises en avant') }}</h2>
+                <a href="{{ url_for('marketplace.list_extensions') }}" class="btn btn-outline-primary">
+                    {{ _('marketplace_view_all', 'Voir tout') }} <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="row">
+                {% for extension in featured_extensions %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card shadow-sm h-100">
+                            {% if extension.cover_image %}
+                                <img src="{{ extension.cover_image }}" class="card-img-top" alt="{{ extension.name }}" style="height: 140px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-light text-center py-4">
+                                    <i class="fas fa-puzzle-piece fa-3x text-secondary"></i>
+                                </div>
+                            {% endif %}
+                            <div class="card-body">
+                                <h5 class="card-title">{{ extension.name }}</h5>
+                                <p class="card-text small text-muted mb-2">{{ _('marketplace_by', 'Par') }} {{ extension.developer.username if extension.developer else 'IA-Solution' }}</p>
+                                <p class="card-text text-muted small">{{ extension.short_description or extension.description|truncate(80) }}</p>
+                                
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <span class="badge bg-secondary">{{ extension.category }}</span>
+                                    <a href="{{ url_for('marketplace.view_extension', slug=extension.slug) }}" class="btn btn-sm btn-primary">{{ _('marketplace_details', 'Détails') }}</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Templates d'automatisation populaires -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h3 mb-0">{{ _('marketplace_popular_templates', 'Templates populaires') }}</h2>
+                <a href="{{ url_for('marketplace.list_automation_templates') }}" class="btn btn-outline-primary">
+                    {{ _('marketplace_view_all', 'Voir tout') }} <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="row">
+                {% for template in popular_templates %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title">{{ template.name }}</h5>
+                                    <span class="badge {% if template.difficulty_level == 'beginner' %}bg-success{% elif template.difficulty_level == 'intermediate' %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {% if template.difficulty_level == 'beginner' %}
+                                            {{ _('marketplace_difficulty_beginner', 'Débutant') }}
+                                        {% elif template.difficulty_level == 'intermediate' %}
+                                            {{ _('marketplace_difficulty_intermediate', 'Intermédiaire') }}
+                                        {% else %}
+                                            {{ _('marketplace_difficulty_advanced', 'Avancé') }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <p class="card-text text-muted small mb-3">{{ template.description }}</p>
+                                
+                                <div class="d-flex mb-3">
+                                    <div class="me-3">
+                                        <i class="fas fa-tag text-muted me-1"></i>
+                                        <span class="small">{{ template.category|capitalize }}</span>
+                                    </div>
+                                    {% if template.estimated_time_minutes %}
+                                        <div>
+                                            <i class="fas fa-clock text-muted me-1"></i>
+                                            <span class="small">
+                                                {% if template.estimated_time_minutes < 60 %}
+                                                    {{ template.estimated_time_minutes }} {{ _('marketplace_minutes', 'minutes') }}
+                                                {% else %}
+                                                    {{ (template.estimated_time_minutes / 60)|int }} {{ _('marketplace_hours', 'heures') }}
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="small text-muted">{{ _('marketplace_by', 'Par') }} {{ template.extension.name }}</div>
+                                    <a href="{{ url_for('marketplace.view_automation_template', template_id=template.id) }}" class="btn btn-sm btn-outline-primary">{{ _('marketplace_details', 'Détails') }}</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card bg-primary text-white shadow">
+                <div class="card-body p-5 text-center">
+                    <h2 class="mb-3">{{ _('marketplace_cta_title', 'Étendez les capacités de votre entreprise') }}</h2>
+                    <p class="lead mb-4">{{ _('marketplace_cta_desc', 'Découvrez comment les extensions et automatisations peuvent transformer votre workflow et booster votre productivité.') }}</p>
+                    <div class="d-flex justify-content-center">
+                        <a href="{{ url_for('marketplace.list_extensions') }}" class="btn btn-light me-2">
+                            {{ _('marketplace_explore_extensions', 'Explorer les extensions') }}
+                        </a>
+                        <a href="{{ url_for('marketplace.list_automation_templates') }}" class="btn btn-outline-light">
+                            {{ _('marketplace_explore_templates', 'Explorer les templates') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Developer Section -->
+    {% if is_authenticated %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h2 class="h3 mb-2">{{ _('marketplace_developer_title', 'Vous êtes développeur ?') }}</h2>
+                                <p class="mb-md-0">{{ _('marketplace_developer_desc', 'Créez et publiez vos propres extensions et templates sur le marketplace IA-Solution.') }}</p>
+                            </div>
+                            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                                <a href="{{ url_for('marketplace.developer_portal') }}" class="btn btn-primary">
+                                    {{ _('marketplace_developer_portal', 'Portail développeur') }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

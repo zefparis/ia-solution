@@ -1,0 +1,234 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {% if article %}
+        {{ _('training_admin_edit_article', 'Modifier l\'article') }}
+    {% else %}
+        {{ _('training_admin_create_article', 'Créer un article') }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('training.training_dashboard') }}">{{ _('training_dashboard', 'Formation') }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('training.admin_knowledge') }}">{{ _('training_admin_knowledge_title', 'Gestion de la base de connaissances') }}</a></li>
+                    <li class="breadcrumb-item active">
+                        {% if article %}
+                            {{ _('training_admin_edit_article', 'Modifier l\'article') }}
+                        {% else %}
+                            {{ _('training_admin_create_article', 'Créer un article') }}
+                        {% endif %}
+                    </li>
+                </ol>
+            </nav>
+            
+            <h1 class="display-5">
+                {% if article %}
+                    {{ _('training_admin_edit_article', 'Modifier l\'article') }}
+                {% else %}
+                    {{ _('training_admin_create_article', 'Créer un nouvel article') }}
+                {% endif %}
+            </h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- Protection CSRF (fournie par Flask-WTF) -->
+                        {{ form.csrf_token if form.csrf_token }}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+                        <!-- Informations de base -->
+                        <div class="mb-4">
+                            <h4>{{ _('training_knowledge_basic_info', 'Informations de base') }}</h4>
+                            <hr>
+                            
+                            <div class="mb-3">
+                                <label for="title" class="form-label">{{ _('training_knowledge_title', 'Titre') }} *</label>
+                                <input type="text" class="form-control" id="title" name="title" required
+                                    value="{{ article.title if article else '' }}">
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="category" class="form-label">{{ _('training_knowledge_category', 'Catégorie') }} *</label>
+                                    <input type="text" class="form-control" id="category" name="category" required
+                                        value="{{ article.category if article else '' }}">
+                                    <small class="text-muted">{{ _('training_knowledge_category_help', 'Par exemple: Tutoriels, FAQ, Bonnes pratiques, etc.') }}</small>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="status" class="form-label">{{ _('training_knowledge_status', 'Statut') }} *</label>
+                                    <select class="form-select" id="status" name="status" required>
+                                        <option value="draft" {% if article and article.status == 'draft' %}selected{% endif %}>
+                                            {{ _('training_status_draft', 'Brouillon') }}
+                                        </option>
+                                        <option value="published" {% if article and article.status == 'published' %}selected{% endif %}>
+                                            {{ _('training_status_published', 'Publié') }}
+                                        </option>
+                                        <option value="archived" {% if article and article.status == 'archived' %}selected{% endif %}>
+                                            {{ _('training_status_archived', 'Archivé') }}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="tags" class="form-label">{{ _('training_knowledge_tags', 'Tags') }}</label>
+                                <input type="text" class="form-control" id="tags" name="tags" 
+                                    value="{{ tags if tags else '' }}">
+                                <small class="text-muted">{{ _('training_knowledge_tags_help', 'Séparés par des virgules. Par exemple: débutant, excel, graphiques') }}</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Contenu de l'article -->
+                        <div class="mb-4">
+                            <h4>{{ _('training_knowledge_content_title', 'Contenu de l\'article') }}</h4>
+                            <hr>
+                            
+                            <div class="mb-3">
+                                <label for="content" class="form-label">{{ _('training_knowledge_content', 'Contenu') }} *</label>
+                                <textarea class="form-control" id="content" name="content" rows="15" required>{{ article.content if article else '' }}</textarea>
+                                <small class="text-muted">{{ _('training_knowledge_content_help', 'Le contenu peut inclure du texte formaté, des images, des listes, etc. Utilisez le format Markdown.') }}</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Cours associés -->
+                        <div class="mb-4">
+                            <h4>{{ _('training_knowledge_related_courses', 'Cours associés') }}</h4>
+                            <hr>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">{{ _('training_knowledge_select_courses', 'Sélectionnez les cours associés') }}</label>
+                                
+                                {% if courses %}
+                                    <div class="row">
+                                        {% for course in courses %}
+                                            <div class="col-md-6 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="related_courses[]" value="{{ course.id }}" id="course_{{ course.id }}"
+                                                        {% if article and course.id in related_courses %}checked{% endif %}>
+                                                    <label class="form-check-label" for="course_{{ course.id }}">
+                                                        {{ course.title }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted">{{ _('training_knowledge_no_courses', 'Aucun cours disponible.') }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Boutons de soumission -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('training.admin_knowledge') }}" class="btn btn-outline-secondary">
+                                {{ _('cancel', 'Annuler') }}
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                {% if article %}
+                                    {{ _('save', 'Enregistrer') }}
+                                {% else %}
+                                    {{ _('create', 'Créer') }}
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">{{ _('training_knowledge_help', 'Aide') }}</h5>
+                </div>
+                <div class="card-body">
+                    <h6>{{ _('training_knowledge_form_help_title', 'Conseils pour créer un bon article') }}</h6>
+                    <ul>
+                        <li>{{ _('training_knowledge_form_help_1', 'Utilisez un titre clair et descriptif.') }}</li>
+                        <li>{{ _('training_knowledge_form_help_2', 'Structurez votre contenu avec des sections et sous-sections.') }}</li>
+                        <li>{{ _('training_knowledge_form_help_3', 'Incluez des exemples concrets et pratiques.') }}</li>
+                        <li>{{ _('training_knowledge_form_help_4', 'Ajoutez des tags pertinents pour faciliter la recherche.') }}</li>
+                        <li>{{ _('training_knowledge_form_help_5', 'Associez l\'article aux cours correspondants.') }}</li>
+                    </ul>
+                    
+                    <div class="alert alert-info mt-3">
+                        <h6>{{ _('training_knowledge_markdown_title', 'Aide au formatage Markdown') }}</h6>
+                        <ul class="mb-0">
+                            <li><code># Titre</code> - Titre principal</li>
+                            <li><code>## Sous-titre</code> - Sous-titre</li>
+                            <li><code>**Texte**</code> - Texte en gras</li>
+                            <li><code>*Texte*</code> - Texte en italique</li>
+                            <li><code>[Lien](URL)</code> - Lien hypertexte</li>
+                            <li><code>- Item</code> - Élément de liste</li>
+                            <li><code>1. Item</code> - Élément de liste numérotée</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            {% if article %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">{{ _('training_knowledge_stats', 'Statistiques') }}</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ _('training_knowledge_view_count', 'Nombre de vues') }}
+                            <span class="badge bg-primary rounded-pill">{{ article.view_count }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ _('training_knowledge_helpful_votes', 'Votes utiles') }}
+                            <span class="badge bg-success rounded-pill">{{ article.helpful_votes }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ _('training_knowledge_unhelpful_votes', 'Votes non utiles') }}
+                            <span class="badge bg-danger rounded-pill">{{ article.unhelpful_votes }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ _('training_knowledge_created_at', 'Date de création') }}
+                            <span>{{ article.created_at.strftime('%d/%m/%Y') }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ _('training_knowledge_updated_at', 'Dernière mise à jour') }}
+                            <span>{{ article.updated_at.strftime('%d/%m/%Y') }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- SimpleMDE (Markdown Editor) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+<script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser l'éditeur Markdown
+        var simplemde = new SimpleMDE({
+            element: document.getElementById("content"),
+            spellChecker: false,
+            autosave: {
+                enabled: true,
+                uniqueId: "training_knowledge_{{ article.id if article else 'new' }}",
+                delay: 1000,
+            },
+            toolbar: ["bold", "italic", "heading", "|", "quote", "unordered-list", "ordered-list", "|", "link", "image", "|", "preview", "side-by-side", "fullscreen", "|", "guide"]
+        });
+    });
+</script>
+{% endblock %}

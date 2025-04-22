@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Scanner device -->
+  <rect x="50" y="120" width="200" height="40" rx="5" ry="5" fill="#455A64"/>
+  <rect x="60" y="110" width="180" height="10" rx="2" ry="2" fill="#607D8B"/>
+  <rect x="60" y="160" width="180" height="10" rx="2" ry="2" fill="#607D8B"/>
+  
+  <!-- Scanner glass -->
+  <rect x="70" y="125" width="160" height="30" fill="#B0BEC5"/>
+  <rect x="75" y="130" width="150" height="20" fill="#ECEFF1"/>
+  
+  <!-- Scanner light -->
+  <rect x="80" y="135" width="5" height="10" fill="#29B6F6" opacity="0.8">
+    <animate attributeName="x" from="80" to="215" dur="3s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="78" y="133" width="9" height="14" fill="#29B6F6" opacity="0.3">
+    <animate attributeName="x" from="78" to="213" dur="3s" repeatCount="indefinite"/>
+  </rect>
+  
+  <!-- Document -->
+  <rect x="90" y="85" width="120" height="160" fill="#FFFFFF" stroke="#BDBDBD" stroke-width="1"/>
+  
+  <!-- Document content -->
+  <line x1="100" y1="100" x2="200" y2="100" stroke="#9E9E9E" stroke-width="1"/>
+  <line x1="100" y1="110" x2="190" y2="110" stroke="#9E9E9E" stroke-width="1"/>
+  <line x1="100" y1="120" x2="180" y2="120" stroke="#9E9E9E" stroke-width="1"/>
+  
+  <line x1="100" y1="180" x2="200" y2="180" stroke="#9E9E9E" stroke-width="1"/>
+  <line x1="100" y1="190" x2="190" y2="190" stroke="#9E9E9E" stroke-width="1"/>
+  <line x1="100" y1="200" x2="180" y2="200" stroke="#9E9E9E" stroke-width="1"/>
+  <line x1="100" y1="210" x2="170" y2="210" stroke="#9E9E9E" stroke-width="1"/>
+  <line x1="100" y1="220" x2="190" y2="220" stroke="#9E9E9E" stroke-width="1"/>
+  
+  <!-- Logo -->
+  <rect x="160" y="140" width="40" height="30" rx="3" ry="3" fill="#3F51B5"/>
+  <text x="180" y="160" font-family="Arial" font-weight="bold" font-size="14" fill="#FFFFFF" text-anchor="middle">IA</text>
+  
+  <!-- Digital data flow -->
+  <path d="M220,150 C240,150 240,50 260,50" stroke="#2196F3" stroke-width="2" fill="none" stroke-dasharray="5,2">
+    <animate attributeName="stroke-dashoffset" from="7" to="0" dur="2s" repeatCount="indefinite"/>
+  </path>
+  
+  <!-- Binary data -->
+  <text x="265" y="40" font-family="Courier" font-size="10" fill="#1A237E">01</text>
+  <text x="265" y="50" font-family="Courier" font-size="10" fill="#1A237E">10</text>
+  <text x="265" y="60" font-family="Courier" font-size="10" fill="#1A237E">01</text>
+  
+  <!-- Document output -->
+  <rect x="240" y="30" width="40" height="40" fill="#E3F2FD" stroke="#90CAF9" stroke-width="1"/>
+  <line x1="245" y1="35" x2="275" y2="35" stroke="#64B5F6" stroke-width="1"/>
+  <line x1="245" y1="40" x2="270" y2="40" stroke="#64B5F6" stroke-width="1"/>
+  <line x1="245" y1="45" x2="265" y2="45" stroke="#64B5F6" stroke-width="1"/>
+  <line x1="245" y1="55" x2="275" y2="55" stroke="#64B5F6" stroke-width="1"/>
+  <line x1="245" y1="60" x2="270" y2="60" stroke="#64B5F6" stroke-width="1"/>
+  
+  <!-- Highlight effect -->
+  <ellipse cx="150" cy="140" rx="80" ry="25" fill="#FFEE58" opacity="0.2">
+    <animate attributeName="opacity" values="0.2;0.4;0.2" dur="3s" repeatCount="indefinite"/>
+  </ellipse>
+</svg>

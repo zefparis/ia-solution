@@ -1,0 +1,498 @@
+{% extends "layout.html" %}
+
+{% block title %}Rapports financiers{% endblock %}
+
+{% block head %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('finance.finance_dashboard') }}">Finance</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Rapports</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="display-5">Rapports financiers</h1>
+                <a href="{{ url_for('dashboard.dashboard_home') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-tachometer-alt me-2"></i>{{ language.get_text('dashboard.title') or 'Tableau de bord' }}
+                </a>
+            </div>
+            
+            <p class="lead">Analysez vos finances et générez des rapports détaillés.</p>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-primary d-flex align-items-center justify-content-between">
+                <div>
+                    <i class="fas fa-file-invoice-dollar me-2"></i>
+                    <span>{{ language.get_text('finance.tax_report.need_tax_report') or 'Besoin de générer un rapport fiscal pour vos déclarations ? Essayez notre nouvel outil!' }}</span>
+                </div>
+                <a href="{{ url_for('finance.generate_tax_report') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-file-invoice me-2"></i>{{ language.get_text('finance.tax_report.create_tax_report') or 'Créer un rapport fiscal' }}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5>Filtres</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('finance.financial_reports') }}" method="GET" class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label for="period" class="form-label">Période</label>
+                            <select class="form-select" id="period" name="period">
+                                <option value="month" {% if period == 'month' %}selected{% endif %}>Mois</option>
+                                <option value="quarter" {% if period == 'quarter' %}selected{% endif %}>Trimestre</option>
+                                <option value="year" {% if period == 'year' %}selected{% endif %}>Année</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="month" class="form-label">Mois</label>
+                            <select class="form-select" id="month" name="month" {% if period == 'year' %}disabled{% endif %}>
+                                <option value="1" {% if month == 1 %}selected{% endif %}>Janvier</option>
+                                <option value="2" {% if month == 2 %}selected{% endif %}>Février</option>
+                                <option value="3" {% if month == 3 %}selected{% endif %}>Mars</option>
+                                <option value="4" {% if month == 4 %}selected{% endif %}>Avril</option>
+                                <option value="5" {% if month == 5 %}selected{% endif %}>Mai</option>
+                                <option value="6" {% if month == 6 %}selected{% endif %}>Juin</option>
+                                <option value="7" {% if month == 7 %}selected{% endif %}>Juillet</option>
+                                <option value="8" {% if month == 8 %}selected{% endif %}>Août</option>
+                                <option value="9" {% if month == 9 %}selected{% endif %}>Septembre</option>
+                                <option value="10" {% if month == 10 %}selected{% endif %}>Octobre</option>
+                                <option value="11" {% if month == 11 %}selected{% endif %}>Novembre</option>
+                                <option value="12" {% if month == 12 %}selected{% endif %}>Décembre</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="year" class="form-label">Année</label>
+                            <select class="form-select" id="year" name="year">
+                                {% for y in range(2023, 2031) %}
+                                    <option value="{{ y }}" {% if year == y %}selected{% endif %}>{{ y }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-filter me-2"></i>Filtrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Résumé de la période -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5>Résumé pour la période du {{ start_date.strftime('%d/%m/%Y') }} au {{ end_date.strftime('%d/%m/%Y') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Revenus</h6>
+                                    <h3 class="text-success">{{ total_income|round(2) }} €</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Dépenses</h6>
+                                    <h3 class="text-danger">{{ total_expenses|round(2) }} €</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">TVA collectée</h6>
+                                    <h3 class="text-primary">{{ total_tax|round(2) }} €</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Bénéfice net</h6>
+                                    <h3 class="{% if net_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        {{ net_profit|round(2) }} €
+                                    </h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0">
+                    <h5>Dépenses par catégorie</h5>
+                </div>
+                <div class="card-body">
+                    {% if expense_data %}
+                        <div style="position: relative; height: 250px;">
+                            <canvas id="expensesChart"></canvas>
+                        </div>
+                        <div class="mt-3">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Catégorie</th>
+                                            <th class="text-end">Montant</th>
+                                            <th class="text-end">%</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for category in expense_by_category %}
+                                            <tr>
+                                                <td>
+                                                    <span class="badge me-1" style="background-color: {{ category[1] }}; width: 10px; height: 10px; border-radius: 50%;"></span>
+                                                    {{ category[0] }}
+                                                </td>
+                                                <td class="text-end">{{ category[2]|round(2) }} €</td>
+                                                <td class="text-end">
+                                                    {% if total_expenses > 0 %}
+                                                        {{ ((category[2] / total_expenses) * 100)|round(1) }}%
+                                                    {% else %}
+                                                        0%
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                            <p>Aucune dépense enregistrée pour cette période</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0">
+                    <h5>Revenus par catégorie</h5>
+                </div>
+                <div class="card-body">
+                    {% if income_data %}
+                        <div style="position: relative; height: 250px;">
+                            <canvas id="incomeChart"></canvas>
+                        </div>
+                        <div class="mt-3">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Catégorie</th>
+                                            <th class="text-end">Montant</th>
+                                            <th class="text-end">%</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for category in income_by_category %}
+                                            <tr>
+                                                <td>
+                                                    <span class="badge me-1" style="background-color: {{ category[1] }}; width: 10px; height: 10px; border-radius: 50%;"></span>
+                                                    {{ category[0] }}
+                                                </td>
+                                                <td class="text-end">{{ category[2]|round(2) }} €</td>
+                                                <td class="text-end">
+                                                    {% if total_income > 0 %}
+                                                        {{ ((category[2] / total_income) * 100)|round(1) }}%
+                                                    {% else %}
+                                                        0%
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                            <p>Aucun revenu enregistré pour cette période</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rapports générés -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5>Rapports fiscaux générés</h5>
+                    <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#reportsCollapse" aria-expanded="true" aria-controls="reportsCollapse">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+                <div class="collapse show" id="reportsCollapse">
+                    <div class="card-body">
+                        {% if reports %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Titre</th>
+                                            <th>Type</th>
+                                            <th>Période</th>
+                                            <th>Revenus</th>
+                                            <th>Dépenses</th>
+                                            <th>Bénéfice</th>
+                                            <th>Généré le</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for report in reports %}
+                                            <tr>
+                                                <td>{{ report.title }}</td>
+                                                <td><span class="badge bg-secondary">{{ report.report_type }}</span></td>
+                                                <td>{{ report.start_date.strftime('%d/%m/%Y') }} - {{ report.end_date.strftime('%d/%m/%Y') }}</td>
+                                                <td class="text-success">{{ report.total_income|round(2) }} €</td>
+                                                <td class="text-danger">{{ report.total_expenses|round(2) }} €</td>
+                                                <td class="{% if report.net_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                                    {{ report.net_profit|round(2) }} €
+                                                </td>
+                                                <td>{{ report.created_at.strftime('%d/%m/%Y') }}</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-primary" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#reportModal{{ report.id }}">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Modals pour chaque rapport -->
+                            {% for report in reports %}
+                                <div class="modal fade" id="reportModal{{ report.id }}" tabindex="-1" aria-labelledby="reportModalLabel{{ report.id }}" aria-hidden="true">
+                                    <div class="modal-dialog modal-xl">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="reportModalLabel{{ report.id }}">{{ report.title }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                {% if report.report_html %}
+                                                    <div class="report-content">
+                                                        {{ report.report_html|safe }}
+                                                    </div>
+                                                {% else %}
+                                                    <div class="row">
+                                                        <div class="col-md-4 mb-3">
+                                                            <div class="card">
+                                                                <div class="card-body">
+                                                                    <h5 class="card-title">Revenus</h5>
+                                                                    <h3 class="text-success">{{ report.total_income|round(2) }} €</h3>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4 mb-3">
+                                                            <div class="card">
+                                                                <div class="card-body">
+                                                                    <h5 class="card-title">Dépenses</h5>
+                                                                    <h3 class="text-danger">{{ report.total_expenses|round(2) }} €</h3>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4 mb-3">
+                                                            <div class="card">
+                                                                <div class="card-body">
+                                                                    <h5 class="card-title">Bénéfice net</h5>
+                                                                    <h3 class="{% if report.net_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                                                        {{ report.net_profit|round(2) }} €
+                                                                    </h3>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <p class="alert alert-info">
+                                                        <i class="fas fa-info-circle me-2"></i>
+                                                        Ce rapport a été généré avec la version basique. Régénérez-le pour obtenir une analyse détaillée avec l'IA.
+                                                    </p>
+                                                {% endif %}
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                                <button type="button" class="btn btn-primary" onclick="window.print();">
+                                                    <i class="fas fa-print me-2"></i>Imprimer
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                                <p>Aucun rapport généré pour l'instant</p>
+                                <p class="text-muted">Utilisez le formulaire ci-dessous pour créer votre premier rapport</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Génération de rapport -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5>Générer un rapport fiscal</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('finance.generate_tax_report') }}" method="POST" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="title" class="form-label">Titre du rapport</label>
+                            <input type="text" class="form-control" id="title" name="title" required placeholder="Ex: Rapport TVA T1 2024">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="report_type" class="form-label">Type de rapport</label>
+                            <select class="form-select" id="report_type" name="report_type" required>
+                                <option value="mensuel">Mensuel</option>
+                                <option value="trimestriel">Trimestriel</option>
+                                <option value="annuel">Annuel</option>
+                                <option value="personnalisé">Période personnalisée</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="start_date" class="form-label">Date de début</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" required value="{{ start_date.strftime('%Y-%m-%d') }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="end_date" class="form-label">Date de fin</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" required value="{{ end_date.strftime('%Y-%m-%d') }}">
+                        </div>
+                        <div class="col-12">
+                            <div class="alert alert-info" role="alert">
+                                <i class="fas fa-info-circle me-2"></i>
+                                {% if has_openai_key %}
+                                    Les rapports seront générés avec une analyse avancée propulsée par l'IA. Cette analyse inclut des conseils personnalisés et des visualisations pertinentes.
+                                {% else %}
+                                    Installez une clé API OpenAI pour obtenir des rapports enrichis avec analyse IA avancée.
+                                {% endif %}
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-file-export me-2"></i>Générer le rapport
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gestion des filtres de période
+        const periodSelect = document.getElementById('period');
+        const monthSelect = document.getElementById('month');
+        
+        periodSelect.addEventListener('change', function() {
+            if (this.value === 'year') {
+                monthSelect.disabled = true;
+            } else {
+                monthSelect.disabled = false;
+            }
+        });
+
+        // Graphique des dépenses
+        {% if expense_data %}
+            const expensesCtx = document.getElementById('expensesChart').getContext('2d');
+            new Chart(expensesCtx, {
+                type: 'pie',
+                data: {
+                    labels: {{ expense_labels|tojson }},
+                    datasets: [{
+                        data: {{ expense_data|tojson }},
+                        backgroundColor: {{ expense_colors|tojson }},
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 15
+                            }
+                        }
+                    }
+                }
+            });
+        {% endif %}
+
+        // Graphique des revenus
+        {% if income_data %}
+            const incomeCtx = document.getElementById('incomeChart').getContext('2d');
+            new Chart(incomeCtx, {
+                type: 'pie',
+                data: {
+                    labels: {{ income_labels|tojson }},
+                    datasets: [{
+                        data: {{ income_data|tojson }},
+                        backgroundColor: {{ income_colors|tojson }},
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 15
+                            }
+                        }
+                    }
+                }
+            });
+        {% endif %}
+    });
+</script>
+{% endblock %}

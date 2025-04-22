@@ -1,0 +1,23 @@
+<svg width="120" height="60" viewBox="0 0 120 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fond du logo Orange Money -->
+  <rect width="120" height="60" rx="8" fill="#F0F0F0"/>
+  
+  <!-- Logo Orange -->
+  <g transform="translate(10, 5)">
+    <!-- Carré orange avec coin arrondi -->
+    <rect x="5" y="5" width="30" height="30" rx="5" fill="#FF6600"/>
+    
+    <!-- Texte ORANGE en blanc -->
+    <text x="20" y="22" font-family="Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="white">ORANGE</text>
+    
+    <!-- MONEY texte -->
+    <text x="75" y="22" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#FF6600">MONEY</text>
+    
+    <!-- Symbole du dollar stylisé -->
+    <path d="M65 15C63 15 61 17 61 19V21H58C57 21 56 22 56 23C56 24 57 25 58 25H61V32C61 33 62 34 63 34C64 34 65 33 65 32V25H70C71 25 72 24 72 23C72 22 71 21 70 21H65V19C65 18 66 17 67 17H70C71 17 72 16 72 15C72 14 71 13 70 13H65Z" fill="#FF6600"/>
+  </g>
+  
+  <!-- Bande inférieure avec la description -->
+  <rect x="0" y="48" width="120" height="12" fill="#FF6600"/>
+  <text x="60" y="57" font-family="Arial, sans-serif" font-size="8" font-weight="bold" text-anchor="middle" fill="white">PAIEMENT MOBILE</text>
+</svg>

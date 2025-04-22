@@ -1,0 +1,388 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ language.get_text('Paiement mobile') }}{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+    /* Style pour les cartes radio */
+    .payment-option-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        overflow: hidden;
+        height: 100%;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .payment-option-card .payment-header {
+        padding: 8px;
+        text-align: center;
+        font-weight: bold;
+        color: white;
+    }
+    
+    .payment-option-card.vodacom .payment-header {
+        background-color: #E60000;
+    }
+    
+    .payment-option-card.orange .payment-header {
+        background-color: #FF6600;
+    }
+    
+    .payment-option-card.airtel .payment-header {
+        background-color: #E40000;
+    }
+    
+    .payment-option-card .payment-body {
+        padding: 15px;
+        text-align: center;
+    }
+    
+    .payment-option-card img {
+        width: 100%;
+        max-width: 120px;
+        height: auto;
+        margin-bottom: 10px;
+        transition: transform 0.3s ease;
+    }
+    
+    .payment-option-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .payment-option-card:hover img {
+        transform: scale(1.05);
+    }
+    
+    .form-check-input:checked + .payment-option-card {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), 0.3), 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-check-input:checked + .payment-option-card.vodacom {
+        border-color: #E60000;
+        box-shadow: 0 0 0 3px rgba(230, 0, 0, 0.3), 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-check-input:checked + .payment-option-card.orange {
+        border-color: #FF6600;
+        box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.3), 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-check-input:checked + .payment-option-card.airtel {
+        border-color: #E40000;
+        box-shadow: 0 0 0 3px rgba(228, 0, 0, 0.3), 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Style pour les étapes */
+    .steps-container {
+        counter-reset: step;
+    }
+    
+    .step-item {
+        position: relative;
+        padding-left: 40px;
+        margin-bottom: 15px;
+    }
+    
+    .step-item:before {
+        content: counter(step);
+        counter-increment: step;
+        width: 30px;
+        height: 30px;
+        line-height: 30px;
+        background: var(--bs-primary);
+        color: white;
+        border-radius: 50%;
+        position: absolute;
+        left: 0;
+        top: 0;
+        text-align: center;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-primary text-white py-3 d-flex align-items-center gap-3">
+                    <img src="{{ url_for('static', filename='img/unipesa-logo.svg') }}" alt="UniPesa Logo" height="40">
+                    <h3 class="mb-0">{{ language.get_text('Paiement Mobile') }}</h3>
+                </div>
+                <div class="card-body p-4">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    {% if plan %}
+                    <div class="alert alert-primary mb-4 bg-primary text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">{{ language.get_text(plan.display_name) }}</h5>
+                                <p class="mb-0">{{ language.get_text('Abonnement mensuel') }}</p>
+                            </div>
+                            <div class="text-end">
+                                <h4 class="mb-0 fw-bold">{{ "%.2f"|format(plan.price) }} {% if plan.currency == 'USD' %}${% else %}€{% endif %}</h4>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <p class="lead mb-4">{{ language.get_text('Payez facilement avec votre mobile en quelques étapes simples.') }}</p>
+                    
+                    <form method="POST" action="{{ url_for('unipesa.mobile_payment_page') }}" class="needs-validation" novalidate>
+                        <!-- Sélection de l'opérateur mobile -->
+                        <div class="mb-4">
+                            <label class="form-label fs-5 mb-3">{{ language.get_text('Choisissez votre opérateur mobile') }} <span class="text-danger">*</span></label>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="form-check visually-hidden">
+                                        <input class="form-check-input" type="radio" name="mobile_operator" id="mpesa" value="mpesa" checked>
+                                    </div>
+                                    <label class="payment-option-card vodacom" for="mpesa">
+                                        <div class="payment-header">
+                                            VODACOM
+                                        </div>
+                                        <div class="payment-body">
+                                            <img src="{{ url_for('static', filename='img/mpesa-logo.svg') }}" alt="M-Pesa">
+                                            <div class="fw-bold">M-Pesa</div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check visually-hidden">
+                                        <input class="form-check-input" type="radio" name="mobile_operator" id="orange" value="orange">
+                                    </div>
+                                    <label class="payment-option-card orange" for="orange">
+                                        <div class="payment-header">
+                                            ORANGE
+                                        </div>
+                                        <div class="payment-body">
+                                            <img src="{{ url_for('static', filename='img/orange-money-logo.svg') }}" alt="Orange Money">
+                                            <div class="fw-bold">Orange Money</div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check visually-hidden">
+                                        <input class="form-check-input" type="radio" name="mobile_operator" id="airtel" value="airtel">
+                                    </div>
+                                    <label class="payment-option-card airtel" for="airtel">
+                                        <div class="payment-header">
+                                            AIRTEL
+                                        </div>
+                                        <div class="payment-body">
+                                            <img src="{{ url_for('static', filename='img/airtel-money-logo.svg') }}" alt="Airtel Money">
+                                            <div class="fw-bold">Airtel Money</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="phone" class="form-label fs-5">{{ language.get_text('Numéro de téléphone') }} <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text"><i class="bi bi-phone"></i></span>
+                                <input type="tel" class="form-control" id="phone" name="phone" placeholder="+243xxxxxxxxx" required>
+                            </div>
+                            <div class="form-text">{{ language.get_text('Format: +243xxxxxxxxx (9 chiffres après le code pays)') }}</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="amount" class="form-label fs-5">{{ language.get_text('Montant') }} <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text"><i class="bi bi-cash-coin"></i></span>
+                                <input type="number" step="0.01" class="form-control" id="amount" name="amount" required 
+                                       {% if plan %}value="{{ plan.price }}"{% endif %} readonly>
+                                <select class="form-select" id="currency" name="currency" style="max-width: 100px;">
+                                    <option value="USD" selected>USD</option>
+                                    <option value="CDF">CDF</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {% if not plan %}
+                        <div class="mb-4">
+                            <label for="plan_id" class="form-label fs-5">{{ language.get_text('Formule d\'abonnement') }}</label>
+                            <select class="form-select form-select-lg" id="plan_id" name="plan_id">
+                                <option value="1">{{ language.get_text('Basique - 10 USD/mois') }}</option>
+                                <option value="2">{{ language.get_text('Standard - 25 USD/mois') }}</option>
+                                <option value="3">{{ language.get_text('Premium - 50 USD/mois') }}</option>
+                            </select>
+                        </div>
+                        {% else %}
+                        <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                        {% endif %}
+
+                        <div class="card bg-light mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">
+                                    <i class="bi bi-info-circle-fill me-2 text-primary"></i>
+                                    {{ language.get_text('Comment ça marche?') }}
+                                </h5>
+                                <div class="steps-container">
+                                    <div class="step-item">
+                                        <h6 class="mb-1">{{ language.get_text('Sélectionnez votre opérateur') }}</h6>
+                                        <p class="text-muted mb-0 small">{{ language.get_text('Choisissez entre Vodacom (M-Pesa), Orange Money ou Airtel Money') }}</p>
+                                    </div>
+                                    <div class="step-item">
+                                        <h6 class="mb-1">{{ language.get_text('Entrez votre numéro') }}</h6>
+                                        <p class="text-muted mb-0 small">{{ language.get_text('Saisissez votre numéro de téléphone associé à votre compte mobile money') }}</p>
+                                    </div>
+                                    <div class="step-item">
+                                        <h6 class="mb-1">{{ language.get_text('Validez le paiement') }}</h6>
+                                        <p class="text-muted mb-0 small">{{ language.get_text('Cliquez sur "Payer maintenant" pour initier la transaction') }}</p>
+                                    </div>
+                                    <div class="step-item">
+                                        <h6 class="mb-1">{{ language.get_text('Confirmez sur votre téléphone') }}</h6>
+                                        <p class="text-muted mb-0 small">{{ language.get_text('Suivez les instructions sur votre téléphone pour compléter le paiement') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg py-3">
+                                <i class="bi bi-credit-card me-2"></i>{{ language.get_text('Payer maintenant') }}
+                            </button>
+                            <a href="{{ url_for('subscription.plans') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>{{ language.get_text('Retour aux formules') }}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="text-center mt-4 p-3 bg-light rounded shadow-sm">
+                <p class="mb-3">
+                    <i class="bi bi-shield-lock me-2 text-success"></i>
+                    <strong>{{ language.get_text('Paiement sécurisé') }}</strong>
+                </p>
+                <p class="text-muted small mb-3">
+                    {{ language.get_text('Toutes les transactions sont sécurisées et chiffrées. Vos données de paiement ne sont pas stockées.') }}
+                </p>
+                <div class="d-flex justify-content-center align-items-center gap-4">
+                    <div class="text-center">
+                        <img src="{{ url_for('static', filename='img/mpesa-logo.svg') }}" alt="M-Pesa" height="40">
+                    </div>
+                    <div class="text-center">
+                        <img src="{{ url_for('static', filename='img/orange-money-logo.svg') }}" alt="Orange Money" height="40">
+                    </div>
+                    <div class="text-center">
+                        <img src="{{ url_for('static', filename='img/airtel-money-logo.svg') }}" alt="Airtel Money" height="40">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Valider le formulaire lors de la soumission
+    (function() {
+        'use strict';
+        
+        // Sélectionner tous les éléments de carte de paiement
+        const paymentCards = document.querySelectorAll('.payment-option-card');
+        const radioInputs = document.querySelectorAll('input[name="mobile_operator"]');
+        const phoneInput = document.getElementById('phone');
+        
+        // Ajouter des écouteurs d'événements à toutes les cartes
+        paymentCards.forEach(card => {
+            card.addEventListener('click', function() {
+                // Trouver l'élément radio associé
+                const radioId = this.getAttribute('for');
+                const radioInput = document.getElementById(radioId);
+                
+                // Cocher le bouton radio correspondant
+                radioInput.checked = true;
+                
+                // Mettre à jour le format du numéro de téléphone
+                updatePhoneFormat(radioInput.value);
+                
+                // Effet visuel de sélection
+                paymentCards.forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+        
+        // Fonction pour mettre à jour le format du numéro de téléphone
+        function updatePhoneFormat(operator) {
+            let placeholder = '+243xxxxxxxxx';
+            
+            switch(operator) {
+                case 'mpesa':
+                    placeholder = '+243 8xx xxx xxx (Vodacom)';
+                    break;
+                case 'orange':
+                    placeholder = '+243 9xx xxx xxx (Orange)';
+                    break;
+                case 'airtel':
+                    placeholder = '+243 9xx xxx xxx (Airtel)';
+                    break;
+            }
+            
+            phoneInput.placeholder = placeholder;
+        }
+        
+        // Initialiser avec l'opérateur par défaut
+        updatePhoneFormat('mpesa');
+        
+        // Validation du formulaire
+        const forms = document.querySelectorAll('.needs-validation');
+        
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                form.classList.add('was-validated');
+            }, false);
+        });
+        
+        // Mettre à jour le montant en fonction du plan sélectionné
+        const planSelect = document.getElementById('plan_id');
+        const amountInput = document.getElementById('amount');
+        
+        if (planSelect && amountInput) {
+            // Définir les prix des plans
+            const planPrices = {
+                '1': 10,  // Basique
+                '2': 25,  // Standard
+                '3': 50   // Premium
+            };
+            
+            // Initialiser avec le prix du plan sélectionné
+            amountInput.value = planPrices[planSelect.value];
+            
+            // Mettre à jour le montant lorsque le plan change
+            planSelect.addEventListener('change', function() {
+                amountInput.value = planPrices[this.value];
+            });
+        }
+        
+        // Animation visuelle lors de la soumission du formulaire
+        document.querySelector('button[type="submit"]').addEventListener('click', function() {
+            if (document.querySelector('form').checkValidity()) {
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>{{ language.get_text("Traitement en cours...") }}';
+                this.disabled = true;
+            }
+        });
+    })();
+</script>
+{% endblock %}

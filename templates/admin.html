@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Assistant Perso</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .admin-header {
+            border-bottom: 1px solid var(--bs-border-color);
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+        }
+        .conversation-card {
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .conversation-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .message-user {
+            background-color: rgba(13, 110, 253, 0.1);
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .message-assistant {
+            background-color: rgba(25, 135, 84, 0.1);
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .admin-actions {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-4">
+        <div class="admin-header d-flex justify-content-between align-items-center">
+            <h1><i class="fas fa-lock me-2"></i>Admin Panel</h1>
+            <div>
+                <button id="themeToggle" class="btn btn-sm btn-outline-secondary me-2">
+                    <i class="fas fa-moon" id="darkIcon"></i>
+                    <i class="fas fa-sun d-none" id="lightIcon"></i>
+                </button>
+                <a href="/" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Retour à l'application
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats Summary -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-comments me-2"></i>Conversations</h5>
+                        <p class="card-text display-4">{{ conversations|length }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-message me-2"></i>Messages</h5>
+                        <p class="card-text display-4">{{ total_messages }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-calendar me-2"></i>Dernière activité</h5>
+                        <p class="card-text">{{ last_activity }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-search me-2"></i>Rechercher dans les conversations</h5>
+            </div>
+            <div class="card-body">
+                <form id="searchForm" action="{{ url_for('admin_search') }}" method="GET" class="row g-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="searchInput" name="q" placeholder="Chercher un mot-clé..." value="{{ search_term }}">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search me-1"></i>Rechercher
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="btn-group w-100" role="group">
+                            <button type="button" class="btn btn-outline-secondary active" data-filter="all">Tous</button>
+                            <button type="button" class="btn btn-outline-secondary" data-filter="today">Aujourd'hui</button>
+                            <button type="button" class="btn btn-outline-secondary" data-filter="week">Cette semaine</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-muted">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small><i class="fas fa-info-circle me-1"></i>Vous consultez les conversations {{ start_idx }} à 
+                    {{ end_idx }} sur {{ total_conversations }}</small>
+                    {% if search_term %}
+                    <span class="badge bg-primary">Recherche: "{{ search_term }}"</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Conversation List -->
+        <h2 class="mb-3"><i class="fas fa-history me-2"></i>Historique des conversations</h2>
+        
+        <div class="row">
+            <div class="col-md-12">
+                {% for conversation in conversations %}
+                <div class="card conversation-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <span class="badge bg-secondary me-2">Conv #{{ conversation.id }}</span>
+                            <small>{{ conversation.messages.count() }} messages</small>
+                        </h5>
+                        <div>
+                            <small class="text-muted me-3">Créée: {{ conversation.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                            <small class="text-muted">Dernière mise à jour: {{ conversation.last_updated.strftime('%d/%m/%Y %H:%M') }}</small>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="conversation-messages">
+                            {% set messages = conversation.messages.order_by(Message.timestamp).all() %}
+                            {% for message in messages %}
+                            <div class="message-{{ message.role }}">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong>{{ message.role|title }}</strong>
+                                    <small class="text-muted">{{ message.timestamp.strftime('%d/%m/%Y %H:%M') }}</small>
+                                </div>
+                                <p class="mb-0">{{ message.content }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="admin-actions d-flex justify-content-between align-items-center mt-3">
+                            <button type="button" class="btn btn-sm btn-outline-primary toggle-messages">
+                                <i class="fas fa-eye me-1"></i>Afficher/masquer les messages
+                            </button>
+                            <form method="POST" action="{{ url_for('admin_delete_conversation', conversation_id=conversation.id) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette conversation ?');">
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash me-1"></i>Supprimer
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>Aucune conversation trouvée.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        {% if pagination.pages > 1 %}
+        <!-- Pagination -->
+        <nav aria-label="Pagination des conversations" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {{ 'disabled' if pagination.page == 1 else '' }}">
+                    <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.prev_num, q=search_term) if pagination.has_prev else '#' }}" {{ 'tabindex="-1" aria-disabled="true"' if pagination.page == 1 else '' }}>Précédent</a>
+                </li>
+                
+                {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == pagination.page %}
+                        <li class="page-item active">
+                            <a class="page-link" href="{{ url_for(request.endpoint, page=page_num, q=search_term) }}">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for(request.endpoint, page=page_num, q=search_term) }}">{{ page_num }}</a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">...</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                <li class="page-item {{ 'disabled' if pagination.page == pagination.pages else '' }}">
+                    <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.next_num, q=search_term) if pagination.has_next else '#' }}">Suivant</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Admin JavaScript -->
+    <script src="{{ url_for('static', filename='admin.js') }}"></script>
+</body>
+</html>

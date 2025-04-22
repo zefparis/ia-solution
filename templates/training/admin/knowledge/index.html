@@ -1,0 +1,189 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('training_admin_knowledge_title', 'Gestion de la base de connaissances') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('training.training_dashboard') }}">{{ _('training_dashboard', 'Formation') }}</a></li>
+                    <li class="breadcrumb-item active">{{ _('training_admin_knowledge_title', 'Gestion de la base de connaissances') }}</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="display-5">{{ _('training_admin_knowledge_title', 'Gestion de la base de connaissances') }}</h1>
+                <a href="{{ url_for('training.create_knowledge') }}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-1"></i> {{ _('training_admin_create_article', 'Créer un article') }}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des articles -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">{{ _('training_admin_all_articles', 'Tous les articles') }}</h5>
+                        <form class="d-flex" method="GET">
+                            <input class="form-control me-2" type="search" name="q" placeholder="{{ _('training_search_placeholder', 'Rechercher...') }}" value="{{ search_query or '' }}">
+                            <button class="btn btn-outline-primary" type="submit">{{ _('search', 'Rechercher') }}</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if articles %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('training_knowledge_title', 'Titre') }}</th>
+                                    <th>{{ _('training_knowledge_category', 'Catégorie') }}</th>
+                                    <th>{{ _('training_knowledge_status', 'Statut') }}</th>
+                                    <th>{{ _('training_knowledge_views', 'Vues') }}</th>
+                                    <th>{{ _('training_knowledge_helpful', 'Utile') }}</th>
+                                    <th>{{ _('training_knowledge_created', 'Créé le') }}</th>
+                                    <th>{{ _('actions', 'Actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for article in articles %}
+                                <tr>
+                                    <td>{{ article.title }}</td>
+                                    <td>{{ article.category }}</td>
+                                    <td>
+                                        {% if article.status == 'draft' %}
+                                            <span class="badge bg-secondary">{{ _('training_status_draft', 'Brouillon') }}</span>
+                                        {% elif article.status == 'published' %}
+                                            <span class="badge bg-success">{{ _('training_status_published', 'Publié') }}</span>
+                                        {% else %}
+                                            <span class="badge bg-dark">{{ _('training_status_archived', 'Archivé') }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ article.view_count }}</td>
+                                    <td>
+                                        {% if article.helpful_votes + article.unhelpful_votes > 0 %}
+                                            {% set helpful_percent = (article.helpful_votes / (article.helpful_votes + article.unhelpful_votes) * 100)|int %}
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress flex-grow-1 me-2" style="height: 6px;">
+                                                    <div class="progress-bar {% if helpful_percent >= 75 %}bg-success{% elif helpful_percent >= 50 %}bg-info{% elif helpful_percent >= 25 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                         style="width: {{ helpful_percent }}%"></div>
+                                                </div>
+                                                <span class="small">{{ helpful_percent }}%</span>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">{{ _('training_knowledge_no_votes', 'Aucun vote') }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ article.created_at.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('training.view_knowledge', article_id=article.id) }}" class="btn btn-sm btn-outline-primary" title="{{ _('view', 'Voir') }}">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('training.edit_knowledge', article_id=article.id) }}" class="btn btn-sm btn-outline-secondary" title="{{ _('edit', 'Modifier') }}">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        {{ _('training_knowledge_no_articles', 'Aucun article trouvé. Créez votre premier article en cliquant sur le bouton "Créer un article".') }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">{{ _('training_knowledge_stats_title', 'Statistiques générales') }}</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ _('training_knowledge_total_articles', 'Nombre d\'articles') }}
+                            <span class="badge bg-primary rounded-pill">{{ stats.total_articles }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ _('training_knowledge_published_articles', 'Articles publiés') }}
+                            <span class="badge bg-success rounded-pill">{{ stats.published_articles }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ _('training_knowledge_draft_articles', 'Articles en brouillon') }}
+                            <span class="badge bg-secondary rounded-pill">{{ stats.draft_articles }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ _('training_knowledge_total_views', 'Nombre total de vues') }}
+                            <span class="badge bg-info rounded-pill">{{ stats.total_views }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ _('training_knowledge_average_score', 'Score moyen d\'utilité') }}
+                            <span class="badge bg-light text-dark rounded-pill">{{ stats.average_score }}%</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">{{ _('training_knowledge_top_articles', 'Articles les plus consultés') }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if top_articles %}
+                        <ol class="list-group list-group-numbered">
+                            {% for article in top_articles %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div class="ms-2 me-auto">
+                                        <a href="{{ url_for('training.view_knowledge', article_id=article.id) }}">{{ article.title }}</a>
+                                    </div>
+                                    <span class="badge bg-primary rounded-pill">{{ article.view_count }}</span>
+                                </li>
+                            {% endfor %}
+                        </ol>
+                    {% else %}
+                        <p class="text-muted">{{ _('training_knowledge_no_views', 'Aucune donnée de consultation disponible.') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">{{ _('training_knowledge_categories', 'Catégories') }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if categories %}
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for category in categories %}
+                                <a href="{{ url_for('training.admin_knowledge', category=category) }}" class="btn btn-outline-secondary btn-sm">
+                                    {{ category }}
+                                    <span class="badge bg-secondary ms-1">{{ category_counts[category] }}</span>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">{{ _('training_knowledge_no_categories', 'Aucune catégorie définie.') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

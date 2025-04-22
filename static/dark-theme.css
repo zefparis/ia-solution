@@ -1,0 +1,370 @@
+/* Variables communes pour les deux thèmes */
+:root {
+    /* Couleurs standards */
+    --bs-primary: #0d6efd;
+    --bs-secondary: #6c757d;
+    --bs-success: #198754;
+    --bs-info: #0dcaf0;
+    --bs-warning: #ffc107;
+    --bs-danger: #dc3545;
+    --bs-light: #f8f9fa;
+    --bs-dark: #212529;
+    
+    /* Couleurs en RGB pour utilisation avec rgba() */
+    --bs-primary-rgb: 13, 110, 253;
+    --bs-secondary-rgb: 108, 117, 125;
+    --bs-success-rgb: 25, 135, 84;
+    --bs-info-rgb: 13, 202, 240;
+    --bs-warning-rgb: 255, 193, 7;
+    --bs-danger-rgb: 220, 53, 69;
+    --bs-light-rgb: 248, 249, 250;
+    --bs-dark-rgb: 33, 37, 41;
+    
+    /* Couleurs spécifiques pour composantes UI - mode clair */
+    --card-bg-light: #ffffff;
+    --card-border-light: rgba(0, 0, 0, 0.125);
+    --card-text-light: #212529;
+    --card-header-bg-light: #f8f9fa;
+    --card-header-text-light: #212529;
+    --text-muted-light: #6c757d;
+    
+    /* Couleurs spécifiques pour composantes UI - mode sombre */
+    --card-bg-dark: #2b2b2b;
+    --card-border-dark: #444444;
+    --card-text-dark: #ffffff;
+    --card-header-bg-dark: #343a40;
+    --card-header-text-dark: #f8f9fa;
+    --text-muted-dark: #adb5bd;
+    
+    /* Variables pour les sections */
+    --section-bg-light: #f8f9fa;
+    --section-text-light: #212529;
+    
+    --section-bg-dark: #343a40;
+    --section-text-dark: #f8f9fa;
+    
+    /* Variantes de boutons - light mode */
+    --btn-primary-text-light: white;
+    --btn-primary-bg-light: #0d6efd;
+    --btn-primary-border-light: #0a58ca;
+    
+    --btn-outline-text-light: #0d6efd;
+    --btn-outline-bg-light: transparent;
+    --btn-outline-border-light: #0d6efd;
+    
+    /* Variantes de boutons - dark mode */
+    --btn-primary-text-dark: white;
+    --btn-primary-bg-dark: #0d6efd;
+    --btn-primary-border-dark: #0a58ca;
+    
+    --btn-outline-text-dark: #f8f9fa;
+    --btn-outline-bg-dark: transparent;
+    --btn-outline-border-dark: #f8f9fa;
+}
+
+/* Mode sombre - mode par défaut */
+[data-bs-theme="dark"] {
+    /* Variables globales Bootstrap */
+    --bs-body-color: #f8f9fa;
+    --bs-body-color-rgb: 248, 249, 250;
+    --bs-body-bg: #212529;
+    --bs-body-bg-rgb: 33, 37, 41;
+    --bs-emphasis-color: #fff;
+    --bs-emphasis-color-rgb: 255, 255, 255;
+    --bs-secondary-color: rgba(248, 249, 250, 0.75);
+    --bs-secondary-color-rgb: 248, 249, 250;
+    --bs-tertiary-color: rgba(248, 249, 250, 0.5);
+    --bs-tertiary-color-rgb: 248, 249, 250;
+    --bs-border-color: #495057;
+    --bs-border-color-translucent: rgba(255, 255, 255, 0.15);
+    --bs-tertiary-bg: #343a40;
+    
+    /* Variables spécifiques à l'application */
+    --user-message-bg: #0d6efd;
+    --user-message-color: #ffffff;
+    --user-message-border: #0a58ca;
+    --assistant-message-bg: #2b2b2b;
+    --assistant-message-color: #f8f9fa;
+    --assistant-message-border: #444444;
+    --chat-bg: #212529;
+    --text-color: #f8f9fa;
+    
+    /* Utiliser les variables dark pour les cartes */
+    --card-bg: var(--card-bg-dark);
+    --card-border: var(--card-border-dark);
+    --card-text: var(--card-text-dark);
+    --card-header-bg: var(--card-header-bg-dark);
+    --card-header-text: var(--card-header-text-dark);
+    --text-muted: var(--text-muted-dark);
+    
+    /* Utiliser les variables dark pour les sections */
+    --section-bg: var(--section-bg-dark);
+    --section-text: var(--section-text-dark);
+    
+    /* Utiliser les variables dark pour les boutons */
+    --btn-primary-text: var(--btn-primary-text-dark);
+    --btn-primary-bg: var(--btn-primary-bg-dark);
+    --btn-primary-border: var(--btn-primary-border-dark);
+    
+    --btn-outline-text: var(--btn-outline-text-dark);
+    --btn-outline-bg: var(--btn-outline-bg-dark);
+    --btn-outline-border: var(--btn-outline-border-dark);
+}
+
+/* Mode clair */
+[data-bs-theme="light"] {
+    /* Variables globales Bootstrap */
+    --bs-body-color: #212529;
+    --bs-body-color-rgb: 33, 37, 41;
+    --bs-body-bg: #ffffff;
+    --bs-body-bg-rgb: 255, 255, 255;
+    --bs-emphasis-color: #000;
+    --bs-emphasis-color-rgb: 0, 0, 0;
+    --bs-secondary-color: rgba(33, 37, 41, 0.75);
+    --bs-secondary-color-rgb: 33, 37, 41;
+    --bs-tertiary-color: rgba(33, 37, 41, 0.5);
+    --bs-tertiary-color-rgb: 33, 37, 41;
+    --bs-border-color: #dee2e6;
+    --bs-border-color-translucent: rgba(0, 0, 0, 0.175);
+    --bs-tertiary-bg: #f8f9fa;
+    
+    /* Variables spécifiques à l'application */
+    --user-message-bg: #e9f5ff;
+    --user-message-color: #0a58ca;
+    --user-message-border: #b6d4fe;
+    --assistant-message-bg: #f1f1f2;
+    --assistant-message-color: #212529;
+    --assistant-message-border: #d3d3d5;
+    --chat-bg: white;
+    --text-color: #212529;
+    
+    /* Utiliser les variables light pour les cartes */
+    --card-bg: var(--card-bg-light);
+    --card-border: var(--card-border-light);
+    --card-text: var(--card-text-light);
+    --card-header-bg: var(--card-header-bg-light);
+    --card-header-text: var(--card-header-text-light);
+    --text-muted: var(--text-muted-light);
+    
+    /* Utiliser les variables light pour les sections */
+    --section-bg: var(--section-bg-light);
+    --section-text: var(--section-text-light);
+    
+    /* Utiliser les variables light pour les boutons */
+    --btn-primary-text: var(--btn-primary-text-light);
+    --btn-primary-bg: var(--btn-primary-bg-light);
+    --btn-primary-border: var(--btn-primary-border-light);
+    
+    --btn-outline-text: var(--btn-outline-text-light);
+    --btn-outline-bg: var(--btn-outline-bg-light);
+    --btn-outline-border: var(--btn-outline-border-light);
+}
+
+/* Ajustements spécifiques au thème pour les différentes parties de l'application */
+.bg-light {
+    background-color: var(--section-bg) !important;
+    color: var(--section-text) !important;
+}
+
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+small.text-muted, .card small.text-muted, .pricing-card small.text-muted {
+    color: var(--text-muted) !important;
+    opacity: 0.9;
+}
+
+/* Cartes basées sur nos variables personnalisées */
+.card, .feature-card, .pricing-card, .home-feature-card, .home-pricing-card {
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--card-border) !important;
+    color: var(--card-text) !important;
+    border-radius: 0.25rem;
+    box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
+    height: 100%;
+    margin-bottom: 1rem;
+}
+
+.pricing-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.pricing-card .card-header {
+    background-color: var(--bs-tertiary-bg) !important;
+    border-bottom: 1px solid var(--card-border) !important;
+    color: var(--card-text) !important;
+    padding: 0.75rem 1.25rem;
+}
+
+.pricing-card .card-body {
+    flex: 1 1 auto;
+    padding: 1.25rem;
+    background-color: var(--card-bg) !important;
+    color: var(--card-text) !important;
+}
+
+.pricing-card.border-primary {
+    border-color: var(--bs-primary) !important;
+}
+
+.pricing-card.border-primary .card-header {
+    background-color: var(--bs-primary) !important;
+    color: white !important;
+}
+
+/* Autres card-headers et footers pour compatibilité */
+.card-header, .card-footer {
+    background-color: var(--bs-tertiary-bg) !important;
+    border-color: var(--bs-border-color) !important;
+    color: var(--bs-body-color) !important;
+}
+
+/* Style pour les sections "Comment ça marche" */
+.comment-ca-marche-card {
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--card-border) !important;
+    color: var(--card-text) !important;
+    border-radius: 0.25rem;
+    box-shadow: 0 .125rem .25rem rgba(0,0,0,.15);
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.table {
+    color: var(--bs-body-color) !important;
+    border-color: var(--bs-border-color) !important;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: var(--bs-tertiary-bg) !important;
+}
+
+.form-control, .form-select {
+    background-color: var(--bs-body-bg) !important;
+    color: var(--bs-body-color) !important;
+    border-color: var(--bs-border-color) !important;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--bs-primary) !important;
+}
+
+.input-group-text {
+    background-color: var(--bs-tertiary-bg) !important;
+    color: var(--bs-body-color) !important;
+    border-color: var(--bs-border-color) !important;
+}
+
+/* Navigation et fond */
+.navbar-dark {
+    background-color: var(--bs-dark) !important;
+}
+
+.navbar-light {
+    background-color: var(--bs-light) !important;
+}
+
+.dropdown-menu {
+    background-color: var(--bs-body-bg) !important;
+    color: var(--bs-body-color) !important;
+    border-color: var(--bs-border-color-translucent) !important;
+}
+
+.dropdown-item {
+    color: var(--bs-body-color) !important;
+}
+
+.dropdown-item:hover {
+    background-color: var(--bs-tertiary-bg) !important;
+}
+
+/* Ajuster les polices pour une meilleure lisibilité */
+body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+    color: var(--bs-body-color) !important;
+    background-color: var(--bs-body-bg) !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 500 !important;
+    color: var(--bs-emphasis-color) !important;
+}
+
+/* Améliorer le contraste des liens */
+a {
+    color: var(--bs-primary) !important;
+    text-decoration: none !important;
+}
+
+a:hover {
+    color: var(--bs-primary-dark) !important;
+    text-decoration: underline !important;
+}
+
+/* Améliorer le contraste des boutons outline sur fond sombre */
+.btn-outline-primary {
+    color: white !important;
+    border-color: var(--bs-primary) !important;
+    background-color: rgba(13, 110, 253, 0.15) !important;
+}
+
+.btn-outline-primary:hover {
+    color: white !important;
+    background-color: var(--bs-primary) !important;
+}
+
+/* Améliorer tous les boutons outline pour un meilleur contraste */
+[data-bs-theme="dark"] .btn-outline-secondary,
+[data-bs-theme="dark"] .btn-outline-success,
+[data-bs-theme="dark"] .btn-outline-danger,
+[data-bs-theme="dark"] .btn-outline-warning,
+[data-bs-theme="dark"] .btn-outline-info {
+    color: white !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Messages chat */
+.user-message {
+    background-color: var(--user-message-bg) !important;
+    color: var(--user-message-color) !important;
+    border: 1px solid var(--user-message-border) !important;
+}
+
+.assistant-message {
+    background-color: var(--assistant-message-bg) !important;
+    color: var(--assistant-message-color) !important;
+    border: 1px solid var(--assistant-message-border) !important;
+}
+
+.chat-container {
+    background-color: var(--chat-bg) !important;
+}
+
+/* Spécifique formulaires */
+label {
+    color: var(--bs-body-color) !important;
+}
+
+.form-text {
+    color: var(--bs-tertiary-color) !important;
+}
+
+.btn-primary, .btn-secondary, .btn-success, .btn-danger, .btn-warning, .btn-info {
+    color: white !important;
+}
+
+/* Footer */
+.footer {
+    background-color: var(--bs-dark) !important;
+    color: var(--bs-light) !important;
+}

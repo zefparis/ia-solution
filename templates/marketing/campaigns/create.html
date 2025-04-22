@@ -1,0 +1,100 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('campaign_create_title') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">{{ _('campaign_create_title', 'Créer une nouvelle campagne') }}</h1>
+            
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('marketing.create_campaign') }}">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">{{ _('campaign_name', 'Nom de la campagne') }} *</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="campaign_type" class="form-label">{{ _('campaign_type', 'Type de campagne') }} *</label>
+                            <select class="form-select" id="campaign_type" name="campaign_type" required>
+                                <option value="" disabled selected>{{ _('select_type', 'Sélectionnez un type') }}</option>
+                                <option value="email">{{ _('campaign_type_email', 'Email Marketing') }}</option>
+                                <option value="social">{{ _('campaign_type_social', 'Médias Sociaux') }}</option>
+                                <option value="influencer">{{ _('campaign_type_influencer', 'Marketing d\'Influence') }}</option>
+                                <option value="content">{{ _('campaign_type_content', 'Marketing de Contenu') }}</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">{{ _('campaign_description', 'Description') }}</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="target_audience" class="form-label">{{ _('target_audience', 'Public cible') }}</label>
+                            <input type="text" class="form-control" id="target_audience" name="target_audience">
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="start_date" class="form-label">{{ _('start_date', 'Date de début') }}</label>
+                                    <input type="date" class="form-control" id="start_date" name="start_date">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="end_date" class="form-label">{{ _('end_date', 'Date de fin') }}</label>
+                                    <input type="date" class="form-control" id="end_date" name="end_date">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="budget" class="form-label">{{ _('budget', 'Budget (€)') }}</label>
+                            <input type="number" class="form-control" id="budget" name="budget" min="0" step="0.01">
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('marketing.list_campaigns') }}" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-times me-1"></i>{{ _('cancel', 'Annuler') }}
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>{{ _('save_campaign', 'Enregistrer la campagne') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Validation de la date de fin postérieure à la date de début
+        const startDateInput = document.getElementById('start_date');
+        const endDateInput = document.getElementById('end_date');
+        
+        function validateDates() {
+            if (startDateInput.value && endDateInput.value) {
+                const startDate = new Date(startDateInput.value);
+                const endDate = new Date(endDateInput.value);
+                
+                if (endDate < startDate) {
+                    endDateInput.setCustomValidity('La date de fin doit être postérieure à la date de début');
+                } else {
+                    endDateInput.setCustomValidity('');
+                }
+            }
+        }
+        
+        startDateInput.addEventListener('change', validateDates);
+        endDateInput.addEventListener('change', validateDates);
+    });
+</script>
+{% endblock %}

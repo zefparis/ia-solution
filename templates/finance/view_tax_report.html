@@ -1,0 +1,548 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ language.get_text('finance.tax_report.view_title') or 'Détails du rapport fiscal' }}{% endblock %}
+
+{% block head %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('finance.finance_dashboard') }}">{{ language.get_text('nav.finance') }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('finance.financial_reports') }}">{{ language.get_text('finance.reports') }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('finance.generate_tax_report') }}">{{ language.get_text('finance.tax_report.title') or 'Rapport fiscal' }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ report.name or report.title }}</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="display-5">{{ report.name or report.title }}</h1>
+                <div>
+                    <a href="{{ url_for('dashboard.dashboard_home') }}" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-tachometer-alt me-2"></i>{{ language.get_text('dashboard.title') or 'Tableau de bord' }}
+                    </a>
+                    <a href="{{ url_for('finance.generate_tax_report') }}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left me-2"></i>{{ language.get_text('action.back') or 'Retour' }}
+                    </a>
+                    <a href="{{ url_for('finance.view_tax_report', report_id=report.id, format='pdf') }}" class="btn btn-primary">
+                        <i class="fas fa-file-pdf me-2"></i>{{ language.get_text('finance.tax_report.download_pdf') or 'Télécharger en PDF' }}
+                    </a>
+                </div>
+            </div>
+            
+            <p class="lead">
+                {{ language.get_text('finance.tax_report.period_prefix') or 'Période du' }} 
+                <strong>{{ report.start_date.strftime('%d/%m/%Y') }}</strong> 
+                {{ language.get_text('finance.tax_report.period_to') or 'au' }}
+                <strong>{{ report.end_date.strftime('%d/%m/%Y') }}</strong>
+            </p>
+        </div>
+    </div>
+
+    <!-- Résumé financier -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5>{{ language.get_text('finance.tax_report.summary') or 'Résumé financier' }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">{{ language.get_text('finance.tax_report.income') or 'Revenus' }}</h6>
+                                    <h3 class="text-success">{{ report.total_income|round(2) }} €</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">{{ language.get_text('finance.tax_report.expenses') or 'Dépenses' }}</h6>
+                                    <h3 class="text-danger">{{ report.total_expenses|round(2) }} €</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">{{ language.get_text('finance.tax_report.tax') or 'TVA collectée' }}</h6>
+                                    <h3 class="text-primary">{{ report.total_tax|round(2) }} €</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">{{ language.get_text('finance.tax_report.profit') or 'Bénéfice net' }}</h6>
+                                    <h3 class="{% if (report.profit or report.net_profit) >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        {{ (report.profit or report.net_profit)|round(2) }} €
+                                    </h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visualisation graphique -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0">
+                    <h5>{{ language.get_text('finance.tax_report.income_by_category') or 'Revenus par catégorie' }}</h5>
+                </div>
+                <div class="card-body">
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="incomeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0">
+                    <h5>{{ language.get_text('finance.tax_report.expenses_by_category') or 'Dépenses par catégorie' }}</h5>
+                </div>
+                <div class="card-body">
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Détail des transactions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="transactionTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="incomes-tab" data-bs-toggle="tab" data-bs-target="#incomes" type="button" role="tab" aria-controls="incomes" aria-selected="true">
+                        {{ language.get_text('finance.tax_report.incomes') or 'Revenus' }} ({{ incomes|length }})
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="expenses-tab" data-bs-toggle="tab" data-bs-target="#expenses" type="button" role="tab" aria-controls="expenses" aria-selected="false">
+                        {{ language.get_text('finance.tax_report.expenses') or 'Dépenses' }} ({{ expenses|length }})
+                    </button>
+                </li>
+            </ul>
+            <div class="tab-content" id="transactionTabsContent">
+                <!-- Revenus -->
+                <div class="tab-pane fade show active" id="incomes" role="tabpanel" aria-labelledby="incomes-tab">
+                    <div class="card border-top-0 rounded-top-0 border-0 shadow-sm">
+                        <div class="card-body">
+                            {% if incomes %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>{{ language.get_text('finance.tax_report.date') or 'Date' }}</th>
+                                                <th>{{ language.get_text('finance.tax_report.description') or 'Description' }}</th>
+                                                <th>{{ language.get_text('finance.tax_report.category') or 'Catégorie' }}</th>
+                                                <th>{{ language.get_text('finance.tax_report.client') or 'Client' }}</th>
+                                                <th class="text-end">{{ language.get_text('finance.tax_report.amount') or 'Montant' }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for income in incomes %}
+                                                <tr>
+                                                    <td>{{ income.transaction_date.strftime('%d/%m/%Y') }}</td>
+                                                    <td>{{ income.description or language.get_text('finance.transactions.no_description') or 'Sans description' }}</td>
+                                                    <td>
+                                                        {% if income.category %}
+                                                            <span class="badge" style="background-color: {{ income.category.color }}">
+                                                                {{ income.category.name }}
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="badge bg-secondary">{{ language.get_text('finance.transactions.unclassified') or 'Non classée' }}</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if income.vendors.all()|length > 0 %}
+                                                            {{ income.vendors[0].name }}
+                                                        {% else %}
+                                                            -
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-end text-success">{{ income.amount|round(2) }} €</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="table-light">
+                                                <th colspan="4" class="text-end">{{ language.get_text('finance.tax_report.total') or 'Total' }}</th>
+                                                <th class="text-end text-success">{{ report.total_income|round(2) }} €</th>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-hand-holding-usd fa-3x text-muted mb-3"></i>
+                                    <p>{{ language.get_text('finance.tax_report.no_incomes') or 'Aucun revenu enregistré pour cette période' }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Dépenses -->
+                <div class="tab-pane fade" id="expenses" role="tabpanel" aria-labelledby="expenses-tab">
+                    <div class="card border-top-0 rounded-top-0 border-0 shadow-sm">
+                        <div class="card-body">
+                            {% if expenses %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>{{ language.get_text('finance.tax_report.date') or 'Date' }}</th>
+                                                <th>{{ language.get_text('finance.tax_report.description') or 'Description' }}</th>
+                                                <th>{{ language.get_text('finance.tax_report.category') or 'Catégorie' }}</th>
+                                                <th>{{ language.get_text('finance.tax_report.vendor') or 'Fournisseur' }}</th>
+                                                <th class="text-end">{{ language.get_text('finance.tax_report.amount') or 'Montant' }}</th>
+                                                <th class="text-end">{{ language.get_text('finance.tax_report.tax_amount') or 'TVA' }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for expense in expenses %}
+                                                <tr>
+                                                    <td>{{ expense.transaction_date.strftime('%d/%m/%Y') }}</td>
+                                                    <td>{{ expense.description or language.get_text('finance.transactions.no_description') or 'Sans description' }}</td>
+                                                    <td>
+                                                        {% if expense.category %}
+                                                            <span class="badge" style="background-color: {{ expense.category.color }}">
+                                                                {{ expense.category.name }}
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="badge bg-secondary">{{ language.get_text('finance.transactions.unclassified') or 'Non classée' }}</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if expense.vendors.all()|length > 0 %}
+                                                            {{ expense.vendors[0].name }}
+                                                        {% else %}
+                                                            -
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-end text-danger">{{ expense.amount|round(2) }} €</td>
+                                                    <td class="text-end">
+                                                        {% if expense.tax_amount %}
+                                                            {{ expense.tax_amount|round(2) }} €
+                                                            <small class="text-muted">({{ expense.tax_rate }}%)</small>
+                                                        {% else %}
+                                                            -
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="table-light">
+                                                <th colspan="4" class="text-end">{{ language.get_text('finance.tax_report.total') or 'Total' }}</th>
+                                                <th class="text-end text-danger">{{ report.total_expenses|round(2) }} €</th>
+                                                <th class="text-end">{{ report.total_tax|round(2) }} €</th>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                                    <p>{{ language.get_text('finance.tax_report.no_expenses') or 'Aucune dépense enregistrée pour cette période' }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Analyse IA -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5>
+                        <i class="fas fa-robot me-2 text-primary"></i>
+                        {{ language.get_text('finance.tax_report.ai_analysis') or 'Analyse et recommandations IA' }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if report.ai_analysis %}
+                        {{ report.ai_analysis|safe }}
+                    {% else %}
+                        <div class="alert alert-info">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-info-circle fa-2x me-3"></i>
+                                </div>
+                                <div>
+                                    <h5>{{ language.get_text('finance.tax_report.ai_not_available') or 'Analyse IA non disponible' }}</h5>
+                                    <p class="mb-0">
+                                        {{ language.get_text('finance.tax_report.ai_explanation') or 'L\'analyse IA de ce rapport n\'est pas disponible. Cela peut être dû à l\'absence de clé API OpenAI ou à une erreur lors de la génération de l\'analyse.' }}
+                                    </p>
+                                    <button class="btn btn-outline-primary mt-3" id="generateAIAnalysis">
+                                        <i class="fas fa-sync-alt me-2"></i>{{ language.get_text('finance.tax_report.generate_ai') or 'Générer l\'analyse IA' }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notes et informations légales -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5>{{ language.get_text('finance.tax_report.legal_notes') or 'Notes et informations légales' }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <p class="text-muted small">
+                            {{ language.get_text('finance.tax_report.legal_disclaimer') or 'Ce rapport est généré automatiquement à partir des données saisies dans le système. Il est destiné à des fins d\'information uniquement et ne constitue pas un document fiscal officiel. Veuillez consulter un expert-comptable pour toute question relative à votre déclaration fiscale.' }}
+                        </p>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>{{ language.get_text('finance.tax_report.report_info') or 'Informations sur le rapport' }}</h6>
+                            <ul class="list-unstyled text-muted small">
+                                <li>{{ language.get_text('finance.tax_report.generated_on') or 'Généré le' }}: {{ report.created_at.strftime('%d/%m/%Y à %H:%M') }}</li>
+                                <li>{{ language.get_text('finance.tax_report.reference') or 'Référence' }}: REF-{{ report.id }}-{{ report.created_at.strftime('%Y%m%d') }}</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-8">
+                            <h6>{{ language.get_text('finance.tax_report.notes') or 'Notes' }}</h6>
+                            <div class="form-floating">
+                                <textarea class="form-control" placeholder="{{ language.get_text('finance.tax_report.add_notes') or 'Ajoutez des notes à ce rapport...' }}" id="reportNotes" style="height: 100px">{{ report.notes or '' }}</textarea>
+                                <label for="reportNotes">{{ language.get_text('finance.tax_report.add_notes') or 'Ajoutez des notes à ce rapport...' }}</label>
+                            </div>
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-2">
+                                <button class="btn btn-sm btn-primary" id="saveNotes">
+                                    <i class="fas fa-save me-2"></i>{{ language.get_text('action.save') or 'Enregistrer' }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Préparer les données pour les graphiques
+        prepareCharts();
+        
+        // Gestion de la sauvegarde des notes
+        document.getElementById('saveNotes').addEventListener('click', function() {
+            const notes = document.getElementById('reportNotes').value;
+            saveReportNotes({{ report.id }}, notes);
+        });
+        
+        // Génération d'analyse IA (si le bouton existe)
+        const generateAIButton = document.getElementById('generateAIAnalysis');
+        if (generateAIButton) {
+            generateAIButton.addEventListener('click', function() {
+                generateAIAnalysis({{ report.id }});
+            });
+        }
+    });
+    
+    // Préparation et affichage des graphiques
+    function prepareCharts() {
+        // Données fictives pour les graphiques - à remplacer par les données réelles
+        const incomeCategories = getIncomeCategories();
+        const expenseCategories = getExpenseCategories();
+        
+        if (incomeCategories.labels.length > 0) {
+            const incomeCtx = document.getElementById('incomeChart').getContext('2d');
+            new Chart(incomeCtx, {
+                type: 'pie',
+                data: {
+                    labels: incomeCategories.labels,
+                    datasets: [{
+                        data: incomeCategories.data,
+                        backgroundColor: incomeCategories.colors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 15
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        if (expenseCategories.labels.length > 0) {
+            const expenseCtx = document.getElementById('expenseChart').getContext('2d');
+            new Chart(expenseCtx, {
+                type: 'pie',
+                data: {
+                    labels: expenseCategories.labels,
+                    datasets: [{
+                        data: expenseCategories.data,
+                        backgroundColor: expenseCategories.colors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 15
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+    // Fonction pour récupérer les catégories de revenus
+    function getIncomeCategories() {
+        // À remplacer par les données réelles
+        // Pour l'instant, calculer à partir des transactions affichées
+        const categories = {};
+        const colors = {};
+        
+        document.querySelectorAll('#incomes table tbody tr').forEach(row => {
+            const categoryElement = row.querySelector('td:nth-child(3) .badge');
+            const amountElement = row.querySelector('td:nth-child(5)');
+            
+            if (categoryElement && amountElement) {
+                const categoryName = categoryElement.textContent.trim();
+                const amount = parseFloat(amountElement.textContent.replace('€', '').trim());
+                const color = categoryElement.style.backgroundColor || '#6c757d';
+                
+                if (!categories[categoryName]) {
+                    categories[categoryName] = 0;
+                    colors[categoryName] = color;
+                }
+                
+                categories[categoryName] += amount;
+            }
+        });
+        
+        return {
+            labels: Object.keys(categories),
+            data: Object.values(categories),
+            colors: Object.keys(categories).map(cat => colors[cat])
+        };
+    }
+    
+    // Fonction pour récupérer les catégories de dépenses
+    function getExpenseCategories() {
+        // À remplacer par les données réelles
+        // Pour l'instant, calculer à partir des transactions affichées
+        const categories = {};
+        const colors = {};
+        
+        document.querySelectorAll('#expenses table tbody tr').forEach(row => {
+            const categoryElement = row.querySelector('td:nth-child(3) .badge');
+            const amountElement = row.querySelector('td:nth-child(5)');
+            
+            if (categoryElement && amountElement) {
+                const categoryName = categoryElement.textContent.trim();
+                const amount = parseFloat(amountElement.textContent.replace('€', '').trim());
+                const color = categoryElement.style.backgroundColor || '#6c757d';
+                
+                if (!categories[categoryName]) {
+                    categories[categoryName] = 0;
+                    colors[categoryName] = color;
+                }
+                
+                categories[categoryName] += amount;
+            }
+        });
+        
+        return {
+            labels: Object.keys(categories),
+            data: Object.values(categories),
+            colors: Object.keys(categories).map(cat => colors[cat])
+        };
+    }
+    
+    // Fonction pour sauvegarder les notes du rapport
+    function saveReportNotes(reportId, notes) {
+        fetch(`/finance/tax_report/${reportId}/notes`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ notes: notes })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Notes enregistrées avec succès');
+            } else {
+                alert('Erreur lors de l\'enregistrement des notes');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erreur lors de la communication avec le serveur');
+        });
+    }
+    
+    // Fonction pour générer l'analyse IA
+    function generateAIAnalysis(reportId) {
+        const button = document.getElementById('generateAIAnalysis');
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Génération en cours...';
+        
+        fetch(`/finance/tax_report/${reportId}/generate_ai`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur lors de la génération de l\'analyse IA: ' + data.error);
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Réessayer';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erreur lors de la communication avec le serveur');
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Réessayer';
+        });
+    }
+</script>
+{% endblock %}

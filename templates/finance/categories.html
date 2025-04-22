@@ -1,0 +1,183 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ language.get_text('finance.categories.manage') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('finance.finance_dashboard') }}">{{ language.get_text('nav.finance') }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ language.get_text('finance.categories.manage') }}</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="display-5">{{ language.get_text('finance.categories.manage') }}</h1>
+                <a href="{{ url_for('dashboard.dashboard_home') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-tachometer-alt me-2"></i>{{ language.get_text('dashboard.title') or 'Tableau de bord' }}
+                </a>
+            </div>
+            <p class="lead">{{ language.get_text('finance.categories.description') }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Liste des catégories -->
+        <div class="col-md-8 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5>{{ language.get_text('finance.categories.my_categories') }}</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs mb-3" id="categoriesTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="expenses-tab" data-bs-toggle="tab" data-bs-target="#expenses" type="button" role="tab" aria-controls="expenses" aria-selected="true">{{ language.get_text('finance.categories.expenses') }}</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="income-tab" data-bs-toggle="tab" data-bs-target="#income" type="button" role="tab" aria-controls="income" aria-selected="false">{{ language.get_text('finance.categories.income') }}</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="categoriesTabsContent">
+                        <!-- Catégories de dépenses -->
+                        <div class="tab-pane fade show active" id="expenses" role="tabpanel" aria-labelledby="expenses-tab">
+                            {% if categories|selectattr('type', 'equalto', 'expense')|list|length > 0 %}
+                                <div class="list-group">
+                                    {% for category in categories %}
+                                        {% if category.type == 'expense' %}
+                                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge me-2" style="background-color: {{ category.color }}; width: 15px; height: 15px; border-radius: 50%;"></span>
+                                                    <div>
+                                                        {{ category.name }}
+                                                        {% if category.icon %}
+                                                            <i class="fas fa-{{ category.icon }} ms-1 text-muted"></i>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                <form method="POST" class="d-inline" onsubmit="return confirm('{{ language.get_text('finance.categories.confirm_delete') }}');">
+                                                    <input type="hidden" name="action" value="delete">
+                                                    <input type="hidden" name="category_id" value="{{ category.id }}">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ language.get_text('finance.categories.delete') }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                                    <p>{{ language.get_text('finance.categories.no_expense_category') }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Catégories de revenus -->
+                        <div class="tab-pane fade" id="income" role="tabpanel" aria-labelledby="income-tab">
+                            {% if categories|selectattr('type', 'equalto', 'income')|list|length > 0 %}
+                                <div class="list-group">
+                                    {% for category in categories %}
+                                        {% if category.type == 'income' %}
+                                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge me-2" style="background-color: {{ category.color }}; width: 15px; height: 15px; border-radius: 50%;"></span>
+                                                    <div>
+                                                        {{ category.name }}
+                                                        {% if category.icon %}
+                                                            <i class="fas fa-{{ category.icon }} ms-1 text-muted"></i>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                <form method="POST" class="d-inline" onsubmit="return confirm('{{ language.get_text('finance.categories.confirm_delete') }}');">
+                                                    <input type="hidden" name="action" value="delete">
+                                                    <input type="hidden" name="category_id" value="{{ category.id }}">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ language.get_text('finance.categories.delete') }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-hand-holding-usd fa-3x text-muted mb-3"></i>
+                                    <p>{{ language.get_text('finance.categories.no_income_category') }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulaire d'ajout de catégorie -->
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5>{{ language.get_text('finance.categories.new') }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="action" value="create">
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">{{ language.get_text('finance.categories.name') }}</label>
+                            <input type="text" class="form-control" id="name" name="name" required placeholder="{{ language.get_text('finance.categories.name_placeholder') }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ language.get_text('finance.categories.type') }}</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="type" id="type_expense" value="expense" checked>
+                                <label class="form-check-label" for="type_expense">
+                                    {{ language.get_text('finance.categories.expense') }}
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="type" id="type_income" value="income">
+                                <label class="form-check-label" for="type_income">
+                                    {{ language.get_text('finance.categories.income') }}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="color" class="form-label">{{ language.get_text('finance.categories.color') }}</label>
+                            <input type="color" class="form-control form-control-color w-100" id="color" name="color" value="#6c757d">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="icon" class="form-label">{{ language.get_text('finance.categories.icon') }}</label>
+                            <select class="form-select" id="icon" name="icon">
+                                <option value="tag">{{ language.get_text('finance.categories.icon_tag') }}</option>
+                                <option value="shopping-cart">{{ language.get_text('finance.categories.icon_shopping') }}</option>
+                                <option value="home">{{ language.get_text('finance.categories.icon_home') }}</option>
+                                <option value="car">{{ language.get_text('finance.categories.icon_car') }}</option>
+                                <option value="utensils">{{ language.get_text('finance.categories.icon_restaurant') }}</option>
+                                <option value="tshirt">{{ language.get_text('finance.categories.icon_clothes') }}</option>
+                                <option value="heartbeat">{{ language.get_text('finance.categories.icon_health') }}</option>
+                                <option value="graduation-cap">{{ language.get_text('finance.categories.icon_education') }}</option>
+                                <option value="plane">{{ language.get_text('finance.categories.icon_travel') }}</option>
+                                <option value="gamepad">{{ language.get_text('finance.categories.icon_leisure') }}</option>
+                                <option value="money-bill-wave">{{ language.get_text('finance.categories.icon_salary') }}</option>
+                                <option value="gift">{{ language.get_text('finance.categories.icon_gift') }}</option>
+                                <option value="coins">{{ language.get_text('finance.categories.icon_investment') }}</option>
+                                <option value="hand-holding-usd">{{ language.get_text('finance.categories.icon_refund') }}</option>
+                            </select>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-2"></i>{{ language.get_text('finance.categories.add') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

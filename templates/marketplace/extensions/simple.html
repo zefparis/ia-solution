@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ _('marketplace_title', 'API Marketplace') }} - {{ _('marketplace_extensions', 'Extensions') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2 mb-0">{{ _('marketplace_extensions', 'Extensions API') }}</h1>
+            <p class="text-muted">{{ _('marketplace_extensions_desc', 'Découvrez et installez des extensions pour étendre les fonctionnalités de votre IA-Solution.') }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for extension in extensions %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ extension.name }}</h5>
+                        <p class="text-muted small mb-3">{{ extension.short_description or extension.description|truncate(80) }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-secondary">{{ extension.category }}</span>
+                            <a href="{{ url_for('marketplace.view_extension', slug=extension.slug) }}" class="btn btn-sm btn-primary">
+                                {{ _('marketplace_details', 'Détails') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    {{ _('marketplace_no_extensions', 'Aucune extension disponible pour le moment.') }}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
