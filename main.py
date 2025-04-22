@@ -11,19 +11,28 @@ from decimal import Decimal
 from sqlalchemy import func, extract
 import language
 
-# Configure logging
+# Chemin du dossier 'logs'
 log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
-os.makedirs(log_dir, exist_ok=True)  # Crée le dossier 'logs' s'il n'existe pas
 
+# Crée automatiquement le dossier 'logs' s’il n’existe pas (évite FileNotFoundError)
+os.makedirs(log_dir, exist_ok=True)
+
+# Définition du fichier de log
 log_file = os.path.join(log_dir, 'app.log')
+
+# Initialisation du système de logging avec deux handlers :
+# - Fichier de log : pour garder une trace persistante
+# - Console : pour affichage en temps réel (utile pour debug sur Railway ou local)
 logging.basicConfig(
-    level=logging.DEBUG, 
+    level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(log_file),
+        logging.FileHandler(log_file, mode='a', encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
+
+# Récupération du logger courant
 logger = logging.getLogger(__name__)
 
 
