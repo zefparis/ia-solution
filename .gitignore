@@ -1,0 +1,26 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environnement
+.env
+.env.*  # Pour ignorer tous les fichiers .env.local, .env.production, etc.
+
+# Systèmes
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Autres fichiers temporaires
+*.swp
+*.tmp
+
+# Build
+dist/
+build/
+out/
